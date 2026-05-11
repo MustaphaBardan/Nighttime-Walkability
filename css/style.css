@@ -454,146 +454,237 @@ p {
 }
 
 .preview-card-image {
+  --sky-start: #07111d;
+  --sky-end: #14221f;
+  --path-left: 39%;
+  --path-right: 61%;
+  --path-color: #87928a;
+  --path-lit: rgba(245, 231, 184, 0.28);
+  --edge-left: #20372b;
+  --edge-right: #20372b;
+  --glow-opacity: 0.42;
+  --lamp-color: #f4c75d;
+  --wall-left: transparent;
+  --wall-right: transparent;
+  position: relative;
   display: block;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background-image: url("../assets/images/ideal_preview_sheet.png");
-  background-repeat: no-repeat;
-  background-size: 300% 300%;
-}
-
-.preview-card-image {
   width: 100%;
   aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(90deg, var(--wall-left) 0 14%, transparent 14% 86%, var(--wall-right) 86% 100%),
+    radial-gradient(circle at 36% 36%, rgba(255, 224, 139, var(--glow-opacity)) 0 9%, transparent 25%),
+    radial-gradient(circle at 64% 41%, rgba(255, 224, 139, calc(var(--glow-opacity) * 0.78)) 0 7%, transparent 21%),
+    linear-gradient(to bottom, var(--sky-start) 0 56%, #18221f 56% 100%);
 }
 
-.preview-tile-uniform-light,
-.preview-tile-contrasted-light,
-.preview-tile-punctual-light,
-.preview-tile-low-vegetation,
-.preview-tile-medium-vegetation,
-.preview-tile-high-vegetation,
-.preview-tile-enclosed,
-.preview-tile-narrow-sidewalk,
-.preview-tile-ordinary-sidewalk,
-.preview-tile-wide-sidewalk,
-.preview-tile-no-obstacles,
-.preview-tile-few-obstacles,
-.preview-tile-many-obstacles,
-.preview-tile-empty-activity,
-.preview-tile-some-activity,
-.preview-tile-active-frontage {
-  background-image: linear-gradient(135deg, #101816, #31413b);
-  background-size: cover;
+.preview-card-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--edge-left) 0 var(--path-left), transparent var(--path-left) var(--path-right), var(--edge-right) var(--path-right) 100%),
+    linear-gradient(to bottom, transparent 0 55%, var(--path-color) 55% 100%);
+  clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
 }
 
-.preview-default,
-.preview-tile-very-low-light {
-  background-position: 0% 0%;
+.preview-card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    radial-gradient(circle at 64% 42%, var(--lamp-color) 0 2.2%, transparent 2.6%),
+    linear-gradient(#707a73, #707a73) 63.5% 43% / 1.4% 32% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
 .preview-tile-low-light {
-  background-position: 50% 0%;
+  --glow-opacity: 0.16;
+  --path-lit: rgba(204, 177, 104, 0.12);
+  --path-color: #5f6963;
 }
 
 .preview-tile-medium-light {
-  background-position: 100% 0%;
+  --glow-opacity: 0.38;
+  --path-lit: rgba(245, 218, 154, 0.24);
 }
 
 .preview-tile-high-light {
-  background-position: 0% 50%;
-}
-
-.preview-tile-very-high-light {
-  background-position: 50% 50%;
-}
-
-.preview-tile-very-enclosed {
-  background-position: 100% 50%;
-}
-
-.preview-tile-balanced-open {
-  background-position: 0% 100%;
-}
-
-.preview-tile-open {
-  background-position: 50% 100%;
-}
-
-.preview-tile-somewhat-enclosed {
-  background-position: 100% 100%;
+  --glow-opacity: 0.66;
+  --path-lit: rgba(255, 235, 178, 0.42);
+  --path-color: #a2aca4;
 }
 
 .preview-tile-uniform-light {
-  background-image: linear-gradient(90deg, #17201b, #3d6170, #17201b);
+  --glow-opacity: 0.34;
+  --path-lit: rgba(143, 201, 219, 0.24);
+}
+
+.preview-tile-uniform-light::after {
+  background:
+    linear-gradient(90deg, rgba(125, 211, 252, 0.18), rgba(125, 211, 252, 0.28), rgba(125, 211, 252, 0.18)),
+    radial-gradient(circle at 36% 37%, #aee6ff 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    radial-gradient(circle at 64% 42%, #aee6ff 0 2.2%, transparent 2.6%),
+    linear-gradient(#707a73, #707a73) 63.5% 43% / 1.4% 32% no-repeat;
 }
 
 .preview-tile-contrasted-light {
-  background-image: linear-gradient(110deg, #060808 0 34%, #7dd3fc 34% 46%, #18201c 46% 100%);
+  --glow-opacity: 0.62;
+  --path-lit: rgba(125, 211, 252, 0.4);
+}
+
+.preview-tile-contrasted-light::after {
+  background:
+    linear-gradient(104deg, rgba(0, 0, 0, 0.58) 0 36%, rgba(125, 211, 252, 0.46) 36% 54%, rgba(0, 0, 0, 0.3) 54% 100%),
+    radial-gradient(circle at 38% 36%, #aee6ff 0 3%, transparent 3.4%),
+    linear-gradient(#7b837e, #7b837e) 37.5% 38% / 1.6% 36% no-repeat;
 }
 
 .preview-tile-punctual-light {
-  background-image: radial-gradient(circle at 28% 58%, #bae6fd 0 9%, transparent 10%),
-    radial-gradient(circle at 70% 44%, #7dd3fc 0 8%, transparent 9%),
-    linear-gradient(135deg, #09100e, #26332e);
+  --glow-opacity: 0;
+}
+
+.preview-tile-punctual-light::after {
+  background:
+    radial-gradient(circle at 28% 72%, rgba(174, 230, 255, 0.78) 0 8%, transparent 16%),
+    radial-gradient(circle at 70% 68%, rgba(125, 211, 252, 0.72) 0 7%, transparent 15%),
+    radial-gradient(circle at 28% 38%, #aee6ff 0 2.8%, transparent 3.2%),
+    linear-gradient(#7b837e, #7b837e) 27.5% 40% / 1.5% 35% no-repeat,
+    radial-gradient(circle at 70% 42%, #7dd3fc 0 2.5%, transparent 2.9%),
+    linear-gradient(#707a73, #707a73) 69.5% 44% / 1.4% 31% no-repeat;
 }
 
 .preview-tile-low-vegetation {
-  background-image: linear-gradient(160deg, #17201b 0 68%, #466151 68% 100%);
+  --edge-left: #24332b;
+  --edge-right: #24332b;
 }
 
-.preview-tile-medium-vegetation {
-  background-image: linear-gradient(135deg, #122019 0 45%, #567a62 45% 72%, #1a2722 72% 100%);
+.preview-tile-low-vegetation::after {
+  background:
+    radial-gradient(ellipse at 19% 67%, #4f7558 0 7%, transparent 8%),
+    radial-gradient(ellipse at 81% 68%, #4f7558 0 7%, transparent 8%),
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat;
 }
 
-.preview-tile-high-vegetation {
-  background-image: linear-gradient(135deg, #0d1411 0 28%, #314e38 28% 58%, #6c8f70 58% 100%);
+.preview-tile-medium-vegetation::after {
+  background:
+    radial-gradient(ellipse at 16% 63%, #4f7558 0 12%, transparent 13%),
+    radial-gradient(ellipse at 27% 69%, #31583d 0 10%, transparent 11%),
+    radial-gradient(ellipse at 83% 63%, #4f7558 0 13%, transparent 14%),
+    radial-gradient(ellipse at 72% 70%, #31583d 0 10%, transparent 11%),
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat;
+}
+
+.preview-tile-high-vegetation::after {
+  background:
+    radial-gradient(ellipse at 8% 55%, #244a34 0 21%, transparent 22%),
+    radial-gradient(ellipse at 26% 57%, #365f41 0 20%, transparent 21%),
+    radial-gradient(ellipse at 94% 55%, #244a34 0 22%, transparent 23%),
+    radial-gradient(ellipse at 73% 58%, #365f41 0 20%, transparent 21%),
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat;
 }
 
 .preview-tile-enclosed {
-  background-image: linear-gradient(90deg, #46534b 0 20%, #121716 20% 80%, #46534b 80% 100%);
+  --wall-left: #4a574f;
+  --wall-right: #4a574f;
+  --path-left: 38%;
+  --path-right: 62%;
+}
+
+.preview-tile-balanced-open {
+  --wall-left: #3b4942;
+  --wall-right: transparent;
+  --path-left: 34%;
+  --path-right: 66%;
+}
+
+.preview-tile-open {
+  --wall-left: transparent;
+  --wall-right: transparent;
+  --path-left: 24%;
+  --path-right: 76%;
+  --edge-left: #263d2d;
+  --edge-right: #263d2d;
 }
 
 .preview-tile-narrow-sidewalk {
-  background-image: linear-gradient(90deg, #17201b 0 42%, #9aa8a0 42% 58%, #243029 58% 100%);
+  --path-left: 44%;
+  --path-right: 56%;
 }
 
 .preview-tile-ordinary-sidewalk {
-  background-image: linear-gradient(90deg, #17201b 0 32%, #aab7af 32% 68%, #243029 68% 100%);
+  --path-left: 36%;
+  --path-right: 64%;
 }
 
 .preview-tile-wide-sidewalk {
-  background-image: linear-gradient(90deg, #17201b 0 20%, #b7c4bc 20% 80%, #243029 80% 100%);
+  --path-left: 24%;
+  --path-right: 76%;
 }
 
-.preview-tile-no-obstacles {
-  background-image: linear-gradient(180deg, #1f2c27 0 58%, #9aa8a0 58% 100%);
+.preview-tile-no-obstacles::after,
+.preview-tile-few-obstacles::after,
+.preview-tile-many-obstacles::after {
+  background:
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
-.preview-tile-few-obstacles {
-  background-image: radial-gradient(circle at 42% 72%, #facc15 0 6%, transparent 7%),
-    linear-gradient(180deg, #1f2c27 0 58%, #9aa8a0 58% 100%);
+.preview-tile-few-obstacles::after {
+  background:
+    radial-gradient(circle at 58% 76%, #facc15 0 4.5%, #a16207 4.8% 5.8%, transparent 6.2%),
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
-.preview-tile-many-obstacles {
-  background-image: radial-gradient(circle at 30% 70%, #facc15 0 6%, transparent 7%),
-    radial-gradient(circle at 54% 76%, #fda4af 0 5%, transparent 6%),
-    radial-gradient(circle at 72% 68%, #facc15 0 5%, transparent 6%),
-    linear-gradient(180deg, #1f2c27 0 58%, #9aa8a0 58% 100%);
+.preview-tile-many-obstacles::after {
+  background:
+    radial-gradient(circle at 44% 75%, #facc15 0 4.2%, #a16207 4.5% 5.5%, transparent 5.9%),
+    radial-gradient(circle at 59% 80%, #fda4af 0 3.6%, #be123c 3.9% 4.8%, transparent 5.2%),
+    radial-gradient(circle at 70% 73%, #facc15 0 4.2%, #a16207 4.5% 5.5%, transparent 5.9%),
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
 .preview-tile-empty-activity {
-  background-image: linear-gradient(135deg, #090d0c, #263029);
+  --wall-right: #263029;
 }
 
 .preview-tile-some-activity {
-  background-image: linear-gradient(135deg, #0c1110 0 55%, #facc15 55% 64%, #27342f 64% 100%);
+  --wall-right: #263029;
+}
+
+.preview-tile-some-activity::after {
+  background:
+    linear-gradient(#facc15, #facc15) 89% 36% / 3.5% 8% no-repeat,
+    linear-gradient(#facc15, #facc15) 94% 44% / 3% 7% no-repeat,
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
 .preview-tile-active-frontage {
-  background-image: repeating-linear-gradient(90deg, #facc15 0 10%, #17201b 10% 16%),
-    linear-gradient(135deg, #0c1110, #27342f);
+  --wall-right: #263029;
+}
+
+.preview-tile-active-frontage::after {
+  background:
+    repeating-linear-gradient(90deg, #facc15 0 3%, #18221f 3% 5%) 85% 31% / 14% 31% no-repeat,
+    linear-gradient(#facc15, #facc15) 87% 70% / 8% 5% no-repeat,
+    radial-gradient(circle at 36% 37%, var(--lamp-color) 0 2.7%, transparent 3.1%),
+    linear-gradient(#7b837e, #7b837e) 35.5% 38% / 1.6% 36% no-repeat,
+    linear-gradient(to bottom, transparent 0 64%, var(--path-lit) 64% 100%);
 }
 
 .preview-option-card:hover,
