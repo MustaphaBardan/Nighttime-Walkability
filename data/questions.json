@@ -1,0 +1,127 @@
+{
+  "batch_classification": [
+    {
+      "question_id": "perceived_safety_class",
+      "text": "Classify each scene according to perceived safety.",
+      "answers": ["low", "medium", "high"]
+    }
+  ],
+  "pairwise_comparison": [
+    {
+      "question_id": "pairwise_safety",
+      "text": "Which scene feels safer for walking at night?",
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_route_preference",
+      "text": "Which route would you prefer to walk through at night?",
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_comfort",
+      "text": "Which scene feels more comfortable?",
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_legibility",
+      "text": "Which scene is easier to understand or navigate?",
+      "answers": ["A", "B", "no_clear_difference"]
+    }
+  ],
+  "detailed_rating": [
+    {
+      "question_id": "perceived_safety",
+      "text": "This scene feels safe for walking at night.",
+      "scale": 5
+    },
+    {
+      "question_id": "comfort",
+      "text": "I would feel comfortable walking through this scene.",
+      "scale": 5
+    },
+    {
+      "question_id": "path_visibility",
+      "text": "The walking path is clearly visible.",
+      "scale": 5
+    },
+    {
+      "question_id": "obstacle_detection",
+      "text": "Obstacles or risky areas would be easy to detect.",
+      "scale": 5
+    },
+    {
+      "question_id": "legibility_orientation",
+      "text": "It is easy to understand where to go.",
+      "scale": 5
+    },
+    {
+      "question_id": "route_choice",
+      "text": "I would choose this route if I had to walk at night.",
+      "scale": 5
+    }
+  ],
+  "ideal_scene_builder": [
+    {
+      "question_id": "preferred_lighting_intensity",
+      "text": "Preferred lighting intensity",
+      "type": "choice",
+      "options": ["low", "medium", "high"]
+    },
+    {
+      "question_id": "preferred_lighting_distribution",
+      "text": "Preferred lighting distribution",
+      "type": "choice",
+      "options": ["uniform", "contrasted", "punctual"]
+    },
+    {
+      "question_id": "preferred_vegetation_density",
+      "text": "Preferred vegetation density",
+      "type": "choice",
+      "options": ["low", "medium", "high"]
+    },
+    {
+      "question_id": "preferred_spatial_openness",
+      "text": "Preferred spatial openness",
+      "type": "choice",
+      "options": ["enclosed", "balanced", "open"]
+    },
+    {
+      "question_id": "preferred_sidewalk_condition",
+      "text": "Preferred sidewalk condition",
+      "type": "choice",
+      "options": ["narrow_discontinuous", "ordinary", "wide_continuous"]
+    },
+    {
+      "question_id": "preferred_obstacles",
+      "text": "Preferred obstacle level",
+      "type": "choice",
+      "options": ["none", "few", "many"]
+    },
+    {
+      "question_id": "preferred_activity_indicators",
+      "text": "Preferred activity indicators",
+      "type": "choice",
+      "options": ["empty", "some_activity", "active_frontage"]
+    }
+  ],
+  "realism_check": [
+    {
+      "question_id": "simulation_realism",
+      "text": "The scenes felt realistic enough to judge them.",
+      "type": "scale",
+      "scale": 5
+    },
+    {
+      "question_id": "lighting_plausibility",
+      "text": "The lighting in the scenes felt plausible for a night-time urban environment.",
+      "type": "scale",
+      "scale": 5
+    },
+    {
+      "question_id": "image_comment",
+      "text": "Did anything in the images disturb your judgment?",
+      "type": "textarea",
+      "optional": true
+    }
+  ]
+}

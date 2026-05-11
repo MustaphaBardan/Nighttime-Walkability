@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Vegetated edge with partial lighting</title>
+  <desc id="desc">A simplified night path bordered by dense vegetation.</desc>
+  <rect width="1280" height="720" fill="#0c1211"/>
+  <rect y="438" width="1280" height="282" fill="#151817"/>
+  <polygon points="420,720 580,350 700,350 860,720" fill="#3a433f"/>
+  <polygon points="485,720 610,376 670,376 795,720" fill="#646d66"/>
+  <g fill="#173429">
+    <circle cx="70" cy="390" r="102"/>
+    <circle cx="160" cy="315" r="130"/>
+    <circle cx="292" cy="388" r="115"/>
+    <circle cx="1020" cy="368" r="130"/>
+    <circle cx="1135" cy="320" r="150"/>
+    <circle cx="1240" cy="392" r="110"/>
+  </g>
+  <circle cx="520" cy="228" r="64" fill="#ffd26a" opacity="0.58"/>
+  <circle cx="520" cy="228" r="145" fill="#ffd26a" opacity="0.12"/>
+  <rect x="510" y="265" width="20" height="185" fill="#555e59"/>
+  <circle cx="775" cy="278" r="44" fill="#f8bf4e" opacity="0.38"/>
+  <circle cx="775" cy="278" r="106" fill="#f8bf4e" opacity="0.08"/>
+  <rect x="767" y="305" width="16" height="145" fill="#4b554f"/>
+  <g fill="#cad4cd" opacity="0.48">
+    <rect x="620" y="455" width="42" height="5"/>
+    <rect x="594" y="545" width="94" height="7"/>
+    <rect x="560" y="650" width="160" height="9"/>
+  </g>
+</svg>

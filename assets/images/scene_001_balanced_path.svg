@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Balanced nocturnal urban path</title>
+  <desc id="desc">A simplified night path with medium lighting and vegetation.</desc>
+  <rect width="1280" height="720" fill="#101719"/>
+  <rect y="450" width="1280" height="270" fill="#171b1d"/>
+  <polygon points="468,720 598,335 682,335 812,720" fill="#4b5351"/>
+  <polygon points="520,720 616,356 664,356 760,720" fill="#77807a"/>
+  <rect x="0" y="390" width="1280" height="70" fill="#24312c"/>
+  <circle cx="340" cy="210" r="86" fill="#ffd875" opacity="0.7"/>
+  <circle cx="340" cy="210" r="170" fill="#ffd875" opacity="0.16"/>
+  <circle cx="900" cy="245" r="72" fill="#f8c957" opacity="0.6"/>
+  <circle cx="900" cy="245" r="140" fill="#f8c957" opacity="0.14"/>
+  <rect x="330" y="245" width="22" height="205" fill="#5e6560"/>
+  <rect x="890" y="280" width="22" height="170" fill="#5e6560"/>
+  <g fill="#1d3b30">
+    <circle cx="120" cy="382" r="72"/>
+    <circle cx="215" cy="360" r="92"/>
+    <circle cx="1045" cy="370" r="95"/>
+    <circle cx="1160" cy="382" r="76"/>
+  </g>
+  <g fill="#d7ded7" opacity="0.65">
+    <rect x="614" y="420" width="52" height="6"/>
+    <rect x="592" y="500" width="96" height="8"/>
+    <rect x="560" y="610" width="160" height="10"/>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Open square with brighter lighting</title>
+  <desc id="desc">A simplified open night square with several bright lights.</desc>
+  <rect width="1280" height="720" fill="#10151a"/>
+  <rect y="405" width="1280" height="315" fill="#202525"/>
+  <polygon points="0,560 1280,470 1280,720 0,720" fill="#2c3332"/>
+  <polygon points="150,720 535,390 745,390 1130,720" fill="#69726d"/>
+  <polygon points="305,720 580,430 700,430 975,720" fill="#8f9891"/>
+  <g fill="#ffe28b">
+    <circle cx="250" cy="210" r="70" opacity="0.72"/>
+    <circle cx="640" cy="180" r="86" opacity="0.82"/>
+    <circle cx="1030" cy="220" r="70" opacity="0.72"/>
+  </g>
+  <g fill="#ffe28b" opacity="0.14">
+    <circle cx="250" cy="210" r="155"/>
+    <circle cx="640" cy="180" r="190"/>
+    <circle cx="1030" cy="220" r="155"/>
+  </g>
+  <g fill="#666d68">
+    <rect x="240" y="255" width="20" height="170"/>
+    <rect x="630" y="255" width="22" height="150"/>
+    <rect x="1020" y="265" width="20" height="160"/>
+  </g>
+  <g fill="#27312f">
+    <rect x="0" y="338" width="220" height="68"/>
+    <rect x="1060" y="330" width="220" height="76"/>
+  </g>
+</svg>

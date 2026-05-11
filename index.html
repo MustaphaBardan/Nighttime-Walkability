@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Night Walkability Survey</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Research Survey</p>
+        <h1>Night Walkability Survey</h1>
+      </div>
+      <div class="header-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true">Light mode</button>
+        <div class="session-chip" id="session-chip">Starting session...</div>
+      </div>
+    </header>
+
+    <main id="app" class="app-shell" aria-live="polite">
+      <section class="loading-state">
+        <h2>Loading survey</h2>
+        <p>Preparing images and questions.</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Night walkability research survey</span>
+      <span id="protocol-version">Protocol version</span>
+    </footer>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
