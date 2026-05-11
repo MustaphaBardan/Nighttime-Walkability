@@ -108,7 +108,7 @@ export function clearMethodCompletion(method) {
   saveProgress(progress);
 }
 
-export async function submitResponses(responses) {
+export async function submitResponses(responses, options = {}) {
   if (!CONFIG.googleAppsScriptUrl) {
     return {
       savedLocal: true,
@@ -126,8 +126,9 @@ export async function submitResponses(responses) {
       },
       body: JSON.stringify({
         participant_id: responses[0]?.participant_id || "",
-        method: responses[0]?.method || "",
-        replace_existing: true,
+        method: options.method || responses[0]?.method || "",
+        replace_existing: Boolean(options.replaceExisting),
+        replace_existing_all: Boolean(options.replaceExistingAll),
         responses,
       }),
     });

@@ -78,9 +78,9 @@ To also submit each response to Google Sheets automatically:
 googleAppsScriptUrl: "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"
 ```
 
-After that, answers are collected during each section and sent when the section is completed. There is no separate submit button.
+After that, answers are saved locally as each section is completed and sent to Google Sheets once, after the final realism section. There is no separate submit button.
 
-The browser stores anonymous progress in versioned `localStorage` keys. If the same browser profile returns after completing the survey, the platform shows a completion warning before allowing the participant to redo the survey and replace the saved answers for the same `participant_id + method`.
+The browser stores anonymous progress in versioned `localStorage` keys. If the same browser profile returns after completing the survey, the platform shows a completion warning before allowing the participant to redo the survey and replace the saved answers for the same participant ID.
 
 The response shape follows the shared long-format schema in the project notes. The Google Sheet will use one row per answer.
 
@@ -98,7 +98,7 @@ Anonymous profile fields are repeated on each answer row:
 - `profile_night_walking_comfort`
 - `profile_vision_or_display_issue`
 
-Section submissions replace previous rows for the same `participant_id + method`.
+Final submissions replace previous rows for the same `participant_id`.
 
 ## Test Google Sheets Saving
 

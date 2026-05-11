@@ -74,7 +74,7 @@ export function renderPairwiseComparison(root, context, onComplete) {
     const status = createElement("div", {
       className: "status-strip participant-status",
       attrs: { id: "save-status" },
-      text: "Your answers for this section are saved when the section is complete.",
+      text: "Your answers are saved on this browser and submitted at the end.",
     });
 
     root.append(toolbar, panel, status);
