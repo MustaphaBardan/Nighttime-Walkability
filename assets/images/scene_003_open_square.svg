@@ -1,28 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
   <title id="title">Open square with brighter lighting</title>
-  <desc id="desc">A simplified open night square with several bright lights.</desc>
-  <rect width="1280" height="720" fill="#10151a"/>
-  <rect y="405" width="1280" height="315" fill="#202525"/>
-  <polygon points="0,560 1280,470 1280,720 0,720" fill="#2c3332"/>
-  <polygon points="150,720 535,390 745,390 1130,720" fill="#69726d"/>
-  <polygon points="305,720 580,430 700,430 975,720" fill="#8f9891"/>
-  <g fill="#ffe28b">
-    <circle cx="250" cy="210" r="70" opacity="0.72"/>
-    <circle cx="640" cy="180" r="86" opacity="0.82"/>
-    <circle cx="1030" cy="220" r="70" opacity="0.72"/>
+  <desc id="desc">A wide open plaza-like night route with high lighting, long sightlines, low vegetation, and visible building edges.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="0.62" stop-color="#111d28"/>
+      <stop offset="1" stop-color="#20292d"/>
+    </linearGradient>
+    <linearGradient id="square" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#68716f"/>
+      <stop offset="1" stop-color="#b9c0b9"/>
+    </linearGradient>
+    <radialGradient id="brightGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff7cf" stop-opacity="1"/>
+      <stop offset="0.22" stop-color="#ffe28f" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#ffe28f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <g fill="#e8b965" opacity="0.74">
+    <rect x="88" y="168" width="12" height="24"/>
+    <rect x="118" y="205" width="10" height="18"/>
+    <rect x="1138" y="150" width="12" height="24"/>
+    <rect x="1172" y="190" width="10" height="18"/>
+    <rect x="1018" y="118" width="8" height="20"/>
   </g>
-  <g fill="#ffe28b" opacity="0.14">
-    <circle cx="250" cy="210" r="155"/>
-    <circle cx="640" cy="180" r="190"/>
-    <circle cx="1030" cy="220" r="155"/>
+  <rect y="382" width="1280" height="338" fill="#28312f"/>
+  <path d="M0 546 C340 506 690 485 1280 452 L1280 720 L0 720 Z" fill="#39423f"/>
+  <path d="M142 720 L528 382 L752 382 L1138 720 Z" fill="#69736f"/>
+  <path d="M300 720 L578 432 L702 432 L980 720 Z" fill="url(#square)"/>
+  <g stroke="#dfe5dc" stroke-opacity="0.32">
+    <path d="M578 432 L300 720" stroke-width="3"/>
+    <path d="M702 432 L980 720" stroke-width="3"/>
+    <path d="M460 552 H820" stroke-width="3"/>
+    <path d="M386 632 H894" stroke-width="3"/>
   </g>
-  <g fill="#666d68">
-    <rect x="240" y="255" width="20" height="170"/>
-    <rect x="630" y="255" width="22" height="150"/>
-    <rect x="1020" y="265" width="20" height="160"/>
+  <g>
+    <ellipse cx="250" cy="226" rx="176" ry="132" fill="url(#brightGlow)"/>
+    <ellipse cx="640" cy="204" rx="230" ry="164" fill="url(#brightGlow)"/>
+    <ellipse cx="1030" cy="230" rx="176" ry="132" fill="url(#brightGlow)"/>
+    <circle cx="250" cy="226" r="18" fill="#fff2bd"/>
+    <circle cx="640" cy="204" r="22" fill="#fff6ca"/>
+    <circle cx="1030" cy="230" r="18" fill="#fff2bd"/>
+    <path d="M250 244 V430 M640 226 V400 M1030 248 V428" stroke="#7b837e" stroke-width="16"/>
+    <path d="M250 248 H305 M640 230 H700 M1030 252 H980" stroke="#7b837e" stroke-width="10" stroke-linecap="round"/>
   </g>
-  <g fill="#27312f">
-    <rect x="0" y="338" width="220" height="68"/>
-    <rect x="1060" y="330" width="220" height="76"/>
+  <g fill="#1f2d29">
+    <rect x="0" y="315" width="195" height="74"/>
+    <rect x="1086" y="305" width="194" height="84"/>
+  </g>
+  <g fill="#36533e" opacity="0.82">
+    <ellipse cx="126" cy="408" rx="94" ry="24"/>
+    <ellipse cx="1145" cy="410" rx="104" ry="26"/>
   </g>
 </svg>
