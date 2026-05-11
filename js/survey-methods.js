@@ -1,7 +1,7 @@
 import {
   buildBaseResponse,
   clearMethodCompletion,
-  getLocalResponses,
+  finalizeSurveyTiming,
   getProgress,
   markMethodCompleted,
   removeLocalResponsesForMethod,
@@ -88,7 +88,8 @@ export async function completeMethod(root, context, methodId, responses, onConti
     return;
   }
 
-  const result = await submitResponses(getLocalResponses(), {
+  const finalizedResponses = finalizeSurveyTiming(completedAt);
+  const result = await submitResponses(finalizedResponses, {
     method: "complete_protocol",
     replaceExistingAll: true,
   });

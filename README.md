@@ -91,8 +91,14 @@ Protocol and display fields are included on each answer row:
 - `protocol_version`
 - `language`
 - `device`
+- `survey_started_at`
+- `survey_completed_at`
+- `survey_duration_ms`
+- `survey_duration_minutes`
 
 For analysis consistency, `question_text` is always stored in English. The `language` column records whether the participant saw the interface in English or French.
+
+Timing is stored at two levels: `reaction_time_ms` measures the time spent on each individual question/trial, while `survey_duration_ms` and `survey_duration_minutes` measure the full survey from the moment the participant starts the survey to final submission.
 
 Anonymous profile fields are repeated on each answer row:
 

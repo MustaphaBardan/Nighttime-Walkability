@@ -6,6 +6,7 @@ export function getOrCreateSession() {
   const existingParticipantId = localStorage.getItem(CONFIG.participantStorageKey);
   const participantId = existingParticipantId || generateId("p");
   const language = getStoredLanguage();
+  const progress = getProgress();
   localStorage.setItem(CONFIG.languageStorageKey, language);
 
   if (!existingParticipantId) {
@@ -17,6 +18,7 @@ export function getOrCreateSession() {
     session_id: generateId("s"),
     protocol_version: CONFIG.protocolVersion,
     started_at: new Date().toISOString(),
+    survey_started_at: progress.survey_started_at || "",
     language,
     device: getDeviceType(),
     profile: {},
@@ -48,6 +50,20 @@ export function updateSessionLanguage(session, language) {
   saveProgress(progress);
 }
 
+export function markSurveyStarted(session, options = {}) {
+  const progress = getProgress();
+
+  if (!progress.survey_started_at || options.reset) {
+    progress.survey_started_at = new Date().toISOString();
+  }
+
+  session.survey_started_at = progress.survey_started_at;
+  saveProgress(progress);
+  sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
+
+  return progress.survey_started_at;
+}
+
 export function updateSessionProfile(session, profile) {
   session.profile = profile;
   sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
@@ -67,6 +83,10 @@ export function saveLocalBackup(response) {
   const existing = getLocalResponses();
   existing.push(response);
   localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(existing));
+}
+
+export function saveLocalResponses(responses) {
+  localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(responses));
 }
 
 export function removeLocalResponsesForMethod(method) {
@@ -110,6 +130,7 @@ export function hydrateSessionFromProgress(session) {
   const progress = getProgress();
   session.profile = progress.profile || {};
   session.language = normalizeLanguage(progress.language || localStorage.getItem(CONFIG.languageStorageKey) || session.language);
+  session.survey_started_at = progress.survey_started_at || session.survey_started_at || "";
   sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
   return progress;
 }
@@ -174,11 +195,35 @@ export async function submitResponses(responses, options = {}) {
   }
 }
 
+export function finalizeSurveyTiming(completedAt = new Date().toISOString()) {
+  const responses = getLocalResponses();
+  const progress = getProgress();
+  const startedAt = progress.survey_started_at || responses[0]?.timestamp || completedAt;
+  const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+  const safeDurationMs = Number.isFinite(durationMs) ? Math.max(0, durationMs) : "";
+  const durationMinutes = safeDurationMs === "" ? "" : Math.round((safeDurationMs / 60000) * 100) / 100;
+
+  const finalized = responses.map((response) => ({
+    ...response,
+    survey_started_at: startedAt,
+    survey_completed_at: completedAt,
+    survey_duration_ms: safeDurationMs,
+    survey_duration_minutes: durationMinutes,
+  }));
+
+  saveLocalResponses(finalized);
+  return finalized;
+}
+
 export function buildBaseResponse(session, method, question, displayOrder, startedAt) {
   return {
     protocol_version: session.protocol_version || CONFIG.protocolVersion,
     participant_id: session.participant_id,
     session_id: session.session_id,
+    survey_started_at: session.survey_started_at || getProgress().survey_started_at || "",
+    survey_completed_at: "",
+    survey_duration_ms: "",
+    survey_duration_minutes: "",
     language: session.language,
     method,
     question_id: question.question_id,

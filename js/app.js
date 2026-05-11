@@ -4,6 +4,7 @@ import {
   getProgress,
   hydrateSessionFromProgress,
   isMethodCompleted,
+  markSurveyStarted,
   updateSessionLanguage,
   updateSessionProfile,
 } from "./storage.js";
@@ -85,7 +86,13 @@ function renderWelcome(context) {
     attrs: { type: "button" },
   });
 
-  start.addEventListener("click", () => routeAfterWelcome(context));
+  start.addEventListener("click", () => {
+    if (!allMethodsCompleted()) {
+      markSurveyStarted(context.session);
+    }
+
+    routeAfterWelcome(context);
+  });
   actions.append(start);
   panel.append(actions);
   app.append(panel);
@@ -159,6 +166,7 @@ function renderCompletedPrompt(context) {
   back.addEventListener("click", () => renderFinalThanks());
   redo.addEventListener("click", () => {
     getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
+    markSurveyStarted(context.session, { reset: true });
     routeToNextProtocolStep(context);
   });
 
