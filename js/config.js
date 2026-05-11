@@ -6,6 +6,7 @@ export const CONFIG = {
   progressStorageKey: "night_walkability_progress_v2",
   participantStorageKey: "night_walkability_participant_id_v2",
   sessionStorageKey: "night_walkability_session_v2",
+  languageStorageKey: "night_walkability_language_v2",
   themeStorageKey: "night_walkability_theme",
   pairwiseTrialCount: 10,
   detailedRatingSceneCount: 8,

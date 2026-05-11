@@ -8,27 +8,28 @@ import {
   saveLocalBackup,
   submitResponses,
 } from "./storage.js";
+import { getContextLanguage, t } from "./i18n.js";
 import { createElement } from "./utils.js";
 
 export const METHOD_DEFINITIONS = [
   {
     id: "pairwise_comparison",
-    title: "Pairwise comparison",
+    titleKey: "pairwiseTitle",
     description: "Compare controlled scene pairs and choose the safer, clearer, or preferred route.",
   },
   {
     id: "detailed_rating",
-    title: "Detailed scene rating",
+    titleKey: "detailedTitle",
     description: "Rate a short set of scenes on safety, comfort, visibility, and route choice.",
   },
   {
     id: "ideal_scene_builder",
-    title: "Ideal scene builder",
+    titleKey: "builderTitle",
     description: "Choose preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions.",
   },
   {
     id: "realism_check",
-    title: "Realism check",
+    titleKey: "realismTitle",
     description: "Judge whether the simulated scenes and lighting felt plausible enough to evaluate.",
   },
 ];
@@ -39,8 +40,9 @@ export function getAllMethodIds() {
   return METHOD_DEFINITIONS.map((method) => method.id);
 }
 
-export function getMethodTitle(methodId) {
-  return METHOD_DEFINITIONS.find((method) => method.id === methodId)?.title || methodId;
+export function getMethodTitle(methodId, language = "en") {
+  const method = METHOD_DEFINITIONS.find((item) => item.id === methodId);
+  return method ? t(language, method.titleKey) : methodId;
 }
 
 export function removeMethodAnswers(methodId) {
@@ -49,6 +51,7 @@ export function removeMethodAnswers(methodId) {
 }
 
 export async function completeMethod(root, context, methodId, responses, onContinue) {
+  const language = getContextLanguage(context);
   const completedAt = new Date().toISOString();
   responses.forEach((response) => {
     response.method_completed_at = completedAt;
@@ -61,18 +64,18 @@ export async function completeMethod(root, context, methodId, responses, onConti
 
   const panel = createElement("section", { className: "panel completion-panel" });
   const status = createElement("p", {
-    text: isFinalSection ? "Saving your complete response..." : "This section is saved on this browser.",
+    text: isFinalSection ? t(language, "savingComplete") : t(language, "sectionSaved"),
   });
   panel.append(
-    createElement("p", { className: "step-label", text: getMethodTitle(methodId) }),
-    createElement("h2", { text: "Section complete" }),
+    createElement("p", { className: "step-label", text: getMethodTitle(methodId, language) }),
+    createElement("h2", { text: t(language, "sectionComplete") }),
     status,
   );
 
   const actions = createElement("div", { className: "completion-actions" });
   const continueButton = createElement("button", {
     className: "primary-button",
-    text: isFinalSection ? "Finish survey" : "Continue",
+    text: isFinalSection ? t(language, "finishSurvey") : t(language, "continue"),
     attrs: isFinalSection ? { type: "button", disabled: "disabled" } : { type: "button" },
   });
 
@@ -92,8 +95,8 @@ export async function completeMethod(root, context, methodId, responses, onConti
 
   continueButton.disabled = false;
   status.textContent = result.submittedRemote
-    ? "Your complete response has been recorded."
-    : "Your complete response is saved on this browser. The research team can retry submission after checking the Google Sheets connection.";
+    ? t(language, "completeRecorded")
+    : t(language, "completeSavedLocal");
 }
 
 export function allMethodsCompleted() {

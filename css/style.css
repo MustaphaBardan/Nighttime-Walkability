@@ -233,6 +233,45 @@ p {
   line-height: 1.35;
 }
 
+.language-selector {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.language-label {
+  margin-bottom: 0;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.language-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.language-option {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 750;
+}
+
+.language-option:hover,
+.language-option:focus-visible,
+.language-option.selected {
+  border-color: var(--accent-strong);
+  outline: none;
+}
+
+.language-option.selected {
+  background: var(--surface-3);
+}
+
 .method-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

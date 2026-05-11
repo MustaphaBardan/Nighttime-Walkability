@@ -1,9 +1,12 @@
 import { CONFIG } from "./config.js";
+import { localize, normalizeLanguage } from "./i18n.js";
 import { generateId, getDeviceType } from "./utils.js";
 
 export function getOrCreateSession() {
   const existingParticipantId = localStorage.getItem(CONFIG.participantStorageKey);
   const participantId = existingParticipantId || generateId("p");
+  const language = getStoredLanguage();
+  localStorage.setItem(CONFIG.languageStorageKey, language);
 
   if (!existingParticipantId) {
     localStorage.setItem(CONFIG.participantStorageKey, participantId);
@@ -14,13 +17,35 @@ export function getOrCreateSession() {
     session_id: generateId("s"),
     protocol_version: CONFIG.protocolVersion,
     started_at: new Date().toISOString(),
-    language: document.documentElement.lang || "en",
+    language,
     device: getDeviceType(),
     profile: {},
   };
 
   sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
   return session;
+}
+
+export function getStoredLanguage() {
+  const savedLanguage = localStorage.getItem(CONFIG.languageStorageKey);
+
+  if (savedLanguage) {
+    return normalizeLanguage(savedLanguage);
+  }
+
+  return navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
+}
+
+export function updateSessionLanguage(session, language) {
+  const nextLanguage = normalizeLanguage(language);
+  session.language = nextLanguage;
+  document.documentElement.lang = nextLanguage;
+  localStorage.setItem(CONFIG.languageStorageKey, nextLanguage);
+  sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
+
+  const progress = getProgress();
+  progress.language = nextLanguage;
+  saveProgress(progress);
 }
 
 export function updateSessionProfile(session, profile) {
@@ -30,6 +55,7 @@ export function updateSessionProfile(session, profile) {
   const progress = getProgress();
   progress.profile_completed = true;
   progress.profile = profile;
+  progress.language = session.language;
   saveProgress(progress);
 }
 
@@ -83,6 +109,7 @@ export function saveProgress(progress) {
 export function hydrateSessionFromProgress(session) {
   const progress = getProgress();
   session.profile = progress.profile || {};
+  session.language = normalizeLanguage(progress.language || localStorage.getItem(CONFIG.languageStorageKey) || session.language);
   sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
   return progress;
 }
@@ -152,9 +179,10 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     protocol_version: session.protocol_version || CONFIG.protocolVersion,
     participant_id: session.participant_id,
     session_id: session.session_id,
+    language: session.language,
     method,
     question_id: question.question_id,
-    question_text: question.text,
+    question_text: localize(question.text, "en"),
     image_id: null,
     image_A: null,
     image_B: null,

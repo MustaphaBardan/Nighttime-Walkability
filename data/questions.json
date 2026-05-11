@@ -2,104 +2,158 @@
   "batch_classification": [
     {
       "question_id": "perceived_safety_class",
-      "text": "Classify each scene according to perceived safety.",
+      "text": {
+        "en": "Classify each scene according to perceived safety.",
+        "fr": "Classez chaque scène selon la sécurité ressentie."
+      },
       "answers": ["low", "medium", "high"]
     }
   ],
   "pairwise_comparison": [
     {
       "question_id": "pairwise_safety",
-      "text": "Which scene feels safer for walking at night?",
+      "text": {
+        "en": "Which scene feels safer for walking at night?",
+        "fr": "Quelle scène semble la plus sûre pour marcher la nuit ?"
+      },
       "answers": ["A", "B", "no_clear_difference"]
     },
     {
       "question_id": "pairwise_route_preference",
-      "text": "Which route would you prefer to walk through at night?",
+      "text": {
+        "en": "Which route would you prefer to walk through at night?",
+        "fr": "Quel itinéraire préféreriez-vous emprunter la nuit ?"
+      },
       "answers": ["A", "B", "no_clear_difference"]
     },
     {
       "question_id": "pairwise_comfort",
-      "text": "Which scene feels more comfortable?",
+      "text": {
+        "en": "Which scene feels more comfortable?",
+        "fr": "Quelle scène semble la plus confortable ?"
+      },
       "answers": ["A", "B", "no_clear_difference"]
     },
     {
       "question_id": "pairwise_legibility",
-      "text": "Which scene is easier to understand or navigate?",
+      "text": {
+        "en": "Which scene is easier to understand or navigate?",
+        "fr": "Quelle scène est la plus facile à comprendre ou à parcourir ?"
+      },
       "answers": ["A", "B", "no_clear_difference"]
     }
   ],
   "detailed_rating": [
     {
       "question_id": "perceived_safety",
-      "text": "This scene feels safe for walking at night.",
+      "text": {
+        "en": "This scene feels safe for walking at night.",
+        "fr": "Cette scène semble sûre pour marcher la nuit."
+      },
       "scale": 5
     },
     {
       "question_id": "comfort",
-      "text": "I would feel comfortable walking through this scene.",
+      "text": {
+        "en": "I would feel comfortable walking through this scene.",
+        "fr": "Je me sentirais à l'aise en marchant dans cette scène."
+      },
       "scale": 5
     },
     {
       "question_id": "path_visibility",
-      "text": "The walking path is clearly visible.",
+      "text": {
+        "en": "The walking path is clearly visible.",
+        "fr": "Le cheminement piéton est clairement visible."
+      },
       "scale": 5
     },
     {
       "question_id": "obstacle_detection",
-      "text": "Obstacles or risky areas would be easy to detect.",
+      "text": {
+        "en": "Obstacles or risky areas would be easy to detect.",
+        "fr": "Les obstacles ou zones à risque seraient faciles à repérer."
+      },
       "scale": 5
     },
     {
       "question_id": "legibility_orientation",
-      "text": "It is easy to understand where to go.",
+      "text": {
+        "en": "It is easy to understand where to go.",
+        "fr": "Il est facile de comprendre où aller."
+      },
       "scale": 5
     },
     {
       "question_id": "route_choice",
-      "text": "I would choose this route if I had to walk at night.",
+      "text": {
+        "en": "I would choose this route if I had to walk at night.",
+        "fr": "Je choisirais cet itinéraire si je devais marcher la nuit."
+      },
       "scale": 5
     }
   ],
   "ideal_scene_builder": [
     {
       "question_id": "preferred_lighting_intensity",
-      "text": "Preferred lighting intensity",
+      "text": {
+        "en": "Preferred lighting intensity",
+        "fr": "Intensité d'éclairage préférée"
+      },
       "type": "choice",
       "options": ["low", "medium", "high"]
     },
     {
       "question_id": "preferred_lighting_distribution",
-      "text": "Preferred lighting distribution",
+      "text": {
+        "en": "Preferred lighting distribution",
+        "fr": "Répartition de l'éclairage préférée"
+      },
       "type": "choice",
       "options": ["uniform", "contrasted", "punctual"]
     },
     {
       "question_id": "preferred_vegetation_density",
-      "text": "Preferred vegetation density",
+      "text": {
+        "en": "Preferred vegetation density",
+        "fr": "Densité de végétation préférée"
+      },
       "type": "choice",
       "options": ["low", "medium", "high"]
     },
     {
       "question_id": "preferred_spatial_openness",
-      "text": "Preferred spatial openness",
+      "text": {
+        "en": "Preferred spatial openness",
+        "fr": "Ouverture spatiale préférée"
+      },
       "type": "choice",
       "options": ["enclosed", "balanced", "open"]
     },
     {
       "question_id": "preferred_sidewalk_condition",
-      "text": "Preferred sidewalk condition",
+      "text": {
+        "en": "Preferred sidewalk condition",
+        "fr": "État du cheminement préféré"
+      },
       "type": "choice",
       "options": ["narrow_discontinuous", "ordinary", "wide_continuous"]
     },
     {
       "question_id": "preferred_obstacles",
-      "text": "Preferred obstacle level",
+      "text": {
+        "en": "Preferred obstacle level",
+        "fr": "Niveau d'obstacles préféré"
+      },
       "type": "choice",
       "options": ["none", "few", "many"]
     },
     {
       "question_id": "preferred_activity_indicators",
-      "text": "Preferred activity indicators",
+      "text": {
+        "en": "Preferred activity indicators",
+        "fr": "Signes d'activité préférés"
+      },
       "type": "choice",
       "options": ["empty", "some_activity", "active_frontage"]
     }
@@ -107,19 +161,28 @@
   "realism_check": [
     {
       "question_id": "simulation_realism",
-      "text": "The scenes felt realistic enough to judge them.",
+      "text": {
+        "en": "The scenes felt realistic enough to judge them.",
+        "fr": "Les scènes semblaient suffisamment réalistes pour être évaluées."
+      },
       "type": "scale",
       "scale": 5
     },
     {
       "question_id": "lighting_plausibility",
-      "text": "The lighting in the scenes felt plausible for a night-time urban environment.",
+      "text": {
+        "en": "The lighting in the scenes felt plausible for a night-time urban environment.",
+        "fr": "L'éclairage des scènes semblait plausible pour un environnement urbain nocturne."
+      },
       "type": "scale",
       "scale": 5
     },
     {
       "question_id": "image_comment",
-      "text": "Did anything in the images disturb your judgment?",
+      "text": {
+        "en": "Did anything in the images disturb your judgment?",
+        "fr": "Quelque chose dans les images a-t-il perturbé votre jugement ?"
+      },
       "type": "textarea",
       "optional": true
     }

@@ -1,9 +1,11 @@
 import { CONFIG } from "./config.js";
 import { buildBaseResponse } from "./storage.js";
-import { completeMethod } from "./survey-methods.js";
+import { TOTAL_SURVEY_STEPS, completeMethod } from "./survey-methods.js";
+import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, makePairs } from "./utils.js";
 
 export function renderPairwiseComparison(root, context, onComplete) {
+  const language = getContextLanguage(context);
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
   const pairs = makePairs(context.images, CONFIG.pairwiseTrialCount);
@@ -34,7 +36,7 @@ export function renderPairwiseComparison(root, context, onComplete) {
     const toolbar = createElement("section", { className: "toolbar" });
     const back = createElement("button", {
       className: "secondary-button",
-      text: "Back",
+      text: t(language, "back"),
       attrs: { type: "button" },
     });
     back.addEventListener("click", () => {
@@ -50,31 +52,31 @@ export function renderPairwiseComparison(root, context, onComplete) {
 
     toolbar.append(
       createElement("div", {
-        html: "<h2>Pairwise comparison</h2><p>Choose the scene that better matches each question.</p>",
+        html: `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`,
       }),
       back,
-      renderProgress(currentIndex, trials.length),
+      renderProgress(currentIndex, trials.length, language),
     );
 
     const panel = createElement("section", { className: "panel question-panel" });
-    panel.append(createElement("div", { className: "question-text", text: trial.question.text }));
+    panel.append(createElement("div", { className: "question-text", text: questionText(trial.question, language) }));
 
     const pairGrid = createElement("div", { className: "pair-grid" });
-    pairGrid.append(renderScene("A", trial.imageA), renderScene("B", trial.imageB));
+    pairGrid.append(renderScene("A", trial.imageA, language), renderScene("B", trial.imageB, language));
     panel.append(pairGrid);
 
     const answerRow = createElement("div", { className: "answer-row" });
     answerRow.append(
       renderAnswerButton("A", "A"),
       renderAnswerButton("B", "B"),
-      renderAnswerButton("No clear difference", "no_clear_difference"),
+      renderAnswerButton(t(language, "noClearDifference"), "no_clear_difference"),
     );
     panel.append(answerRow);
 
     const status = createElement("div", {
       className: "status-strip participant-status",
       attrs: { id: "save-status" },
-      text: "Your answers are saved on this browser and submitted at the end.",
+      text: t(language, "savedAtEnd"),
     });
 
     root.append(toolbar, panel, status);
@@ -83,7 +85,7 @@ export function renderPairwiseComparison(root, context, onComplete) {
   function renderAnswerButton(label, value) {
     const button = createElement("button", {
       className: "choice-button",
-      text: label === "A" || label === "B" ? `Scene ${label}` : label,
+      text: label === "A" || label === "B" ? `${t(language, "scene")} ${label}` : label,
       attrs: { type: "button" },
     });
 
@@ -121,29 +123,28 @@ export function renderPairwiseComparison(root, context, onComplete) {
 }
 
 function renderProtocolIntro(root, context, onComplete) {
+  const language = getContextLanguage(context);
   root.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
   const start = createElement("button", {
     className: "primary-button",
-    text: "Start pairwise comparison",
+    text: t(language, "pairwiseStart"),
     attrs: { type: "button" },
   });
 
   start.addEventListener("click", () => renderPairwiseComparison(root, context, onComplete));
   panel.append(
-    createElement("p", { className: "step-label", text: "Step 3" }),
-    createElement("h2", { text: "Pairwise comparison" }),
-    createElement("p", {
-      text: "You will compare short pairs of simulated night scenes. Choose the scene that best matches each question.",
-    }),
+    createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
+    createElement("h2", { text: t(language, "pairwiseTitle") }),
+    createElement("p", { text: t(language, "pairwiseIntroBody") }),
     createElement("div", { className: "completion-actions" }),
   );
   panel.querySelector(".completion-actions").append(start);
   root.append(panel);
 }
 
-function renderScene(label, image) {
+function renderScene(label, image, language) {
   const wrapper = createElement("article", { className: "scene-option" });
   const frame = createElement("div", { className: "scene-frame" });
   const img = createElement("img", {
@@ -155,20 +156,20 @@ function renderScene(label, image) {
   });
 
   const footer = createElement("div", { className: "scene-footer" });
-  footer.append(createElement("span", { className: "scene-label", text: `Scene ${label}` }));
+  footer.append(createElement("span", { className: "scene-label", text: `${t(language, "scene")} ${label}` }));
 
   frame.append(img);
   wrapper.append(frame, footer);
   return wrapper;
 }
 
-function renderProgress(currentIndex, total) {
+function renderProgress(currentIndex, total, language = "en") {
   const percent = total > 0 ? Math.round((currentIndex / total) * 100) : 0;
   const wrapper = createElement("div", { className: "progress-wrap" });
 
   wrapper.innerHTML = `
     <div class="progress-label">
-      <span>Progress</span>
+      <span>${t(language, "progress")}</span>
       <span>${currentIndex} / ${total}</span>
     </div>
     <div class="progress-bar" aria-hidden="true">

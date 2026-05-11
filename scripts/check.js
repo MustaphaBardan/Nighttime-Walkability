@@ -10,6 +10,7 @@ const jsonFiles = [
 const jsFiles = [
   "js/app.js",
   "js/config.js",
+  "js/i18n.js",
   "js/pairwise-comparison.js",
   "js/simple-methods.js",
   "js/storage.js",

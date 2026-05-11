@@ -53,6 +53,8 @@ The participant no longer chooses a method. This version follows one fixed path:
 - ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
 - realism and lighting-plausibility checks at the end.
 
+The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
+
 Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
 
 With the current four placeholder scenes, the pairwise block uses all available unique pairs. When more scenes are added, `js/config.js` targets up to 10 pairwise trials and 8 detailed-rating scenes per participant.
@@ -87,7 +89,10 @@ The response shape follows the shared long-format schema in the project notes. T
 Protocol and display fields are included on each answer row:
 
 - `protocol_version`
+- `language`
 - `device`
+
+For analysis consistency, `question_text` is always stored in English. The `language` column records whether the participant saw the interface in English or French.
 
 Anonymous profile fields are repeated on each answer row:
 

@@ -1,8 +1,10 @@
 import { CONFIG } from "./config.js";
+import { getContextLanguage, optionLabel, optionPreview, questionText, t } from "./i18n.js";
 import { completeMethod, makeResponse } from "./survey-methods.js";
 import { createElement, takeRandomSubset } from "./utils.js";
 
 export function renderBatchClassification(root, context, onComplete) {
+  const language = getContextLanguage(context);
   const methodId = "batch_classification";
   const question = context.questions.batch_classification[0];
   const responses = [];
@@ -22,7 +24,7 @@ export function renderBatchClassification(root, context, onComplete) {
     const panel = createElement("section", { className: "panel question-panel" });
     panel.append(
       createElement("h2", { text: "Batch classification" }),
-      createElement("p", { className: "question-text", text: question.text }),
+      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderBackButton(() => {
         if (currentIndex === 0) {
           onComplete(context);
@@ -32,9 +34,9 @@ export function renderBatchClassification(root, context, onComplete) {
         currentIndex -= 1;
         responses.pop();
         renderCurrent();
-      }, currentIndex === 0),
+      }, currentIndex === 0, language),
       renderSingleImage(image),
-      renderChoiceRow(question.answers, (answer, index) => {
+      renderChoiceRow(question.answers, language, (answer, index) => {
         responses.push(makeResponse(context, methodId, question, currentIndex + 1, startedAt, {
           image_id: image.image_id,
           answer,
@@ -43,7 +45,7 @@ export function renderBatchClassification(root, context, onComplete) {
         currentIndex += 1;
         renderCurrent();
       }),
-      renderProgressText(currentIndex + 1, context.images.length),
+      renderProgressText(currentIndex + 1, context.images.length, language),
     );
 
     root.append(panel);
@@ -53,6 +55,7 @@ export function renderBatchClassification(root, context, onComplete) {
 }
 
 export function renderDetailedRating(root, context, onComplete) {
+  const language = getContextLanguage(context);
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
   const images = takeRandomSubset(context.images, CONFIG.detailedRatingSceneCount);
@@ -75,8 +78,8 @@ export function renderDetailedRating(root, context, onComplete) {
 
     const panel = createElement("section", { className: "panel question-panel" });
     panel.append(
-      createElement("h2", { text: "Detailed scene rating" }),
-      createElement("p", { className: "question-text", text: question.text }),
+      createElement("h2", { text: t(language, "detailedTitle") }),
+      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderBackButton(() => {
         if (displayOrder === 1) {
           onComplete(context);
@@ -93,9 +96,9 @@ export function renderDetailedRating(root, context, onComplete) {
         }
 
         renderCurrent();
-      }, displayOrder === 1),
+      }, displayOrder === 1, language),
       renderSingleImage(image),
-      renderLikertRow(question, (value) => {
+      renderLikertRow(question, language, (value) => {
         responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
           image_id: image.image_id,
           answer: String(value),
@@ -112,7 +115,7 @@ export function renderDetailedRating(root, context, onComplete) {
 
         renderCurrent();
       }),
-      renderProgressText(displayOrder, images.length * questions.length),
+      renderProgressText(displayOrder, images.length * questions.length, language),
     );
 
     root.append(panel);
@@ -122,6 +125,7 @@ export function renderDetailedRating(root, context, onComplete) {
 }
 
 export function renderIdealSceneBuilder(root, context, onComplete) {
+  const language = getContextLanguage(context);
   const methodId = "ideal_scene_builder";
   const questions = context.questions.ideal_scene_builder;
   const responses = [];
@@ -145,7 +149,7 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
     const panel = createElement("section", { className: "panel question-panel" });
     const continueButton = createElement("button", {
       className: "primary-button",
-      text: "Validate and continue",
+      text: t(language, "validateContinue"),
       attrs: { type: "button", disabled: "disabled" },
     });
 
@@ -163,8 +167,8 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
     });
 
     panel.append(
-      createElement("h2", { text: "Ideal scene builder" }),
-      createElement("p", { className: "question-text", text: question.text }),
+      createElement("h2", { text: t(language, "builderTitle") }),
+      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderBackButton(() => {
         if (currentIndex === 0) {
           onComplete(context);
@@ -174,14 +178,14 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
         currentIndex -= 1;
         responses.pop();
         renderCurrent();
-      }, currentIndex === 0),
-      renderPreviewChoiceGrid(question, (answer, index) => {
+      }, currentIndex === 0, language),
+      renderPreviewChoiceGrid(question, language, (answer, index) => {
         selectedAnswer = answer;
         selectedIndex = index;
         continueButton.disabled = false;
       }),
       createElement("div", { className: "completion-actions", html: "" }),
-      renderProgressText(currentIndex + 1, questions.length),
+      renderProgressText(currentIndex + 1, questions.length, language),
     );
     panel.querySelector(".completion-actions").append(continueButton);
 
@@ -192,6 +196,7 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
 }
 
 export function renderRealismCheck(root, context, onComplete) {
+  const language = getContextLanguage(context);
   const methodId = "realism_check";
   const questions = context.questions.realism_check;
   const startedAt = Date.now();
@@ -201,26 +206,24 @@ export function renderRealismCheck(root, context, onComplete) {
   const form = createElement("form", { className: "profile-form" });
 
   form.append(
-    createElement("p", { className: "step-label", text: "Final section" }),
-    createElement("h2", { text: "Realism check" }),
-    createElement("p", {
-      text: "These last questions help interpret whether the simulated images were clear enough to judge.",
-    }),
+    createElement("p", { className: "step-label", text: t(language, "finalSection") }),
+    createElement("h2", { text: t(language, "realismTitle") }),
+    createElement("p", { text: t(language, "realismIntro") }),
   );
 
   questions.forEach((question, index) => {
     if (question.type === "textarea") {
-      form.append(renderTextArea(question));
+      form.append(renderTextArea(question, language));
       return;
     }
 
-    form.append(renderScaleField(question, index + 1));
+    form.append(renderScaleField(question, index + 1, language));
   });
 
   const actions = createElement("div", { className: "completion-actions" });
   const submit = createElement("button", {
     className: "primary-button",
-    text: "Finish survey",
+    text: t(language, "finishSurvey"),
     attrs: { type: "submit" },
   });
 
@@ -245,11 +248,11 @@ export function renderRealismCheck(root, context, onComplete) {
   root.append(panel);
 }
 
-function renderBackButton(onBack, disabled = false) {
+function renderBackButton(onBack, disabled = false, language = "en") {
   const actions = createElement("div", { className: "page-actions" });
   const back = createElement("button", {
     className: "secondary-button",
-    text: "Back",
+    text: t(language, "back"),
     attrs: disabled ? { type: "button", disabled: "disabled" } : { type: "button" },
   });
   if (!disabled) {
@@ -259,7 +262,7 @@ function renderBackButton(onBack, disabled = false) {
   return actions;
 }
 
-function renderPreviewChoiceGrid(question, onSelect) {
+function renderPreviewChoiceGrid(question, language, onSelect) {
   const grid = createElement("div", { className: "preview-option-grid" });
 
   question.options.forEach((option, index) => {
@@ -273,8 +276,8 @@ function renderPreviewChoiceGrid(question, onSelect) {
         className: `preview-card-image ${getPreviewClass(question.question_id, option)}`,
         attrs: { "aria-hidden": "true" },
       }),
-      createElement("strong", { text: formatChoice(option) }),
-      createElement("span", { text: getOptionPreview(question.question_id, option) }),
+      createElement("strong", { text: optionLabel(option, language) }),
+      createElement("span", { text: optionPreview(question.question_id, option, language) }),
     );
 
     button.addEventListener("click", () => {
@@ -309,12 +312,12 @@ function renderSingleImage(image) {
   return wrapper;
 }
 
-function renderChoiceRow(options, onSelect) {
+function renderChoiceRow(options, language, onSelect) {
   const row = createElement("div", { className: "answer-row" });
   options.forEach((option, index) => {
     const button = createElement("button", {
       className: "choice-button",
-      text: formatChoice(option),
+      text: optionLabel(option, language),
       attrs: { type: "button" },
     });
     button.addEventListener("click", () => onSelect(option, index));
@@ -323,7 +326,7 @@ function renderChoiceRow(options, onSelect) {
   return row;
 }
 
-function renderLikertRow(question, onSelect) {
+function renderLikertRow(question, language, onSelect) {
   const scale = question.scale || 5;
   const wrapper = createElement("div", { className: "scale-block" });
   const row = createElement("div", { className: "answer-row likert-row" });
@@ -342,16 +345,16 @@ function renderLikertRow(question, onSelect) {
     row,
     createElement("div", {
       className: "scale-anchors",
-      html: "<span>Strongly disagree</span><span>Strongly agree</span>",
+      html: `<span>${t(language, "stronglyDisagree")}</span><span>${t(language, "stronglyAgree")}</span>`,
     }),
   );
 
   return wrapper;
 }
 
-function renderScaleField(question, order) {
+function renderScaleField(question, order, language) {
   const fieldset = createElement("fieldset", { className: "scale-field" });
-  const legend = createElement("legend", { text: question.text });
+  const legend = createElement("legend", { text: questionText(question, language) });
   const row = createElement("div", { className: "answer-row likert-row" });
   const scale = question.scale || 5;
 
@@ -372,24 +375,24 @@ function renderScaleField(question, order) {
 
   fieldset.append(
     legend,
-    createElement("p", { className: "step-label", text: `Question ${order}` }),
+    createElement("p", { className: "step-label", text: t(language, "questionNumber", { number: order }) }),
     row,
     createElement("div", {
       className: "scale-anchors",
-      html: "<span>Strongly disagree</span><span>Strongly agree</span>",
+      html: `<span>${t(language, "stronglyDisagree")}</span><span>${t(language, "stronglyAgree")}</span>`,
     }),
   );
 
   return fieldset;
 }
 
-function renderTextArea(question) {
+function renderTextArea(question, language) {
   const label = createElement("label", { className: "form-field" });
   const textarea = createElement("textarea", {
     attrs: {
       name: question.question_id,
       rows: "4",
-      placeholder: "Optional comment",
+      placeholder: t(language, "optionalComment"),
     },
   });
 
@@ -397,61 +400,15 @@ function renderTextArea(question) {
     textarea.required = true;
   }
 
-  label.append(createElement("span", { text: question.text }), textarea);
+  label.append(createElement("span", { text: questionText(question, language) }), textarea);
   return label;
 }
 
-function renderProgressText(current, total) {
+function renderProgressText(current, total, language = "en") {
   return createElement("div", {
     className: "status-strip participant-status",
-    text: `${Math.min(current, total)} of ${total}`,
+    text: t(language, "ofTotal", { current: Math.min(current, total), total }),
   });
-}
-
-function formatChoice(value) {
-  return String(value).replaceAll("_", " ");
-}
-
-function getOptionPreview(questionId, option) {
-  const previews = {
-    preferred_lighting_intensity: {
-      low: "Soft lighting with some shadows, keeping the scene subdued while preserving basic visibility.",
-      medium: "Balanced lighting where the walking path is readable without feeling over-lit.",
-      high: "Bright lighting that makes the path and surroundings easier to see.",
-    },
-    preferred_lighting_distribution: {
-      uniform: "Even lighting across the walking path and its edges.",
-      contrasted: "Visible differences between lit areas and darker areas.",
-      punctual: "Localized light sources that create pools of light along the route.",
-    },
-    preferred_vegetation_density: {
-      low: "Few trees or planted edges, with fewer hidden areas.",
-      medium: "Some vegetation while keeping the route readable.",
-      high: "Dense vegetation and a stronger night-time atmosphere.",
-    },
-    preferred_spatial_openness: {
-      enclosed: "A corridor-like route with strong edges and limited long-distance visibility.",
-      balanced: "A mix of enclosure and openness, with a defined path and some wider views.",
-      open: "A broad, open route with long views and fewer enclosing edges.",
-    },
-    preferred_sidewalk_condition: {
-      narrow_discontinuous: "A narrower or interrupted walking surface.",
-      ordinary: "A standard continuous walking surface.",
-      wide_continuous: "A wider continuous route with more room to walk.",
-    },
-    preferred_obstacles: {
-      none: "No visible obstacles on or near the walking path.",
-      few: "A small number of elements to notice while walking.",
-      many: "Several objects or risky areas that may need attention.",
-    },
-    preferred_activity_indicators: {
-      empty: "No visible signs of activity.",
-      some_activity: "Some lit windows, signs, or traces of nearby activity.",
-      active_frontage: "Visible active frontage such as shops, windows, or entrances.",
-    },
-  };
-
-  return previews[questionId]?.[option] || "This option will be saved as your preferred scene characteristic.";
 }
 
 function getPreviewClass(questionId, option) {
