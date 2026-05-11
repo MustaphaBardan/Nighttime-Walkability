@@ -1,6 +1,5 @@
 import { CONFIG } from "./config.js";
 import {
-  resetSurveyState,
   getOrCreateSession,
   getProgress,
   hydrateSessionFromProgress,
@@ -11,6 +10,8 @@ import {
   METHOD_DEFINITIONS,
   TOTAL_SURVEY_STEPS,
   allMethodsCompleted,
+  getAllMethodIds,
+  removeMethodAnswers,
 } from "./survey-methods.js";
 import {
   renderDetailedRating,
@@ -83,7 +84,7 @@ function renderWelcome(context) {
   const actions = createElement("div", { className: "completion-actions" });
   const start = createElement("button", {
     className: "primary-button",
-    text: getProgress().profile_completed ? "Continue survey" : "Start survey",
+    text: "Start survey",
     attrs: { type: "button" },
   });
 
@@ -102,11 +103,44 @@ function routeAfterWelcome(context) {
   }
 
   if (allMethodsCompleted()) {
-    renderFinalThanks();
+    renderCompletedPrompt(context);
     return;
   }
 
   routeToNextProtocolStep(context);
+}
+
+function renderCompletedPrompt(context) {
+  app.innerHTML = "";
+
+  const panel = createElement("section", { className: "panel completion-panel" });
+  const actions = createElement("div", { className: "completion-actions" });
+  const back = createElement("button", {
+    className: "secondary-button",
+    text: "Keep my existing response",
+    attrs: { type: "button" },
+  });
+  const redo = createElement("button", {
+    className: "primary-button",
+    text: "Redo and replace my answers",
+    attrs: { type: "button" },
+  });
+
+  back.addEventListener("click", () => renderFinalThanks());
+  redo.addEventListener("click", () => {
+    getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
+    routeToNextProtocolStep(context);
+  });
+
+  actions.append(back, redo);
+  panel.append(
+    createElement("h2", { text: "You already completed this survey" }),
+    createElement("p", {
+      text: "This browser already has a completed response for the current protocol version. If you redo the survey, your saved answers for this browser will be replaced.",
+    }),
+    actions,
+  );
+  app.append(panel);
 }
 
 function routeToNextProtocolStep(context) {
@@ -282,26 +316,12 @@ function renderFinalThanks() {
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
-  const actions = createElement("div", { className: "completion-actions" });
-  const fresh = createElement("button", {
-    className: "secondary-button",
-    text: "Start a fresh response",
-    attrs: { type: "button" },
-  });
-
-  fresh.addEventListener("click", () => {
-    resetSurveyState();
-    window.location.reload();
-  });
-
-  actions.append(fresh);
   panel.append(
     createElement("h2", { text: "Thank you for your time" }),
     createElement("p", {
       text: "Your participation in this proposed-methodology version is complete. Your answers have been recorded for the research team.",
     }),
     createElement("p", { className: "status-strip", text: CONFIG.protocolLabel }),
-    actions,
   );
   app.append(panel);
 }

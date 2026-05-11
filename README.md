@@ -80,7 +80,7 @@ googleAppsScriptUrl: "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"
 
 After that, answers are collected during each section and sent when the section is completed. There is no separate submit button.
 
-The browser stores anonymous progress in versioned `localStorage` keys. A participant who reaches the end can start a fresh anonymous response from the final screen when the platform is being tested.
+The browser stores anonymous progress in versioned `localStorage` keys. If the same browser profile returns after completing the survey, the platform shows a completion warning before allowing the participant to redo the survey and replace the saved answers for the same `participant_id + method`.
 
 The response shape follows the shared long-format schema in the project notes. The Google Sheet will use one row per answer.
 
