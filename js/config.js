@@ -1,5 +1,4 @@
 export const CONFIG = {
-  protocolVersion: "v2_proposed_methodology_2026_05",
   protocolLabel: "Protocol v2 - proposed methodology",
   googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbztOko8hIfqh-oAJp9Q9aRLPWiTDOKx6TLMJoMJPsObjnM293KlErOyUvdXYJkAzvG2/exec",
   localStorageKey: "night_walkability_responses_v2",

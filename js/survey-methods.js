@@ -53,9 +53,6 @@ export function removeMethodAnswers(methodId) {
 export async function completeMethod(root, context, methodId, responses, onContinue) {
   const language = getContextLanguage(context);
   const completedAt = new Date().toISOString();
-  responses.forEach((response) => {
-    response.method_completed_at = completedAt;
-  });
   responses.forEach((response) => saveLocalBackup(response));
   markMethodCompleted(methodId, completedAt);
 

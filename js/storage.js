@@ -15,9 +15,6 @@ export function getOrCreateSession() {
 
   const session = {
     participant_id: participantId,
-    session_id: generateId("s"),
-    protocol_version: CONFIG.protocolVersion,
-    started_at: new Date().toISOString(),
     survey_started_at: progress.survey_started_at || "",
     language,
     device: getDeviceType(),
@@ -198,17 +195,14 @@ export async function submitResponses(responses, options = {}) {
 export function finalizeSurveyTiming(completedAt = new Date().toISOString()) {
   const responses = getLocalResponses();
   const progress = getProgress();
-  const startedAt = progress.survey_started_at || responses[0]?.timestamp || completedAt;
+  const startedAt = progress.survey_started_at || completedAt;
   const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime();
   const safeDurationMs = Number.isFinite(durationMs) ? Math.max(0, durationMs) : "";
-  const durationMinutes = safeDurationMs === "" ? "" : Math.round((safeDurationMs / 60000) * 100) / 100;
 
   const finalized = responses.map((response) => ({
     ...response,
-    survey_started_at: startedAt,
     survey_completed_at: completedAt,
     survey_duration_ms: safeDurationMs,
-    survey_duration_minutes: durationMinutes,
   }));
 
   saveLocalResponses(finalized);
@@ -217,13 +211,9 @@ export function finalizeSurveyTiming(completedAt = new Date().toISOString()) {
 
 export function buildBaseResponse(session, method, question, displayOrder, startedAt) {
   return {
-    protocol_version: session.protocol_version || CONFIG.protocolVersion,
     participant_id: session.participant_id,
-    session_id: session.session_id,
-    survey_started_at: session.survey_started_at || getProgress().survey_started_at || "",
     survey_completed_at: "",
     survey_duration_ms: "",
-    survey_duration_minutes: "",
     language: session.language,
     method,
     question_id: question.question_id,
@@ -235,15 +225,12 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     answer_value: null,
     display_order: displayOrder,
     reaction_time_ms: Date.now() - startedAt,
-    timestamp: new Date().toISOString(),
     device: session.device,
-    user_agent: navigator.userAgent,
     profile_age_range: session.profile?.age_range || "",
     profile_gender: session.profile?.gender || "",
     profile_night_walk_frequency: session.profile?.night_walk_frequency || "",
     profile_place_familiarity: session.profile?.place_familiarity || "",
     profile_night_walking_comfort: session.profile?.night_walking_comfort || "",
     profile_vision_or_display_issue: session.profile?.vision_or_display_issue || "",
-    method_completed_at: "",
   };
 }
