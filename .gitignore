@@ -3,7 +3,7 @@
 *.log
 .DS_Store
 Thumbs.db
-CODEX_night_walkability_survey.md
+*.md
 google_apps_script/
 .env
 .env.local
