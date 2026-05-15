@@ -178,10 +178,23 @@
       "scale": 5
     },
     {
+      "question_id": "lighting_security_contribution",
+      "text": {
+        "en": "To what extent does the lighting of this scene contribute to your sense of security?",
+        "fr": "Dans quelle mesure l'éclairage de cette scène contribue-t-il à votre sentiment de sécurité ?"
+      },
+      "type": "scale",
+      "scale": 5
+    },
+    {
       "question_id": "image_comment",
       "text": {
-        "en": "Did anything in the images disturb your judgment?",
-        "fr": "Quelque chose dans les images a-t-il perturbé votre jugement ?"
+        "en": "In your opinion, what could improve the quality of the atmosphere of this night scene, particularly in terms of light and/or sounds?",
+        "fr": "À votre avis, qu'est-ce qui pourrait améliorer la qualité de l'ambiance de cette scène nocturne, en particulier en matière de lumière et/ou de sons ?"
+      },
+      "helper": {
+        "en": "(You can mention the lighting, dark areas, contrasts, sound atmosphere, the feeling of calm, comfort, or discomfort.)",
+        "fr": "(Vous pouvez mentionner l'éclairage, les zones sombres, les contrastes, l'ambiance sonore, le sentiment de calme, de confort ou d'inconfort.)"
       },
       "type": "textarea",
       "optional": true

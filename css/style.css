@@ -233,6 +233,12 @@ p {
   line-height: 1.35;
 }
 
+.field-helper {
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .language-selector {
   display: grid;
   gap: 10px;

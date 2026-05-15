@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { getContextLanguage, optionLabel, optionPreview, questionText, t } from "./i18n.js";
+import { getContextLanguage, localize, optionLabel, optionPreview, questionText, t } from "./i18n.js";
 import { completeMethod, makeResponse } from "./survey-methods.js";
 import { createElement, takeRandomSubset } from "./utils.js";
 
@@ -400,7 +400,14 @@ function renderTextArea(question, language) {
     textarea.required = true;
   }
 
-  label.append(createElement("span", { text: questionText(question, language) }), textarea);
+  label.append(createElement("span", { text: questionText(question, language) }));
+
+  const helper = localize(question.helper, language);
+  if (helper) {
+    label.append(createElement("small", { className: "field-helper", text: helper }));
+  }
+
+  label.append(textarea);
   return label;
 }
 
