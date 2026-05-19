@@ -193,8 +193,8 @@
         "fr": "À votre avis, qu'est-ce qui pourrait améliorer la qualité de l'ambiance de cette scène nocturne, en particulier en matière de lumière et/ou de sons ?"
       },
       "helper": {
-        "en": "(You can mention the lighting, dark areas, contrasts, sound atmosphere, the feeling of calm, comfort, or discomfort.)",
-        "fr": "(Vous pouvez mentionner l'éclairage, les zones sombres, les contrastes, l'ambiance sonore, le sentiment de calme, de confort ou d'inconfort.)"
+        "en": "(You can mention the lighting, dark areas, contrasts, the feeling of calm, comfort, or discomfort.)",
+        "fr": "(Vous pouvez mentionner l'éclairage, les zones sombres, les contrastes, le sentiment de calme, de confort ou d'inconfort.)"
       },
       "type": "textarea",
       "optional": true
