@@ -98,7 +98,7 @@ const UI_TEXT = {
     welcome: "Bienvenue",
     stepOf: "Étape {current} sur {total}",
     welcomeIntro:
-      "Vous êtes invité(e) à répondre à ce questionnaire en ligne dans le cadre d'un projet de recherche sur la perception des environnements urbains nocturnes. Le temps de réponse estimé est d'environ 10 minutes.",
+      "Vous êtes invité(e)s à répondre à ce questionnaire en ligne dans le cadre d'un projet de recherche sur la perception des environnements urbains nocturnes. Le temps de réponse estimé est d'environ 10 minutes.",
     welcomePath:
       "Vous répondrez à de courtes questions sur des scènes urbaines simulées, notamment sur la sécurité ressentie, le confort, la visibilité et la préférence d'itinéraire.",
     welcomePrivacy:
