@@ -189,8 +189,8 @@
     {
       "question_id": "image_comment",
       "text": {
-        "en": "In your opinion, what could improve the quality of the atmosphere of this night scene, particularly in terms of light and/or sounds?",
-        "fr": "À votre avis, qu'est-ce qui pourrait améliorer la qualité de l'ambiance de cette scène nocturne, en particulier en matière de lumière et/ou de sons ?"
+        "en": "In your opinion, what could improve the quality of the atmosphere of these night scenes, particularly in terms of light and/or structure?",
+        "fr": "À votre avis, qu'est-ce qui pourrait améliorer la qualité de l'ambiance de ces scènes nocturnes, en particulier en matière de lumière et/ou de structure ?"
       },
       "helper": {
         "en": "(You can mention the lighting, dark areas, contrasts, the feeling of calm, comfort, or discomfort.)",
