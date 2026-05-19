@@ -81,6 +81,7 @@ function renderWelcome(context) {
     createElement("h2", { text: t(language, "welcome") }),
     createElement("p", { text: t(language, "welcomeIntro") }),
     createElement("p", { text: t(language, "welcomePath") }),
+    createElement("p", { text: t(language, "welcomePrivacy") }),
   );
 
   const actions = createElement("div", { className: "completion-actions" });

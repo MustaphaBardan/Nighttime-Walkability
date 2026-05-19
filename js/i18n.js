@@ -12,7 +12,9 @@ const UI_TEXT = {
     welcomeIntro:
       "You are invited to answer this online questionnaire as part of a research project on the perception of night-time urban environments. The estimated completion time is about 10 minutes.",
     welcomePath:
-      "You will answer short questions about simulated urban scenes, including safety, comfort, visibility, and route preference. To respect participants' rights and privacy, the collected data are anonymous and used only for research analysis.",
+      "You will answer short questions about simulated urban scenes, including safety, comfort, visibility, and route preference.",
+    welcomePrivacy:
+      "To respect participants' rights and privacy, the collected data are anonymous and used only for research analysis.",
     languageLabel: "Choose language",
     english: "English",
     french: "Français",
@@ -98,7 +100,9 @@ const UI_TEXT = {
     welcomeIntro:
       "Vous êtes invité(e) à répondre à ce questionnaire en ligne dans le cadre d'un projet de recherche sur la perception des environnements urbains nocturnes. Le temps de réponse estimé est d'environ 10 minutes.",
     welcomePath:
-      "Vous répondrez à de courtes questions sur des scènes urbaines simulées, notamment sur la sécurité ressentie, le confort, la visibilité et la préférence d'itinéraire. Afin de respecter les droits et la vie privée des participant(e)s, les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
+      "Vous répondrez à de courtes questions sur des scènes urbaines simulées, notamment sur la sécurité ressentie, le confort, la visibilité et la préférence d'itinéraire.",
+    welcomePrivacy:
+      "Afin de respecter les droits et la vie privée des participant(e)s, les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
     languageLabel: "Choisir la langue",
     english: "English",
     french: "Français",
