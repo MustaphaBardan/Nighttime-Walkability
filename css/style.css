@@ -109,6 +109,36 @@ button:disabled {
   gap: 10px;
 }
 
+.header-language {
+  display: flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.header-language-option {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.header-language-option:hover,
+.header-language-option:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.header-language-option.selected {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--accent);
@@ -165,18 +195,6 @@ p {
 .theme-toggle:focus-visible {
   border-color: var(--accent-strong);
   outline: none;
-}
-
-.session-chip {
-  flex: 0 0 auto;
-  max-width: min(44vw, 360px);
-  overflow-wrap: anywhere;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 8px 12px;
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 0.83rem;
 }
 
 .app-shell {
@@ -237,45 +255,6 @@ p {
   color: var(--muted);
   font-weight: 500;
   line-height: 1.4;
-}
-
-.language-selector {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.language-label {
-  margin-bottom: 0;
-  color: var(--text);
-  font-weight: 750;
-}
-
-.language-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.language-option {
-  min-height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 10px 14px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-weight: 750;
-}
-
-.language-option:hover,
-.language-option:focus-visible,
-.language-option.selected {
-  border-color: var(--accent-strong);
-  outline: none;
-}
-
-.language-option.selected {
-  background: var(--surface-3);
 }
 
 .method-grid {
@@ -435,13 +414,6 @@ p {
   justify-content: center;
   gap: 10px;
   margin-top: 16px;
-}
-
-.page-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0 0 16px;
 }
 
 .primary-button,
@@ -840,10 +812,6 @@ p {
   color: var(--muted);
 }
 
-.participant-status {
-  text-align: center;
-}
-
 .status-strip strong {
   color: var(--text);
 }
@@ -882,10 +850,6 @@ p {
   .site-footer {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .session-chip {
-    max-width: 100%;
   }
 
   .header-actions {

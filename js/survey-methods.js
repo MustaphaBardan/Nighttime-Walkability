@@ -50,36 +50,78 @@ export function removeMethodAnswers(methodId) {
   clearMethodCompletion(methodId);
 }
 
-export async function completeMethod(root, context, methodId, responses, onContinue) {
-  const language = getContextLanguage(context);
+export function renderSurveyProgress(current, total, language = "en") {
+  const safeTotal = Math.max(0, Number(total) || 0);
+  const safeCurrent = safeTotal > 0 ? Math.min(Math.max(0, Number(current) || 0), safeTotal) : 0;
+  const percent = safeTotal > 0 ? Math.round((safeCurrent / safeTotal) * 100) : 0;
+  const wrapper = createElement("div", { className: "progress-wrap" });
+
+  wrapper.innerHTML = `
+    <div class="progress-label">
+      <span>${t(language, "progress")}</span>
+      <span>${safeCurrent} / ${safeTotal}</span>
+    </div>
+    <div class="progress-bar" aria-hidden="true">
+      <div class="progress-fill" style="width: ${percent}%"></div>
+    </div>
+  `;
+
+  return wrapper;
+}
+
+export async function completeMethod(root, context, methodId, responses, onContinue, onRerenderReady = () => {}, onBack = null) {
   const completedAt = new Date().toISOString();
   responses.forEach((response) => saveLocalBackup(response));
   markMethodCompleted(methodId, completedAt);
 
   const isFinalSection = allMethodsCompleted();
-  root.innerHTML = "";
+  let finalStatusKey = isFinalSection ? "savingComplete" : "sectionSaved";
+  let continueDisabled = isFinalSection;
+  let continueButton = null;
+  let status = null;
 
-  const panel = createElement("section", { className: "panel completion-panel" });
-  const status = createElement("p", {
-    text: isFinalSection ? t(language, "savingComplete") : t(language, "sectionSaved"),
-  });
-  panel.append(
-    createElement("p", { className: "step-label", text: getMethodTitle(methodId, language) }),
-    createElement("h2", { text: t(language, "sectionComplete") }),
-    status,
-  );
+  function renderCompletion() {
+    const language = getContextLanguage(context);
+    root.innerHTML = "";
 
-  const actions = createElement("div", { className: "completion-actions" });
-  const continueButton = createElement("button", {
-    className: "primary-button",
-    text: isFinalSection ? t(language, "finishSurvey") : t(language, "continue"),
-    attrs: isFinalSection ? { type: "button", disabled: "disabled" } : { type: "button" },
-  });
+    const panel = createElement("section", { className: "panel completion-panel" });
+    status = createElement("p", {
+      text: t(language, finalStatusKey),
+    });
+    panel.append(
+      createElement("p", { className: "step-label", text: getMethodTitle(methodId, language) }),
+      createElement("h2", { text: t(language, "sectionComplete") }),
+      status,
+    );
 
-  continueButton.addEventListener("click", () => onContinue(context));
-  actions.append(continueButton);
-  panel.append(actions);
-  root.append(panel);
+    const actions = createElement("div", { className: "completion-actions" });
+    continueButton = createElement("button", {
+      className: "primary-button",
+      text: isFinalSection ? t(language, "finishSurvey") : t(language, "continue"),
+      attrs: continueDisabled ? { type: "button", disabled: "disabled" } : { type: "button" },
+    });
+
+    if (onBack && !isFinalSection) {
+      const backButton = createElement("button", {
+        className: "secondary-button",
+        text: t(language, "back"),
+        attrs: { type: "button" },
+      });
+      backButton.addEventListener("click", () => {
+        removeMethodAnswers(methodId);
+        onBack();
+      });
+      actions.append(backButton);
+    }
+
+    continueButton.addEventListener("click", () => onContinue(context));
+    actions.append(continueButton);
+    panel.append(actions);
+    root.append(panel);
+  }
+
+  onRerenderReady(renderCompletion);
+  renderCompletion();
 
   if (!isFinalSection) {
     return;
@@ -91,10 +133,10 @@ export async function completeMethod(root, context, methodId, responses, onConti
     replaceExistingAll: true,
   });
 
+  continueDisabled = false;
+  finalStatusKey = result.submittedRemote ? "completeRecorded" : "completeSavedLocal";
   continueButton.disabled = false;
-  status.textContent = result.submittedRemote
-    ? t(language, "completeRecorded")
-    : t(language, "completeSavedLocal");
+  status.textContent = t(getContextLanguage(context), finalStatusKey);
 }
 
 export function allMethodsCompleted() {

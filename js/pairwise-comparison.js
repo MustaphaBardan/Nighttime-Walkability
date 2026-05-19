@@ -1,11 +1,10 @@
 import { CONFIG } from "./config.js";
 import { buildBaseResponse } from "./storage.js";
-import { TOTAL_SURVEY_STEPS, completeMethod } from "./survey-methods.js";
+import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, makePairs } from "./utils.js";
 
-export function renderPairwiseComparison(root, context, onComplete) {
-  const language = getContextLanguage(context);
+export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
   const pairs = makePairs(context.images, CONFIG.pairwiseTrialCount);
@@ -24,8 +23,15 @@ export function renderPairwiseComparison(root, context, onComplete) {
   const sessionResponses = [];
 
   function renderTrial() {
+    const language = getContextLanguage(context);
+    onRerenderReady(renderTrial);
+
     if (currentIndex >= trials.length) {
-      completeMethod(root, context, methodId, sessionResponses, onComplete);
+      completeMethod(root, context, methodId, sessionResponses, onComplete, onRerenderReady, () => {
+        currentIndex -= 1;
+        sessionResponses.pop();
+        renderTrial();
+      });
       return;
     }
 
@@ -41,7 +47,7 @@ export function renderPairwiseComparison(root, context, onComplete) {
     });
     back.addEventListener("click", () => {
       if (currentIndex === 0) {
-        renderProtocolIntro(root, context, onComplete);
+        renderProtocolIntro(root, context, onComplete, onRerenderReady);
         return;
       }
 
@@ -55,7 +61,7 @@ export function renderPairwiseComparison(root, context, onComplete) {
         html: `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`,
       }),
       back,
-      renderProgress(currentIndex, trials.length, language),
+      renderSurveyProgress(currentIndex + 1, trials.length, language),
     );
 
     const panel = createElement("section", { className: "panel question-panel" });
@@ -67,22 +73,16 @@ export function renderPairwiseComparison(root, context, onComplete) {
 
     const answerRow = createElement("div", { className: "answer-row" });
     answerRow.append(
-      renderAnswerButton("A", "A"),
-      renderAnswerButton("B", "B"),
-      renderAnswerButton(t(language, "noClearDifference"), "no_clear_difference"),
+      renderAnswerButton("A", "A", language),
+      renderAnswerButton("B", "B", language),
+      renderAnswerButton(t(language, "noClearDifference"), "no_clear_difference", language),
     );
     panel.append(answerRow);
 
-    const status = createElement("div", {
-      className: "status-strip participant-status",
-      attrs: { id: "save-status" },
-      text: t(language, "savedAtEnd"),
-    });
-
-    root.append(toolbar, panel, status);
+    root.append(toolbar, panel);
   }
 
-  function renderAnswerButton(label, value) {
+  function renderAnswerButton(label, value, language) {
     const button = createElement("button", {
       className: "choice-button",
       text: label === "A" || label === "B" ? `${t(language, "scene")} ${label}` : label,
@@ -122,8 +122,9 @@ export function renderPairwiseComparison(root, context, onComplete) {
   renderTrial();
 }
 
-function renderProtocolIntro(root, context, onComplete) {
+function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {
   const language = getContextLanguage(context);
+  onRerenderReady(() => renderProtocolIntro(root, context, onComplete, onRerenderReady));
   root.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
@@ -133,7 +134,7 @@ function renderProtocolIntro(root, context, onComplete) {
     attrs: { type: "button" },
   });
 
-  start.addEventListener("click", () => renderPairwiseComparison(root, context, onComplete));
+  start.addEventListener("click", () => renderPairwiseComparison(root, context, onComplete, onRerenderReady));
   panel.append(
     createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
     createElement("h2", { text: t(language, "pairwiseTitle") }),
@@ -160,22 +161,5 @@ function renderScene(label, image, language) {
 
   frame.append(img);
   wrapper.append(frame, footer);
-  return wrapper;
-}
-
-function renderProgress(currentIndex, total, language = "en") {
-  const percent = total > 0 ? Math.round((currentIndex / total) * 100) : 0;
-  const wrapper = createElement("div", { className: "progress-wrap" });
-
-  wrapper.innerHTML = `
-    <div class="progress-label">
-      <span>${t(language, "progress")}</span>
-      <span>${currentIndex} / ${total}</span>
-    </div>
-    <div class="progress-bar" aria-hidden="true">
-      <div class="progress-fill" style="width: ${percent}%"></div>
-    </div>
-  `;
-
   return wrapper;
 }

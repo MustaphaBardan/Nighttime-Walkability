@@ -27,9 +27,11 @@ import { renderPairwiseComparison } from "./pairwise-comparison.js";
 const app = byId("app");
 const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
+let rerenderCurrentView = () => {};
 
 initThemeToggle();
 applyLanguage(session.language);
+renderHeaderLanguageSelector();
 
 async function init() {
   try {
@@ -68,6 +70,9 @@ async function fetchJson(path) {
 
 function renderWelcome(context) {
   const language = getContextLanguage(context);
+  const progress = getProgress();
+  const hasPartialProgress = hasSavedPartialProgress(progress);
+  setCurrentViewRenderer(() => renderWelcome(context));
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel welcome-panel" });
@@ -76,13 +81,12 @@ function renderWelcome(context) {
     createElement("h2", { text: t(language, "welcome") }),
     createElement("p", { text: t(language, "welcomeIntro") }),
     createElement("p", { text: t(language, "welcomePath") }),
-    renderLanguageSelector(context),
   );
 
   const actions = createElement("div", { className: "completion-actions" });
   const start = createElement("button", {
     className: "primary-button",
-    text: t(language, "startSurvey"),
+    text: t(language, hasPartialProgress ? "continueSurvey" : "startSurvey"),
     attrs: { type: "button" },
   });
 
@@ -96,38 +100,6 @@ function renderWelcome(context) {
   actions.append(start);
   panel.append(actions);
   app.append(panel);
-}
-
-function renderLanguageSelector(context) {
-  const language = getContextLanguage(context);
-  const wrapper = createElement("div", { className: "language-selector" });
-  const label = createElement("p", { className: "language-label", text: t(language, "languageLabel") });
-  const controls = createElement("div", { className: "language-options" });
-
-  [
-    ["en", t(language, "english")],
-    ["fr", t(language, "french")],
-  ].forEach(([value, text]) => {
-    const button = createElement("button", {
-      className: value === language ? "language-option selected" : "language-option",
-      text,
-      attrs: {
-        type: "button",
-        "aria-pressed": String(value === language),
-      },
-    });
-
-    button.addEventListener("click", () => {
-      updateSessionLanguage(context.session, value);
-      applyLanguage(value);
-      renderWelcome(context);
-    });
-
-    controls.append(button);
-  });
-
-  wrapper.append(label, controls);
-  return wrapper;
 }
 
 function routeAfterWelcome(context) {
@@ -146,8 +118,16 @@ function routeAfterWelcome(context) {
   routeToNextProtocolStep(context);
 }
 
+function hasSavedPartialProgress(progress) {
+  return !allMethodsCompleted() && (
+    Boolean(progress.profile_completed) ||
+    Object.values(progress.completed_methods || {}).some(Boolean)
+  );
+}
+
 function renderCompletedPrompt(context) {
   const language = getContextLanguage(context);
+  setCurrentViewRenderer(() => renderCompletedPrompt(context));
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
@@ -197,9 +177,11 @@ function routeToNextProtocolStep(context) {
   startMethod(context, nextMethod.id);
 }
 
-function renderProfile(context) {
+function renderProfile(context, draft = null) {
   const language = getContextLanguage(context);
+  setCurrentViewRenderer(() => renderProfile(context, readProfileDraft()));
   app.innerHTML = "";
+  const values = draft || context.session.profile || {};
 
   const panel = createElement("section", { className: "panel form-panel" });
   const form = createElement("form", { className: "profile-form" });
@@ -218,7 +200,7 @@ function renderProfile(context) {
       ["55_64", "55-64"],
       ["65_plus", "65+"],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ]),
+    ], true, values.age_range),
     renderSelect("gender", t(language, "gender"), [
       ["", t(language, "selectOption")],
       ["woman", t(language, "woman")],
@@ -226,7 +208,7 @@ function renderProfile(context) {
       ["non_binary", t(language, "nonBinary")],
       ["self_describe", t(language, "selfDescribe")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ]),
+    ], true, values.gender),
     renderSelect("night_walk_frequency", t(language, "nightWalkFrequency"), [
       ["", t(language, "selectOption")],
       ["rarely", t(language, "rarely")],
@@ -234,7 +216,7 @@ function renderProfile(context) {
       ["weekly", t(language, "weekly")],
       ["almost_daily", t(language, "almostDaily")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ]),
+    ], true, values.night_walk_frequency),
     renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
       ["", t(language, "selectOption")],
       ["not_familiar", t(language, "notFamiliar")],
@@ -242,7 +224,7 @@ function renderProfile(context) {
       ["familiar", t(language, "familiar")],
       ["very_familiar", t(language, "veryFamiliar")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ]),
+    ], true, values.place_familiarity),
     renderSelect("night_walking_comfort", t(language, "nightWalkingComfort"), [
       ["", t(language, "selectOption")],
       ["very_uncomfortable", t(language, "veryUncomfortable")],
@@ -251,13 +233,13 @@ function renderProfile(context) {
       ["comfortable", t(language, "comfortable")],
       ["very_comfortable", t(language, "veryComfortable")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ]),
+    ], true, values.night_walking_comfort),
     renderSelect("vision_or_display_issue", t(language, "visionOrDisplayIssue"), [
       ["", t(language, "noIssue")],
       ["minor_issue", t(language, "minorIssue")],
       ["significant_issue", t(language, "significantIssue")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ], false),
+    ], false, values.vision_or_display_issue),
   );
 
   const actions = createElement("div", { className: "completion-actions" });
@@ -295,7 +277,7 @@ function renderProfile(context) {
   app.append(panel);
 }
 
-function renderSelect(name, label, options, required = true) {
+function renderSelect(name, label, options, required = true, selectedValue = "") {
   const field = createElement("label", { className: "form-field" });
   const attrs = { name };
 
@@ -310,13 +292,17 @@ function renderSelect(name, label, options, required = true) {
   options.forEach(([value, text], index) => {
     const option = createElement("option", { text, attrs: { value } });
 
-    if (index === 0) {
+    if (index === 0 && !selectedValue) {
       option.disabled = true;
       option.selected = true;
     }
 
     if (index === 0 && !required) {
       option.disabled = false;
+    }
+
+    if (value === selectedValue) {
+      option.selected = true;
     }
 
     select.append(option);
@@ -328,34 +314,34 @@ function renderSelect(name, label, options, required = true) {
 
 function startMethod(context, methodId) {
   if (methodId === "pairwise_comparison") {
-    renderPairwiseComparison(app, context, routeToNextProtocolStep);
+    renderPairwiseComparison(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
     return;
   }
 
   if (methodId === "detailed_rating") {
-    renderDetailedRating(app, context, routeToNextProtocolStep);
+    renderDetailedRating(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
     return;
   }
 
   if (methodId === "ideal_scene_builder") {
-    renderIdealSceneBuilder(app, context, routeToNextProtocolStep);
+    renderIdealSceneBuilder(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
     return;
   }
 
   if (methodId === "realism_check") {
-    renderRealismCheck(app, context, routeToNextProtocolStep);
+    renderRealismCheck(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
   }
 }
 
 function renderFinalThanks() {
   const language = getContextLanguage({ session });
+  setCurrentViewRenderer(renderFinalThanks);
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
   panel.append(
     createElement("h2", { text: t(language, "thankYou") }),
     createElement("p", { text: t(language, "finalThanks") }),
-    createElement("p", { className: "status-strip", text: CONFIG.protocolLabel }),
   );
   app.append(panel);
 }
@@ -387,7 +373,62 @@ function applyLanguage(language) {
   document.documentElement.lang = language;
   byId("app-eyebrow").textContent = t(language, "appEyebrow");
   byId("app-title").textContent = t(language, "appTitle");
-  byId("session-chip").textContent = t(language, "anonymousSession");
-  byId("protocol-version").textContent = CONFIG.protocolLabel;
   setTheme(document.documentElement.dataset.theme || "dark", byId("theme-toggle"));
+}
+
+function changeLanguage(context, language) {
+  const previousLanguage = getContextLanguage(context);
+  updateSessionLanguage(context.session, language);
+  applyLanguage(context.session.language);
+  renderHeaderLanguageSelector();
+
+  if (context.session.language !== previousLanguage) {
+    rerenderCurrentView();
+  }
+}
+
+function setCurrentViewRenderer(callback) {
+  rerenderCurrentView = callback;
+}
+
+function renderHeaderLanguageSelector() {
+  const language = getContextLanguage({ session });
+  const container = byId("header-language");
+  container.innerHTML = "";
+  container.setAttribute("aria-label", t(language, "languageLabel"));
+
+  ["en", "fr"].forEach((value) => {
+    const button = createElement("button", {
+      className: value === language ? "header-language-option selected" : "header-language-option",
+      text: value.toUpperCase(),
+      attrs: {
+        type: "button",
+        "aria-pressed": String(value === language),
+      },
+    });
+    button.addEventListener("click", () => {
+      if (window.surveyContext) {
+        changeLanguage(window.surveyContext, value);
+      }
+    });
+    container.append(button);
+  });
+}
+
+function readProfileDraft() {
+  const form = app.querySelector(".profile-form");
+
+  if (!form) {
+    return session.profile || {};
+  }
+
+  const formData = new FormData(form);
+  return {
+    age_range: formData.get("age_range") || "",
+    gender: formData.get("gender") || "",
+    night_walk_frequency: formData.get("night_walk_frequency") || "",
+    place_familiarity: formData.get("place_familiarity") || "",
+    night_walking_comfort: formData.get("night_walking_comfort") || "",
+    vision_or_display_issue: formData.get("vision_or_display_issue") || "",
+  };
 }

@@ -1,10 +1,11 @@
 import { CONFIG } from "./config.js";
 import { getContextLanguage, localize, optionLabel, optionPreview, questionText, t } from "./i18n.js";
-import { completeMethod, makeResponse } from "./survey-methods.js";
+import { completeMethod, makeResponse, renderSurveyProgress } from "./survey-methods.js";
 import { createElement, takeRandomSubset } from "./utils.js";
 
-export function renderBatchClassification(root, context, onComplete) {
-  const language = getContextLanguage(context);
+const FINAL_COMMENT_CHARACTER_LIMIT = 300;
+
+export function renderBatchClassification(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "batch_classification";
   const question = context.questions.batch_classification[0];
   const responses = [];
@@ -12,8 +13,15 @@ export function renderBatchClassification(root, context, onComplete) {
   let startedAt = Date.now();
 
   function renderCurrent() {
+    const language = getContextLanguage(context);
+    onRerenderReady(renderCurrent);
+
     if (currentIndex >= context.images.length) {
-      completeMethod(root, context, methodId, responses, onComplete);
+      completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
+        currentIndex -= 1;
+        responses.pop();
+        renderCurrent();
+      });
       return;
     }
 
@@ -21,11 +29,10 @@ export function renderBatchClassification(root, context, onComplete) {
     startedAt = Date.now();
     root.innerHTML = "";
 
-    const panel = createElement("section", { className: "panel question-panel" });
-    panel.append(
-      createElement("h2", { text: "Batch classification" }),
-      createElement("p", { className: "question-text", text: questionText(question, language) }),
-      renderBackButton(() => {
+    const toolbar = renderQuestionToolbar(
+      "Batch classification",
+      null,
+      () => {
         if (currentIndex === 0) {
           onComplete(context);
           return;
@@ -34,7 +41,14 @@ export function renderBatchClassification(root, context, onComplete) {
         currentIndex -= 1;
         responses.pop();
         renderCurrent();
-      }, currentIndex === 0, language),
+      },
+      currentIndex === 0,
+      renderSurveyProgress(currentIndex + 1, context.images.length, language),
+      language,
+    );
+    const panel = createElement("section", { className: "panel question-panel" });
+    panel.append(
+      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderSingleImage(image),
       renderChoiceRow(question.answers, language, (answer, index) => {
         responses.push(makeResponse(context, methodId, question, currentIndex + 1, startedAt, {
@@ -45,17 +59,15 @@ export function renderBatchClassification(root, context, onComplete) {
         currentIndex += 1;
         renderCurrent();
       }),
-      renderProgressText(currentIndex + 1, context.images.length, language),
     );
 
-    root.append(panel);
+    root.append(toolbar, panel);
   }
 
   renderCurrent();
 }
 
-export function renderDetailedRating(root, context, onComplete) {
-  const language = getContextLanguage(context);
+export function renderDetailedRating(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
   const images = takeRandomSubset(context.images, CONFIG.detailedRatingSceneCount);
@@ -66,8 +78,22 @@ export function renderDetailedRating(root, context, onComplete) {
   let startedAt = Date.now();
 
   function renderCurrent() {
+    const language = getContextLanguage(context);
+    onRerenderReady(renderCurrent);
+
     if (imageIndex >= images.length) {
-      completeMethod(root, context, methodId, responses, onComplete);
+      completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
+        responses.pop();
+        displayOrder -= 1;
+        questionIndex -= 1;
+
+        if (questionIndex < 0) {
+          imageIndex -= 1;
+          questionIndex = questions.length - 1;
+        }
+
+        renderCurrent();
+      });
       return;
     }
 
@@ -76,11 +102,10 @@ export function renderDetailedRating(root, context, onComplete) {
     startedAt = Date.now();
     root.innerHTML = "";
 
-    const panel = createElement("section", { className: "panel question-panel" });
-    panel.append(
-      createElement("h2", { text: t(language, "detailedTitle") }),
-      createElement("p", { className: "question-text", text: questionText(question, language) }),
-      renderBackButton(() => {
+    const toolbar = renderQuestionToolbar(
+      t(language, "detailedTitle"),
+      null,
+      () => {
         if (displayOrder === 1) {
           onComplete(context);
           return;
@@ -96,7 +121,14 @@ export function renderDetailedRating(root, context, onComplete) {
         }
 
         renderCurrent();
-      }, displayOrder === 1, language),
+      },
+      displayOrder === 1,
+      renderSurveyProgress(displayOrder, images.length * questions.length, language),
+      language,
+    );
+    const panel = createElement("section", { className: "panel question-panel" });
+    panel.append(
+      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderSingleImage(image),
       renderLikertRow(question, language, (value) => {
         responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
@@ -115,17 +147,15 @@ export function renderDetailedRating(root, context, onComplete) {
 
         renderCurrent();
       }),
-      renderProgressText(displayOrder, images.length * questions.length, language),
     );
 
-    root.append(panel);
+    root.append(toolbar, panel);
   }
 
   renderCurrent();
 }
 
-export function renderIdealSceneBuilder(root, context, onComplete) {
-  const language = getContextLanguage(context);
+export function renderIdealSceneBuilder(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "ideal_scene_builder";
   const questions = context.questions.ideal_scene_builder;
   const responses = [];
@@ -135,8 +165,15 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
   let selectedIndex = -1;
 
   function renderCurrent() {
+    const language = getContextLanguage(context);
+    onRerenderReady(renderCurrent);
+
     if (currentIndex >= questions.length) {
-      completeMethod(root, context, methodId, responses, onComplete);
+      completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
+        currentIndex -= 1;
+        responses.pop();
+        renderCurrent();
+      });
       return;
     }
 
@@ -146,6 +183,23 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
     selectedIndex = -1;
     root.innerHTML = "";
 
+    const toolbar = renderQuestionToolbar(
+      t(language, "builderTitle"),
+      null,
+      () => {
+        if (currentIndex === 0) {
+          onComplete(context);
+          return;
+        }
+
+        currentIndex -= 1;
+        responses.pop();
+        renderCurrent();
+      },
+      currentIndex === 0,
+      renderSurveyProgress(currentIndex + 1, questions.length, language),
+      language,
+    );
     const panel = createElement("section", { className: "panel question-panel" });
     const continueButton = createElement("button", {
       className: "primary-button",
@@ -167,57 +221,51 @@ export function renderIdealSceneBuilder(root, context, onComplete) {
     });
 
     panel.append(
-      createElement("h2", { text: t(language, "builderTitle") }),
       createElement("p", { className: "question-text", text: questionText(question, language) }),
-      renderBackButton(() => {
-        if (currentIndex === 0) {
-          onComplete(context);
-          return;
-        }
-
-        currentIndex -= 1;
-        responses.pop();
-        renderCurrent();
-      }, currentIndex === 0, language),
       renderPreviewChoiceGrid(question, language, (answer, index) => {
         selectedAnswer = answer;
         selectedIndex = index;
         continueButton.disabled = false;
       }),
       createElement("div", { className: "completion-actions", html: "" }),
-      renderProgressText(currentIndex + 1, questions.length, language),
     );
     panel.querySelector(".completion-actions").append(continueButton);
 
-    root.append(panel);
+    root.append(toolbar, panel);
   }
 
   renderCurrent();
 }
 
-export function renderRealismCheck(root, context, onComplete) {
+export function renderRealismCheck(root, context, onComplete, onRerenderReady = () => {}, draft = null) {
   const language = getContextLanguage(context);
   const methodId = "realism_check";
   const questions = context.questions.realism_check;
   const startedAt = Date.now();
+  onRerenderReady(() => renderRealismCheck(root, context, onComplete, onRerenderReady, readRealismDraft(root)));
   root.innerHTML = "";
+
+  const toolbar = createElement("section", { className: "toolbar" });
+  toolbar.append(
+    createElement("div", {
+      html: `<h2>${t(language, "realismTitle")}</h2><p>${t(language, "realismIntro")}</p>`,
+    }),
+  );
 
   const panel = createElement("section", { className: "panel form-panel" });
   const form = createElement("form", { className: "profile-form" });
 
   form.append(
     createElement("p", { className: "step-label", text: t(language, "finalSection") }),
-    createElement("h2", { text: t(language, "realismTitle") }),
-    createElement("p", { text: t(language, "realismIntro") }),
   );
 
   questions.forEach((question, index) => {
     if (question.type === "textarea") {
-      form.append(renderTextArea(question, language));
+      form.append(renderTextArea(question, language, draft?.[question.question_id] || ""));
       return;
     }
 
-    form.append(renderScaleField(question, index + 1, language));
+    form.append(renderScaleField(question, index + 1, language, draft?.[question.question_id] || ""));
   });
 
   const actions = createElement("div", { className: "completion-actions" });
@@ -234,32 +282,40 @@ export function renderRealismCheck(root, context, onComplete) {
 
     const formData = new FormData(form);
     const responses = questions.map((question, index) => {
-      const value = String(formData.get(question.question_id) || "").trim();
+      const rawValue = String(formData.get(question.question_id) || "").trim();
+      const value = question.type === "textarea"
+        ? limitCharacters(rawValue, FINAL_COMMENT_CHARACTER_LIMIT)
+        : rawValue;
       return makeResponse(context, methodId, question, index + 1, startedAt, {
         answer: value,
         answer_value: question.type === "scale" ? Number(value) : null,
       });
     });
 
-    completeMethod(root, context, methodId, responses, onComplete);
+    completeMethod(root, context, methodId, responses, onComplete, onRerenderReady);
   });
 
   panel.append(form);
-  root.append(panel);
+  root.append(toolbar, panel);
 }
 
-function renderBackButton(onBack, disabled = false, language = "en") {
-  const actions = createElement("div", { className: "page-actions" });
+function renderQuestionToolbar(title, intro, onBack, backDisabled, progress, language = "en") {
+  const toolbar = createElement("section", { className: "toolbar" });
+  const heading = createElement("div", {
+    html: `<h2>${title}</h2>${intro ? `<p>${intro}</p>` : ""}`,
+  });
   const back = createElement("button", {
     className: "secondary-button",
     text: t(language, "back"),
-    attrs: disabled ? { type: "button", disabled: "disabled" } : { type: "button" },
+    attrs: backDisabled ? { type: "button", disabled: "disabled" } : { type: "button" },
   });
-  if (!disabled) {
+
+  if (!backDisabled) {
     back.addEventListener("click", onBack);
   }
-  actions.append(back);
-  return actions;
+
+  toolbar.append(heading, back, progress);
+  return toolbar;
 }
 
 function renderPreviewChoiceGrid(question, language, onSelect) {
@@ -352,7 +408,7 @@ function renderLikertRow(question, language, onSelect) {
   return wrapper;
 }
 
-function renderScaleField(question, order, language) {
+function renderScaleField(question, order, language, selectedValue = "") {
   const fieldset = createElement("fieldset", { className: "scale-field" });
   const legend = createElement("legend", { text: questionText(question, language) });
   const row = createElement("div", { className: "answer-row likert-row" });
@@ -368,6 +424,10 @@ function renderScaleField(question, order, language) {
         required: "required",
       },
     });
+
+    if (String(value) === String(selectedValue)) {
+      input.checked = true;
+    }
 
     label.append(input, createElement("span", { text: String(value) }));
     row.append(label);
@@ -386,7 +446,7 @@ function renderScaleField(question, order, language) {
   return fieldset;
 }
 
-function renderTextArea(question, language) {
+function renderTextArea(question, language, value = "") {
   const label = createElement("label", { className: "form-field" });
   const textarea = createElement("textarea", {
     attrs: {
@@ -400,6 +460,7 @@ function renderTextArea(question, language) {
     textarea.required = true;
   }
 
+  textarea.value = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
   label.append(createElement("span", { text: questionText(question, language) }));
 
   const helper = localize(question.helper, language);
@@ -408,14 +469,47 @@ function renderTextArea(question, language) {
   }
 
   label.append(textarea);
+
+  const counter = createElement("small", {
+    className: "field-helper character-counter",
+    text: t(language, "characterLimit", {
+      current: countCharacters(textarea.value),
+      limit: FINAL_COMMENT_CHARACTER_LIMIT,
+    }),
+  });
+  textarea.addEventListener("input", () => {
+    const limitedValue = limitCharacters(textarea.value, FINAL_COMMENT_CHARACTER_LIMIT);
+
+    if (textarea.value !== limitedValue) {
+      textarea.value = limitedValue;
+    }
+
+    counter.textContent = t(language, "characterLimit", {
+      current: countCharacters(textarea.value),
+      limit: FINAL_COMMENT_CHARACTER_LIMIT,
+    });
+  });
+  label.append(counter);
+
   return label;
 }
 
-function renderProgressText(current, total, language = "en") {
-  return createElement("div", {
-    className: "status-strip participant-status",
-    text: t(language, "ofTotal", { current: Math.min(current, total), total }),
-  });
+function countCharacters(value) {
+  return Array.from(String(value)).length;
+}
+
+function limitCharacters(value, limit) {
+  return Array.from(String(value)).slice(0, limit).join("");
+}
+
+function readRealismDraft(root) {
+  const form = root.querySelector(".profile-form");
+
+  if (!form) {
+    return {};
+  }
+
+  return Object.fromEntries(new FormData(form).entries());
 }
 
 function getPreviewClass(questionId, option) {
