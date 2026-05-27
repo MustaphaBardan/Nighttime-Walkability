@@ -1,38 +1,46 @@
 [
   {
-    "image_id": "scene_001_balanced_path",
-    "path": "assets/images/scene_001_balanced_path.svg",
-    "scenario": "urban_path",
-    "lighting_condition": "medium",
-    "morphology_condition": "balanced",
-    "vegetation_condition": "medium",
-    "description": "Sample nocturnal urban path with balanced lighting and moderate vegetation."
+    "image_id": "scene_001_panorama_test",
+    "path": "assets/images/Test_image_panoramic.png",
+    "view_type": "panorama_360",
+    "initial_yaw_degrees": 90,
+    "scenario": "panorama_test",
+    "lighting_condition": "test",
+    "morphology_condition": "test",
+    "vegetation_condition": "test",
+    "description": "Static 360 degree panorama test scene."
   },
   {
-    "image_id": "scene_002_dim_corridor",
-    "path": "assets/images/scene_002_dim_corridor.svg",
-    "scenario": "street_corridor",
-    "lighting_condition": "low",
-    "morphology_condition": "enclosed",
-    "vegetation_condition": "low",
-    "description": "Sample dim street corridor with stronger enclosure."
+    "image_id": "scene_002_panorama_test",
+    "path": "assets/images/Test_image_panoramic.png",
+    "view_type": "panorama_360",
+    "initial_yaw_degrees": 90,
+    "scenario": "panorama_test",
+    "lighting_condition": "test",
+    "morphology_condition": "test",
+    "vegetation_condition": "test",
+    "description": "Static 360 degree panorama test scene."
   },
   {
-    "image_id": "scene_003_open_square",
-    "path": "assets/images/scene_003_open_square.svg",
-    "scenario": "open_square",
-    "lighting_condition": "high",
-    "morphology_condition": "open",
-    "vegetation_condition": "low",
-    "description": "Sample open plaza-like route with stronger lighting."
+    "image_id": "scene_003_panorama_test",
+    "path": "assets/images/Test_image_panoramic.png",
+    "view_type": "panorama_360",
+    "initial_yaw_degrees": 90,
+    "scenario": "panorama_test",
+    "lighting_condition": "test",
+    "morphology_condition": "test",
+    "vegetation_condition": "test",
+    "description": "Static 360 degree panorama test scene."
   },
   {
-    "image_id": "scene_004_vegetated_edge",
-    "path": "assets/images/scene_004_vegetated_edge.svg",
-    "scenario": "vegetated_edge",
-    "lighting_condition": "medium_low",
-    "morphology_condition": "edge",
-    "vegetation_condition": "high",
-    "description": "Sample path near dense vegetation with partial lighting."
+    "image_id": "scene_004_panorama_test",
+    "path": "assets/images/Test_image_panoramic.png",
+    "view_type": "panorama_360",
+    "initial_yaw_degrees": 90,
+    "scenario": "panorama_test",
+    "lighting_condition": "test",
+    "morphology_condition": "test",
+    "vegetation_condition": "test",
+    "description": "Static 360 degree panorama test scene."
   }
 ]

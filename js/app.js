@@ -19,15 +19,18 @@ import {
   renderDetailedRating,
   renderIdealSceneBuilder,
   renderRealismCheck,
+  renderTrainingScene,
 } from "./simple-methods.js";
 import { getContextLanguage, t } from "./i18n.js";
 import { byId, createElement } from "./utils.js";
 import { renderPairwiseComparison } from "./pairwise-comparison.js";
+import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.js";
 
 const app = byId("app");
 const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
 let rerenderCurrentView = () => {};
+let mediaWarmupStarted = false;
 
 initThemeToggle();
 applyLanguage(session.language);
@@ -35,16 +38,23 @@ renderHeaderLanguageSelector();
 
 async function init() {
   try {
-    const [images, questions] = await Promise.all([
+    const [images, questions, idealSceneVariants] = await Promise.all([
       fetchJson("data/images.json"),
       fetchJson("data/questions.json"),
+      fetchJson("data/ideal_scene_variants.json"),
     ]);
 
     window.surveyContext = {
       session,
       images,
       questions,
+      idealSceneVariants,
     };
+    preloadSurveyImages([
+      ...images,
+      idealSceneVariants.default,
+      ...(idealSceneVariants.variants || []),
+    ]);
 
     renderWelcome(window.surveyContext);
   } catch (error) {
@@ -111,6 +121,8 @@ function routeAfterWelcome(context) {
     return;
   }
 
+  warmUpSurveyMedia(context);
+
   if (allMethodsCompleted()) {
     renderCompletedPrompt(context);
     return;
@@ -175,7 +187,17 @@ function routeToNextProtocolStep(context) {
     return;
   }
 
+  warmUpSurveyMedia(context);
   startMethod(context, nextMethod.id);
+}
+
+function warmUpSurveyMedia(context) {
+  if (mediaWarmupStarted) {
+    return;
+  }
+
+  mediaWarmupStarted = true;
+  warmUpPanoramaTextures(context.images);
 }
 
 function renderProfile(context, draft = null) {
@@ -212,35 +234,42 @@ function renderProfile(context, draft = null) {
     ], true, values.gender),
     renderSelect("night_walk_frequency", t(language, "nightWalkFrequency"), [
       ["", t(language, "selectOption")],
-      ["rarely", t(language, "rarely")],
-      ["sometimes", t(language, "sometimes")],
-      ["weekly", t(language, "weekly")],
-      ["almost_daily", t(language, "almostDaily")],
-      ["prefer_not_to_say", t(language, "preferNotToSay")],
+      ["never_or_almost_never", t(language, "neverOrAlmostNever")],
+      ["rarely_less_than_monthly", t(language, "rarelyLessThanMonthly")],
+      ["occasionally_few_times_monthly", t(language, "occasionallyFewTimesMonthly")],
+      ["regularly_one_two_weekly", t(language, "regularlyOneTwoWeekly")],
+      ["often_three_five_weekly", t(language, "oftenThreeFiveWeekly")],
+      ["almost_every_night", t(language, "almostEveryNight")],
     ], true, values.night_walk_frequency),
-    renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
-      ["", t(language, "selectOption")],
-      ["not_familiar", t(language, "notFamiliar")],
-      ["somewhat_familiar", t(language, "somewhatFamiliar")],
-      ["familiar", t(language, "familiar")],
-      ["very_familiar", t(language, "veryFamiliar")],
-      ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ], true, values.place_familiarity),
     renderSelect("night_walking_comfort", t(language, "nightWalkingComfort"), [
       ["", t(language, "selectOption")],
-      ["very_uncomfortable", t(language, "veryUncomfortable")],
-      ["uncomfortable", t(language, "uncomfortable")],
-      ["neutral", t(language, "neutral")],
+      ["not_comfortable_at_all", t(language, "notComfortableAtAll")],
+      ["slightly_comfortable", t(language, "slightlyComfortable")],
+      ["moderately_comfortable", t(language, "moderatelyComfortable")],
       ["comfortable", t(language, "comfortable")],
       ["very_comfortable", t(language, "veryComfortable")],
-      ["prefer_not_to_say", t(language, "preferNotToSay")],
     ], true, values.night_walking_comfort),
-    renderSelect("vision_or_display_issue", t(language, "visionOrDisplayIssue"), [
-      ["", t(language, "noIssue")],
-      ["minor_issue", t(language, "minorIssue")],
-      ["significant_issue", t(language, "significantIssue")],
-      ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ], false, values.vision_or_display_issue),
+    renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
+      ["", t(language, "selectOption")],
+      ["yes_very_familiar_nantes", t(language, "yesVeryFamiliarNantes")],
+      ["somewhat_familiar_nantes", t(language, "somewhatFamiliarNantes")],
+      ["similar_urban_environment", t(language, "similarUrbanEnvironment")],
+      ["not_familiar_environment", t(language, "notFamiliarEnvironment")],
+    ], true, values.place_familiarity),
+    renderSelect("screen_brightness", t(language, "screenBrightness"), [
+      ["", t(language, "selectOption")],
+      ["yes", t(language, "yes")],
+      ["no", t(language, "no")],
+      ["not_sure", t(language, "notSure")],
+    ], true, values.screen_brightness),
+    renderSelect("device_used", t(language, "deviceUsed"), [
+      ["", t(language, "selectOption")],
+      ["computer_laptop", t(language, "computerLaptop")],
+      ["tablet", t(language, "tablet")],
+      ["smartphone", t(language, "smartphone")],
+      ["vr_headset", t(language, "vrHeadset")],
+      ["other", t(language, "other")],
+    ], true, values.device_used),
   );
 
   const actions = createElement("div", { className: "completion-actions" });
@@ -264,9 +293,10 @@ function renderProfile(context, draft = null) {
       age_range: formData.get("age_range"),
       gender: formData.get("gender"),
       night_walk_frequency: formData.get("night_walk_frequency"),
-      place_familiarity: formData.get("place_familiarity"),
       night_walking_comfort: formData.get("night_walking_comfort"),
-      vision_or_display_issue: formData.get("vision_or_display_issue"),
+      place_familiarity: formData.get("place_familiarity"),
+      screen_brightness: formData.get("screen_brightness"),
+      device_used: formData.get("device_used"),
     });
 
     routeToNextProtocolStep(context);
@@ -314,6 +344,11 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
 }
 
 function startMethod(context, methodId) {
+  if (methodId === "training_scene") {
+    renderTrainingScene(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
+    return;
+  }
+
   if (methodId === "pairwise_comparison") {
     renderPairwiseComparison(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
     return;
@@ -428,8 +463,9 @@ function readProfileDraft() {
     age_range: formData.get("age_range") || "",
     gender: formData.get("gender") || "",
     night_walk_frequency: formData.get("night_walk_frequency") || "",
-    place_familiarity: formData.get("place_familiarity") || "",
     night_walking_comfort: formData.get("night_walking_comfort") || "",
-    vision_or_display_issue: formData.get("vision_or_display_issue") || "",
+    place_familiarity: formData.get("place_familiarity") || "",
+    screen_brightness: formData.get("screen_brightness") || "",
+    device_used: formData.get("device_used") || "",
   };
 }

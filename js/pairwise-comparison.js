@@ -3,83 +3,136 @@ import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, makePairs } from "./utils.js";
+import { renderSceneMedia } from "./panorama-viewer.js";
 
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
   const pairs = makePairs(context.images, CONFIG.pairwiseTrialCount);
-  const trials = pairs.map((pair, index) => {
+  const trials = pairs.flatMap((pair, pairIndex) => {
     const [first, second] = Math.random() > 0.5 ? pair : [pair[1], pair[0]];
-    return {
+    return questions.map((question, questionIndex) => ({
       imageA: first,
       imageB: second,
-      question: questions[index % questions.length],
-      displayOrder: index + 1,
-    };
+      pairOrder: pairIndex + 1,
+      questionOrder: questionIndex + 1,
+      question,
+      displayOrder: pairIndex * questions.length + questionIndex + 1,
+    }));
   });
 
   let currentIndex = 0;
   let trialStartedAt = Date.now();
+  let activeScene = "A";
   const sessionResponses = [];
 
-  function renderTrial() {
+  root.innerHTML = "";
+
+  const toolbar = createElement("section", { className: "toolbar" });
+  const toolbarTitle = createElement("div");
+  const back = createElement("button", {
+    className: "secondary-button",
+    text: t(getContextLanguage(context), "back"),
+    attrs: { type: "button" },
+  });
+  const progressSlot = createElement("div");
+  const panel = createElement("section", { className: "panel question-panel pairwise-panel" });
+  const normalQuestion = createElement("div", { className: "question-text" });
+  const shell = createElement("section", {
+    className: "pairwise-viewer-shell",
+    attrs: { "data-active-scene": activeScene },
+  });
+  const pairGrid = createElement("div", { className: "pair-grid pairwise-fullscreen-grid" });
+  const switchButton = createElement("button", {
+    className: "pairwise-switch-button",
+    attrs: { type: "button" },
+  });
+  const exitFullscreenButton = createElement("button", {
+    className: "fullscreen-exit-button",
+    text: "Exit full screen",
+    attrs: { type: "button" },
+  });
+  const overlay = createElement("div", { className: "pairwise-fullscreen-overlay" });
+  const overlayProgress = createElement("p", { className: "step-label" });
+  const overlayQuestion = createElement("p", { className: "pairwise-overlay-question" });
+  const overlayAnswers = createElement("div", { className: "answer-row pairwise-overlay-answers" });
+  const normalAnswers = createElement("div", { className: "answer-row" });
+
+  shell.append(pairGrid, switchButton, exitFullscreenButton, overlay);
+  overlay.append(overlayProgress, overlayQuestion, overlayAnswers);
+  toolbar.append(toolbarTitle, back, progressSlot);
+  panel.append(normalQuestion, shell, normalAnswers);
+  root.append(toolbar, panel);
+
+  back.addEventListener("click", () => {
+    if (currentIndex === 0) {
+      renderProtocolIntro(root, context, onComplete, onRerenderReady);
+      return;
+    }
+
+    currentIndex -= 1;
+    sessionResponses.pop();
+    updateTrial();
+  });
+
+  switchButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    activeScene = activeScene === "A" ? "B" : "A";
+    updateActiveScene();
+  });
+  exitFullscreenButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    document.exitFullscreen?.();
+  });
+
+  document.addEventListener("fullscreenchange", updateActiveScene);
+  onRerenderReady(() => {
+    document.removeEventListener("fullscreenchange", updateActiveScene);
+    renderPairwiseComparison(root, context, onComplete, onRerenderReady);
+  });
+  updateTrial();
+
+  function updateTrial() {
     const language = getContextLanguage(context);
-    onRerenderReady(renderTrial);
 
     if (currentIndex >= trials.length) {
+      document.removeEventListener("fullscreenchange", updateActiveScene);
       completeMethod(root, context, methodId, sessionResponses, onComplete, onRerenderReady, () => {
         currentIndex -= 1;
         sessionResponses.pop();
-        renderTrial();
+        renderPairwiseComparison(root, context, onComplete, onRerenderReady);
       });
       return;
     }
 
     const trial = trials[currentIndex];
     trialStartedAt = Date.now();
-    root.innerHTML = "";
+    activeScene = "A";
 
-    const toolbar = createElement("section", { className: "toolbar" });
-    const back = createElement("button", {
-      className: "secondary-button",
-      text: t(language, "back"),
-      attrs: { type: "button" },
-    });
-    back.addEventListener("click", () => {
-      if (currentIndex === 0) {
-        renderProtocolIntro(root, context, onComplete, onRerenderReady);
-        return;
-      }
+    toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
+    back.textContent = t(language, "back");
+    progressSlot.replaceChildren(renderSurveyProgress(currentIndex + 1, trials.length, language));
+    normalQuestion.textContent = questionText(trial.question, language);
+    overlayProgress.textContent = `${t(language, "progress")} ${currentIndex + 1} / ${trials.length}`;
+    overlayQuestion.textContent = questionText(trial.question, language);
 
-      currentIndex -= 1;
-      sessionResponses.pop();
-      renderTrial();
-    });
-
-    toolbar.append(
-      createElement("div", {
-        html: `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`,
-      }),
-      back,
-      renderSurveyProgress(currentIndex + 1, trials.length, language),
+    pairGrid.replaceChildren(
+      renderScene("A", trial.imageA, language, enterComparisonFullscreen),
+      renderScene("B", trial.imageB, language, enterComparisonFullscreen),
     );
+    normalAnswers.replaceChildren(...renderAnswerButtons(language));
+    overlayAnswers.replaceChildren(...renderAnswerButtons(language));
+    updateActiveScene();
+  }
 
-    const panel = createElement("section", { className: "panel question-panel" });
-    panel.append(createElement("div", { className: "question-text", text: questionText(trial.question, language) }));
-
-    const pairGrid = createElement("div", { className: "pair-grid" });
-    pairGrid.append(renderScene("A", trial.imageA, language), renderScene("B", trial.imageB, language));
-    panel.append(pairGrid);
-
-    const answerRow = createElement("div", { className: "answer-row" });
-    answerRow.append(
+  function renderAnswerButtons(language) {
+    return [
       renderAnswerButton("A", "A", language),
       renderAnswerButton("B", "B", language),
       renderAnswerButton(t(language, "noClearDifference"), "no_clear_difference", language),
-    );
-    panel.append(answerRow);
-
-    root.append(toolbar, panel);
+    ];
   }
 
   function renderAnswerButton(label, value, language) {
@@ -89,7 +142,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       attrs: { type: "button" },
     });
 
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       const trial = trials[currentIndex];
       const response = buildBaseResponse(
         context.session,
@@ -103,23 +156,39 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       response.image_B = trial.imageB.image_id;
       response.answer = value;
       response.answer_value = value === "A" ? 1 : value === "B" ? 2 : 0;
+      response.pair_order = trial.pairOrder;
+      response.pair_question_order = trial.questionOrder;
 
       setButtonsDisabled(true);
       sessionResponses.push(response);
       currentIndex += 1;
-      renderTrial();
+      updateTrial();
     });
 
     return button;
   }
 
-  function setButtonsDisabled(disabled) {
-    document.querySelectorAll(".choice-button").forEach((button) => {
-      button.disabled = disabled;
+  function enterComparisonFullscreen(sceneLabel) {
+    activeScene = sceneLabel;
+    updateActiveScene();
+    shell.requestFullscreen?.();
+  }
+
+  function updateActiveScene() {
+    const language = getContextLanguage(context);
+    const nextScene = activeScene === "A" ? "B" : "A";
+    shell.dataset.activeScene = activeScene;
+    switchButton.textContent = `${t(language, "scene")} ${nextScene}`;
+    pairGrid.querySelectorAll(".scene-option").forEach((scene) => {
+      scene.classList.toggle("active", scene.dataset.sceneLabel === activeScene);
     });
   }
 
-  renderTrial();
+  function setButtonsDisabled(disabled) {
+    root.querySelectorAll(".choice-button").forEach((button) => {
+      button.disabled = disabled;
+    });
+  }
 }
 
 function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {
@@ -136,7 +205,7 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
 
   start.addEventListener("click", () => renderPairwiseComparison(root, context, onComplete, onRerenderReady));
   panel.append(
-    createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
+    createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 4, total: TOTAL_SURVEY_STEPS }) }),
     createElement("h2", { text: t(language, "pairwiseTitle") }),
     createElement("p", { text: t(language, "pairwiseIntroBody") }),
     createElement("div", { className: "completion-actions" }),
@@ -145,21 +214,20 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
   root.append(panel);
 }
 
-function renderScene(label, image, language) {
-  const wrapper = createElement("article", { className: "scene-option" });
-  const frame = createElement("div", { className: "scene-frame" });
-  const img = createElement("img", {
-    attrs: {
-      src: image.path,
-      alt: `Survey scene ${label}`,
-      loading: "eager",
-    },
+function renderScene(label, image, language, onFullscreenRequest) {
+  const wrapper = createElement("article", {
+    className: "scene-option",
+    attrs: { "data-scene-label": label },
+  });
+  const frame = renderSceneMedia(image, {
+    alt: `${t(language, "surveyScene")} ${label}`,
+    compact: true,
+    onFullscreenRequest: () => onFullscreenRequest(label),
   });
 
   const footer = createElement("div", { className: "scene-footer" });
   footer.append(createElement("span", { className: "scene-label", text: `${t(language, "scene")} ${label}` }));
 
-  frame.append(img);
   wrapper.append(frame, footer);
   return wrapper;
 }

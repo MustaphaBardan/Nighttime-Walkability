@@ -231,6 +231,8 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     profile_night_walk_frequency: session.profile?.night_walk_frequency || "",
     profile_place_familiarity: session.profile?.place_familiarity || "",
     profile_night_walking_comfort: session.profile?.night_walking_comfort || "",
+    profile_screen_brightness: session.profile?.screen_brightness || "",
+    profile_device_used: session.profile?.device_used || "",
     profile_vision_or_display_issue: session.profile?.vision_or_display_issue || "",
   };
 }

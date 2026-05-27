@@ -13,9 +13,14 @@ import { createElement } from "./utils.js";
 
 export const METHOD_DEFINITIONS = [
   {
+    id: "training_scene",
+    titleKey: "trainingTitle",
+    description: "Practice rotating a static 360 degree night scene before answering the main survey.",
+  },
+  {
     id: "pairwise_comparison",
     titleKey: "pairwiseTitle",
-    description: "Compare controlled scene pairs and choose the safer, clearer, or preferred route.",
+    description: "Compare controlled scene pairs and choose the safer, clearer, or preferred scene.",
   },
   {
     id: "detailed_rating",

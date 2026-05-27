@@ -4,6 +4,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 
 const root = process.cwd();
 const port = Number(process.env.PORT || 8000);
+const host = process.env.HOST || "0.0.0.0";
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -52,6 +53,7 @@ const server = createServer((request, response) => {
   createReadStream(filePath).pipe(response);
 });
 
-server.listen(port, () => {
+server.listen(port, host, () => {
   console.log(`Night Walkability Survey running at http://127.0.0.1:${port}/`);
+  console.log(`Listening on ${host}:${port}`);
 });

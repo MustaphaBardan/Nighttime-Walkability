@@ -1,0 +1,44 @@
+{
+  "default": {
+    "variant_id": "ideal_default_test",
+    "path": "assets/images/Test_image_panoramic.png",
+    "view_type": "panorama_360",
+    "initial_yaw_degrees": 90,
+    "description": "Default ideal scene preview using the current test panorama."
+  },
+  "variants": [
+    {
+      "variant_id": "lighting_low_test",
+      "conditions": { "preferred_lighting_intensity": "low" },
+      "path": "assets/images/Test_image_panoramic.png",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90
+    },
+    {
+      "variant_id": "lighting_medium_test",
+      "conditions": { "preferred_lighting_intensity": "medium" },
+      "path": "assets/images/Test_image_panoramic.png",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90
+    },
+    {
+      "variant_id": "lighting_high_test",
+      "conditions": { "preferred_lighting_intensity": "high" },
+      "path": "assets/images/Test_image_panoramic.png",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90
+    },
+    {
+      "variant_id": "example_full_combination_test",
+      "conditions": {
+        "preferred_lighting_intensity": "medium",
+        "preferred_lighting_distribution": "uniform",
+        "preferred_vegetation_density": "medium",
+        "preferred_spatial_openness": "balanced"
+      },
+      "path": "assets/images/Test_image_panoramic.png",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90
+    }
+  ]
+}
