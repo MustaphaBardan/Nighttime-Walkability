@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:panoramas": "node scripts/generate-panorama-assets.js",
     "dev": "node scripts/dev-server.js",
     "start": "npm run dev",
     "check": "node scripts/check.js"

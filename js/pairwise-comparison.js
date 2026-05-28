@@ -3,7 +3,7 @@ import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, makePairs } from "./utils.js";
-import { renderSceneMedia } from "./panorama-viewer.js";
+import { getImageAssetMetadata, renderSceneMedia } from "./panorama-viewer.js";
 
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
@@ -154,6 +154,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
       response.image_A = trial.imageA.image_id;
       response.image_B = trial.imageB.image_id;
+      Object.assign(response, pairImageAssetFields("image_A", trial.imageA));
+      Object.assign(response, pairImageAssetFields("image_B", trial.imageB));
       response.answer = value;
       response.answer_value = value === "A" ? 1 : value === "B" ? 2 : 0;
       response.pair_order = trial.pairOrder;
@@ -189,6 +191,18 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       button.disabled = disabled;
     });
   }
+}
+
+function pairImageAssetFields(prefix, image) {
+  const asset = getImageAssetMetadata(image);
+
+  return {
+    [`${prefix}_asset_path`]: asset.path,
+    [`${prefix}_asset_variant`]: asset.variant,
+    [`${prefix}_asset_width`]: asset.width,
+    [`${prefix}_asset_height`]: asset.height,
+    [`${prefix}_asset_format`]: asset.format,
+  };
 }
 
 function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {

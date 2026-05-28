@@ -5,11 +5,13 @@ const KEY_STEP = Math.PI / 36;
 const MAX_PITCH = Math.PI * 0.47;
 const MIN_FOV = 42;
 const MAX_FOV = 94;
+const MOBILE_IMAGE_QUERY = "(max-width: 719px)";
 const imageCache = new Map();
+const renderedAssetCache = new WeakMap();
 const textureSourceCache = new WeakMap();
 
 export function preloadSurveyImages(images = []) {
-  const paths = [...new Set(images.map((image) => image.path).filter(Boolean))];
+  const paths = [...new Set(images.map((image) => resolveSceneImageSource(image).path).filter(Boolean))];
   return Promise.allSettled(paths.map((path) => loadCachedImage(path)));
 }
 
@@ -43,14 +45,49 @@ export function renderSceneMedia(image, options = {}) {
   return renderFlatImage(image, options);
 }
 
+export function getImageAssetMetadata(image) {
+  const source = getRenderedImageSource(image) || resolveSceneImageSource(image);
+
+  return {
+    path: source.path || "",
+    variant: source.variant || "",
+    width: source.width || "",
+    height: source.height || "",
+    format: source.format || getFileExtension(source.path),
+  };
+}
+
+export function resolveSceneImageSource(image = {}) {
+  const responsiveSources = image.responsive_sources || {};
+  const mobileSource = responsiveSources.mobile;
+  const desktopSource = responsiveSources.desktop;
+
+  if (mobileSource?.path && isMobileImageViewport()) {
+    return normalizeImageSource(mobileSource, "mobile");
+  }
+
+  if (desktopSource?.path) {
+    return normalizeImageSource(desktopSource, "desktop");
+  }
+
+  return normalizeImageSource({
+    path: image.path,
+    width: image.width,
+    height: image.height,
+    format: image.format,
+  }, "default");
+}
+
 function renderFlatImage(image, options = {}) {
+  const source = resolveSceneImageSource(image);
+  rememberRenderedImageSource(image, source);
   const frame = createElement("div", {
     className: "scene-frame",
     attrs: { tabindex: "0" },
   });
   const img = createElement("img", {
     attrs: {
-      src: image.path,
+      src: source.path,
       alt: options.alt || image.description || "Survey scene",
       loading: options.loading || "eager",
     },
@@ -62,6 +99,8 @@ function renderFlatImage(image, options = {}) {
 }
 
 function renderPanoramaViewer(image, options = {}) {
+  const source = resolveSceneImageSource(image);
+  rememberRenderedImageSource(image, source);
   const classNames = ["scene-frame", "panorama-frame"];
 
   if (options.compact) {
@@ -94,8 +133,40 @@ function renderPanoramaViewer(image, options = {}) {
 
   appendFullscreenButton(frame, options);
 
-  createSphericalViewer(frame, canvas, image.path, options);
+  createSphericalViewer(frame, canvas, source.path, options);
   return frame;
+}
+
+function getRenderedImageSource(image) {
+  return image && typeof image === "object" ? renderedAssetCache.get(image) : null;
+}
+
+function rememberRenderedImageSource(image, source) {
+  if (image && typeof image === "object") {
+    renderedAssetCache.set(image, source);
+  }
+}
+
+function isMobileImageViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return Boolean(window.matchMedia?.(MOBILE_IMAGE_QUERY).matches || window.innerWidth < 720);
+}
+
+function normalizeImageSource(source = {}, variant) {
+  return {
+    path: source.path || "",
+    variant: source.variant || variant,
+    width: source.width || "",
+    height: source.height || "",
+    format: source.format || getFileExtension(source.path),
+  };
+}
+
+function getFileExtension(path = "") {
+  return path.split(".").pop()?.toLowerCase() || "";
 }
 
 function appendFullscreenButton(frame, options = {}) {

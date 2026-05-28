@@ -1,7 +1,24 @@
 [
   {
     "image_id": "scene_001_panorama_test",
-    "path": "assets/images/Test_image_panoramic.png",
+    "path": "assets/images/Test_image_panoramic_4k.png",
+    "source_path": "assets/images/Test_image_panoramic.png",
+    "responsive_sources": {
+      "mobile": {
+        "variant": "mobile_2k",
+        "path": "assets/images/Test_image_panoramic_2k.png",
+        "width": 2048,
+        "height": 1024,
+        "format": "png"
+      },
+      "desktop": {
+        "variant": "desktop_4k",
+        "path": "assets/images/Test_image_panoramic_4k.png",
+        "width": 4096,
+        "height": 2048,
+        "format": "png"
+      }
+    },
     "view_type": "panorama_360",
     "initial_yaw_degrees": 90,
     "scenario": "panorama_test",
@@ -12,7 +29,24 @@
   },
   {
     "image_id": "scene_002_panorama_test",
-    "path": "assets/images/Test_image_panoramic.png",
+    "path": "assets/images/Test_image_panoramic_4k.png",
+    "source_path": "assets/images/Test_image_panoramic.png",
+    "responsive_sources": {
+      "mobile": {
+        "variant": "mobile_2k",
+        "path": "assets/images/Test_image_panoramic_2k.png",
+        "width": 2048,
+        "height": 1024,
+        "format": "png"
+      },
+      "desktop": {
+        "variant": "desktop_4k",
+        "path": "assets/images/Test_image_panoramic_4k.png",
+        "width": 4096,
+        "height": 2048,
+        "format": "png"
+      }
+    },
     "view_type": "panorama_360",
     "initial_yaw_degrees": 90,
     "scenario": "panorama_test",
@@ -23,7 +57,24 @@
   },
   {
     "image_id": "scene_003_panorama_test",
-    "path": "assets/images/Test_image_panoramic.png",
+    "path": "assets/images/Test_image_panoramic_4k.png",
+    "source_path": "assets/images/Test_image_panoramic.png",
+    "responsive_sources": {
+      "mobile": {
+        "variant": "mobile_2k",
+        "path": "assets/images/Test_image_panoramic_2k.png",
+        "width": 2048,
+        "height": 1024,
+        "format": "png"
+      },
+      "desktop": {
+        "variant": "desktop_4k",
+        "path": "assets/images/Test_image_panoramic_4k.png",
+        "width": 4096,
+        "height": 2048,
+        "format": "png"
+      }
+    },
     "view_type": "panorama_360",
     "initial_yaw_degrees": 90,
     "scenario": "panorama_test",
@@ -34,7 +85,24 @@
   },
   {
     "image_id": "scene_004_panorama_test",
-    "path": "assets/images/Test_image_panoramic.png",
+    "path": "assets/images/Test_image_panoramic_4k.png",
+    "source_path": "assets/images/Test_image_panoramic.png",
+    "responsive_sources": {
+      "mobile": {
+        "variant": "mobile_2k",
+        "path": "assets/images/Test_image_panoramic_2k.png",
+        "width": 2048,
+        "height": 1024,
+        "format": "png"
+      },
+      "desktop": {
+        "variant": "desktop_4k",
+        "path": "assets/images/Test_image_panoramic_4k.png",
+        "width": 4096,
+        "height": 2048,
+        "format": "png"
+      }
+    },
     "view_type": "panorama_360",
     "initial_yaw_degrees": 90,
     "scenario": "panorama_test",

@@ -19,6 +19,7 @@ const jsFiles = [
   "js/survey-methods.js",
   "js/utils.js",
   "scripts/dev-server.js",
+  "scripts/generate-panorama-assets.js",
   "scripts/check.js",
 ];
 
