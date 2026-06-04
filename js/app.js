@@ -22,7 +22,7 @@ import {
   renderTrainingScene,
 } from "./simple-methods.js";
 import { getContextLanguage, t } from "./i18n.js";
-import { byId, createElement } from "./utils.js";
+import { byId, createElement, getDeviceType } from "./utils.js";
 import { renderPairwiseComparison } from "./pairwise-comparison.js";
 import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.js";
 
@@ -31,6 +31,7 @@ const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
 let rerenderCurrentView = () => {};
 let mediaWarmupStarted = false;
+let lastAllowedDeviceState = null;
 
 initThemeToggle();
 applyLanguage(session.language);
@@ -82,6 +83,7 @@ function renderWelcome(context) {
   const language = getContextLanguage(context);
   const progress = getProgress();
   const hasPartialProgress = hasSavedPartialProgress(progress);
+  const allowedDevice = isDesktopSurveyDevice(context);
   setCurrentViewRenderer(() => renderWelcome(context));
   app.innerHTML = "";
 
@@ -94,11 +96,15 @@ function renderWelcome(context) {
     createElement("p", { text: t(language, "welcomePrivacy") }),
   );
 
+  if (!allowedDevice) {
+    panel.append(renderDesktopOnlyNotice(context));
+  }
+
   const actions = createElement("div", { className: "completion-actions" });
   const start = createElement("button", {
     className: "primary-button",
     text: t(language, hasPartialProgress ? "continueSurvey" : "startSurvey"),
-    attrs: { type: "button" },
+    attrs: allowedDevice ? { type: "button" } : { type: "button", disabled: "disabled" },
   });
 
   start.addEventListener("click", () => {
@@ -114,6 +120,11 @@ function renderWelcome(context) {
 }
 
 function routeAfterWelcome(context) {
+  if (!isDesktopSurveyDevice(context)) {
+    renderWelcome(context);
+    return;
+  }
+
   const progress = getProgress();
 
   if (!progress.profile_completed) {
@@ -158,6 +169,11 @@ function renderCompletedPrompt(context) {
 
   back.addEventListener("click", () => renderFinalThanks());
   redo.addEventListener("click", () => {
+    if (!isDesktopSurveyDevice(context)) {
+      renderWelcome(context);
+      return;
+    }
+
     getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
     markSurveyStarted(context.session, { reset: true });
     routeToNextProtocolStep(context);
@@ -173,6 +189,11 @@ function renderCompletedPrompt(context) {
 }
 
 function routeToNextProtocolStep(context) {
+  if (!isDesktopSurveyDevice(context)) {
+    renderWelcome(context);
+    return;
+  }
+
   const progress = getProgress();
 
   if (!progress.profile_completed) {
@@ -202,6 +223,11 @@ function warmUpSurveyMedia(context) {
 
 function renderProfile(context, draft = null) {
   const language = getContextLanguage(context);
+  if (!isDesktopSurveyDevice(context)) {
+    renderWelcome(context);
+    return;
+  }
+
   setCurrentViewRenderer(() => renderProfile(context, readProfileDraft()));
   app.innerHTML = "";
   const values = draft || context.session.profile || {};
@@ -344,6 +370,11 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
 }
 
 function startMethod(context, methodId) {
+  if (!isDesktopSurveyDevice(context)) {
+    renderWelcome(context);
+    return;
+  }
+
   if (methodId === "training_scene") {
     renderTrainingScene(app, context, routeToNextProtocolStep, setCurrentViewRenderer);
     return;
@@ -369,6 +400,25 @@ function startMethod(context, methodId) {
   }
 }
 
+function isDesktopSurveyDevice(context) {
+  const currentDevice = getDeviceType();
+
+  if (context?.session) {
+    context.session.device = currentDevice;
+  }
+
+  return currentDevice === "desktop";
+}
+
+function renderDesktopOnlyNotice(context) {
+  const language = getContextLanguage(context);
+
+  return createElement("div", {
+    className: "device-block-notice",
+    html: `<strong>${t(language, "desktopOnlyTitle")}</strong><p>${t(language, "desktopOnlyBody")}</p>`,
+  });
+}
+
 function renderFinalThanks() {
   const language = getContextLanguage({ session });
   setCurrentViewRenderer(renderFinalThanks);
@@ -383,6 +433,7 @@ function renderFinalThanks() {
 }
 
 init();
+initDeviceGateResizeWatcher();
 
 function initThemeToggle() {
   const button = byId("theme-toggle");
@@ -425,6 +476,29 @@ function changeLanguage(context, language) {
 
 function setCurrentViewRenderer(callback) {
   rerenderCurrentView = callback;
+}
+
+function initDeviceGateResizeWatcher() {
+  window.addEventListener("resize", () => {
+    const allowedDevice = getDeviceType() === "desktop";
+
+    if (allowedDevice === lastAllowedDeviceState) {
+      return;
+    }
+
+    lastAllowedDeviceState = allowedDevice;
+
+    if (!window.surveyContext) {
+      return;
+    }
+
+    if (!allowedDevice) {
+      renderWelcome(window.surveyContext);
+      return;
+    }
+
+    rerenderCurrentView();
+  });
 }
 
 function renderHeaderLanguageSelector() {

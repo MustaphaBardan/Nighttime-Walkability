@@ -1,5 +1,5 @@
 image_id,mean_luminance,path_luminance,uniformity,dark_ratio,contrast,enclosure,svf,vegetation_ratio
-scene_001_balanced_path,,,,,,,,
-scene_002_dim_corridor,,,,,,,,
-scene_003_open_square,,,,,,,,
-scene_004_vegetated_edge,,,,,,,,
+scene_001_panorama_test,,,,,,,,
+scene_002_panorama_test,,,,,,,,
+scene_003_panorama_test,,,,,,,,
+scene_004_panorama_test,,,,,,,,

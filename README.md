@@ -2,7 +2,7 @@
 
 Static research survey platform for the proposed night walkability methodology.
 
-Current version: `v2_proposed_methodology_2026_05`.
+Current version: `v4_static_360_panorama`.
 
 ## Run Locally
 
@@ -40,14 +40,16 @@ The survey flow is:
 
 1. Welcome page
 2. Anonymous general information
-3. Pairwise comparison block
-4. Detailed scene rating block
-5. Ideal scene builder
-6. Final realism check and optional comment
-7. Thank-you page
+3. Training 360-degree scene
+4. Pairwise comparison block
+5. Detailed scene rating block
+6. Ideal scene builder
+7. Final realism check and optional comment
+8. Thank-you page
 
 The participant no longer chooses a method. This version follows one fixed path:
 
+- one 360-degree training scene so participants can learn the viewer controls;
 - pairwise comparison for controlled scene preferences;
 - detailed 1-5 scene ratings for safety, comfort, visibility, obstacle detection, legibility, and route choice;
 - ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
@@ -55,9 +57,11 @@ The participant no longer chooses a method. This version follows one fixed path:
 
 The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
 
+The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and asks participants to use a computer or laptop with a desktop-sized browser window before starting or continuing.
+
 Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
 
-With the current four placeholder scenes, the pairwise block uses all available unique pairs. When more scenes are added, `js/config.js` targets up to 10 pairwise trials and 8 detailed-rating scenes per participant.
+With the current four placeholder scenes, the pairwise block uses all available unique pairs. When more scenes are added, `js/config.js` currently targets up to 6 pairwise pairs and 8 detailed-rating scenes per participant.
 
 ## Configure Remote Saving
 
@@ -105,7 +109,23 @@ Anonymous profile fields are repeated on each answer row:
 - `profile_night_walk_frequency`
 - `profile_place_familiarity`
 - `profile_night_walking_comfort`
-- `profile_vision_or_display_issue`
+- `profile_screen_brightness`
+- `profile_device_used`
+- `profile_vision_or_display_issue` legacy column, kept for older exports or future reuse
+
+Scene asset fields are also repeated on answer rows so later analysis can distinguish which responsive panorama file was rendered:
+
+- `image_asset_path`
+- `image_asset_variant`
+- `image_asset_width`
+- `image_asset_height`
+- `image_asset_format`
+
+Pairwise rows additionally include `image_A_*` and `image_B_*` asset fields, plus `pair_order` and `pair_question_order`. Ideal-scene-builder rows include `preview_variant_id`.
+
+The training-scene row includes `yaw_coverage_degrees`, which stores how much of the 360-degree panorama the participant covered before continuing.
+
+The indicator table in `data/indicators.csv` is keyed by `image_id` and should match the IDs in `data/images.json`. The current rows are placeholders for the four panorama test scenes.
 
 Final submissions replace previous rows for the same `participant_id`.
 

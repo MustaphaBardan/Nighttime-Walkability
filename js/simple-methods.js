@@ -15,6 +15,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
   };
   const image = context.images.find((item) => item.view_type === "panorama_360") || context.images[0];
   let startedAt = Date.now();
+  let yawCoverageDegrees = 0;
 
   function renderCurrent() {
     const language = getContextLanguage(context);
@@ -32,11 +33,35 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     );
     const panel = createElement("section", { className: "panel question-panel training-panel" });
     const actions = createElement("div", { className: "completion-actions" });
+    const coverageValue = createElement("strong", { text: t(language, "yawCoverageValue", { current: 0 }) });
+    const fullscreenCoverageValue = createElement("div", {
+      className: "training-yaw-fullscreen",
+      text: t(language, "yawCoverageValue", { current: 0 }),
+    });
+    const coverageRange = createElement("input", {
+      className: "training-yaw-range",
+      attrs: {
+        type: "range",
+        min: "0",
+        max: "360",
+        value: "0",
+        disabled: "disabled",
+        "aria-label": t(language, "yawCoverageLabel"),
+      },
+    });
+    const coverageMeter = createElement("div", { className: "training-yaw-meter" });
     const continueButton = createElement("button", {
       className: "primary-button",
       text: t(language, "continue"),
       attrs: { type: "button" },
     });
+
+    function updateYawCoverage({ yawCoverageDegrees: nextCoverage }) {
+      yawCoverageDegrees = Math.max(0, Math.min(360, Math.round(nextCoverage || 0)));
+      coverageRange.value = String(yawCoverageDegrees);
+      coverageValue.textContent = t(language, "yawCoverageValue", { current: yawCoverageDegrees });
+      fullscreenCoverageValue.textContent = t(language, "yawCoverageValue", { current: yawCoverageDegrees });
+    }
 
     continueButton.addEventListener("click", () => {
       saveLocalBackup(makeResponse(context, methodId, question, 1, startedAt, {
@@ -44,16 +69,30 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
         ...singleImageAssetFields(image),
         answer: "viewed",
         answer_value: 1,
+        yaw_coverage_degrees: yawCoverageDegrees,
       }));
       markMethodCompleted(methodId);
       onComplete(context);
     });
 
+    coverageMeter.append(
+      createElement("div", {
+        className: "training-yaw-meter-label",
+        html: `<span>${t(language, "yawCoverageLabel")}</span>`,
+      }),
+      coverageValue,
+      coverageRange,
+    );
     actions.append(continueButton);
     panel.append(
       createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
       createElement("p", { className: "question-text", text: questionText(question, language) }),
-      renderSingleImage(image, language, { fullViewport: true }),
+      renderSingleImage(image, language, {
+        fullViewport: true,
+        onYawCoverageChange: updateYawCoverage,
+        overlayElement: fullscreenCoverageValue,
+      }),
+      coverageMeter,
       actions,
     );
     root.append(toolbar, panel);
@@ -143,7 +182,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   const mediaSlot = createElement("div", { className: "detailed-rating-media" });
   const exitFullscreenButton = createElement("button", {
     className: "fullscreen-exit-button",
-    text: "Exit full screen",
+    text: t(getContextLanguage(context), "exitFullScreen"),
     attrs: { type: "button" },
   });
   const overlay = createElement("div", { className: "detailed-rating-overlay" });
@@ -265,7 +304,7 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
   const overlayControls = createElement("div", { className: "ideal-builder-overlay-controls" });
   const exitFullscreenButton = createElement("button", {
     className: "fullscreen-exit-button",
-    text: "Exit full screen",
+    text: t(getContextLanguage(context), "exitFullScreen"),
     attrs: { type: "button" },
   });
   const parametersToggle = createElement("button", {
@@ -561,6 +600,7 @@ function renderSingleImage(image, language = "en", options = {}) {
   const wrapper = createElement("article", { className: "scene-option single-scene" });
   const frame = renderSceneMedia(image, {
     alt: `${t(language, "surveyScene")} ${image.image_id || ""}`.trim(),
+    fullscreenLabel: t(language, "fullScreen"),
     ...options,
   });
 

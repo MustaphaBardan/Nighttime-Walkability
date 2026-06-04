@@ -131,6 +131,10 @@ function renderPanoramaViewer(image, options = {}) {
 
   frame.append(canvas, badge);
 
+  if (options.overlayElement instanceof HTMLElement) {
+    frame.append(options.overlayElement);
+  }
+
   appendFullscreenButton(frame, options);
 
   createSphericalViewer(frame, canvas, source.path, options);
@@ -176,7 +180,7 @@ function appendFullscreenButton(frame, options = {}) {
 
   const fullscreenButton = createElement("button", {
     className: "panorama-fullscreen-button",
-    text: "Full screen",
+    text: options.fullscreenLabel || "Full screen",
     attrs: { type: "button" },
   });
 
@@ -242,6 +246,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     textureReady: false,
     renderQueued: false,
   };
+  const yawCoverage = createYawCoverageTracker(state.yaw, options.onYawCoverageChange);
   const vertexBuffer = gl.createBuffer();
   const texture = gl.createTexture();
 
@@ -313,8 +318,10 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   }
 
   function setView(nextYaw, nextPitch) {
+    const previousYaw = state.yaw;
     state.yaw = nextYaw;
     state.pitch = clamp(nextPitch, -MAX_PITCH, MAX_PITCH);
+    yawCoverage.record(previousYaw, state.yaw);
     requestRender();
   }
 
@@ -369,6 +376,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   }
 
   requestAnimationFrame(resizeCanvas);
+  yawCoverage.notify();
 }
 
 function renderImageFallback(frame, imagePath, options) {
@@ -388,6 +396,58 @@ function clamp(value, min, max) {
 
 function degreesToRadians(value) {
   return Number(value || 0) * Math.PI / 180;
+}
+
+function radiansToDegrees(value) {
+  return Number(value || 0) * 180 / Math.PI;
+}
+
+function createYawCoverageTracker(initialYaw, onChange) {
+  const visitedBins = new Set([yawToDegreeBin(initialYaw)]);
+  let hasMoved = false;
+
+  function emit(yaw) {
+    if (typeof onChange !== "function") {
+      return;
+    }
+
+    onChange({
+      yawCoverageDegrees: hasMoved ? Math.min(360, visitedBins.size) : 0,
+      yawDegrees: normalizeDegrees(radiansToDegrees(yaw)),
+    });
+  }
+
+  return {
+    notify() {
+      emit(initialYaw);
+    },
+
+    record(previousYaw, nextYaw) {
+      const deltaDegrees = radiansToDegrees(nextYaw - previousYaw);
+
+      if (!Number.isFinite(deltaDegrees) || Math.abs(deltaDegrees) < 0.001) {
+        return;
+      }
+
+      hasMoved = true;
+      const steps = Math.max(1, Math.ceil(Math.abs(deltaDegrees)));
+
+      for (let index = 0; index <= steps; index += 1) {
+        const ratio = index / steps;
+        visitedBins.add(yawToDegreeBin(previousYaw + (nextYaw - previousYaw) * ratio));
+      }
+
+      emit(nextYaw);
+    },
+  };
+}
+
+function yawToDegreeBin(yaw) {
+  return Math.floor(normalizeDegrees(radiansToDegrees(yaw)));
+}
+
+function normalizeDegrees(value) {
+  return ((value % 360) + 360) % 360;
 }
 
 function loadCachedImage(path) {

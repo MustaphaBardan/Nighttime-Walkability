@@ -49,7 +49,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   });
   const exitFullscreenButton = createElement("button", {
     className: "fullscreen-exit-button",
-    text: "Exit full screen",
+    text: t(getContextLanguage(context), "exitFullScreen"),
     attrs: { type: "button" },
   });
   const overlay = createElement("div", { className: "pairwise-fullscreen-overlay" });
@@ -113,6 +113,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
+    exitFullscreenButton.textContent = t(language, "exitFullScreen");
     progressSlot.replaceChildren(renderSurveyProgress(currentIndex + 1, trials.length, language));
     normalQuestion.textContent = questionText(trial.question, language);
     overlayProgress.textContent = `${t(language, "progress")} ${currentIndex + 1} / ${trials.length}`;
@@ -236,6 +237,7 @@ function renderScene(label, image, language, onFullscreenRequest) {
   const frame = renderSceneMedia(image, {
     alt: `${t(language, "surveyScene")} ${label}`,
     compact: true,
+    fullscreenLabel: t(language, "fullScreen"),
     onFullscreenRequest: () => onFullscreenRequest(label),
   });
 

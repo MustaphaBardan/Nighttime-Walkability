@@ -3,8 +3,8 @@
     {
       "question_id": "training_360_scene_viewed",
       "text": {
-        "en": "Use this training scene to rotate the 360 degree view and inspect the surroundings before continuing.",
-        "fr": "Utilisez cette scène d'entraînement pour faire pivoter la vue à 360 degrés et observer les environs avant de continuer."
+        "en": "Enter the 360 degree scene, make at least one turn, and inspect the surroundings before continuing.",
+        "fr": "Entrez dans la scène à 360 degrés, faites au moins un tour, puis observez les environs avant de continuer."
       },
       "type": "instruction"
     }
