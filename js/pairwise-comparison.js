@@ -2,7 +2,7 @@ import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
-import { getImageAssetMetadata, renderSceneMedia } from "./panorama-viewer.js";
+import { renderSceneMedia } from "./panorama-viewer.js";
 
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
@@ -17,8 +17,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     return {
       imageA: first,
       imageB: second,
-      pairOrder: pairIndex + 1,
-      questionOrder: questionIndex + 1,
       question: questions[questionIndex],
       displayOrder: pairIndex + 1,
     };
@@ -189,14 +187,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       response.image_B = trial.imageB.image_id;
       response.image_left = trial.imageA.image_id;
       response.image_right = trial.imageB.image_id;
-      response.image_A_position = "left";
-      response.image_B_position = "right";
-      Object.assign(response, pairImageAssetFields("image_A", trial.imageA));
-      Object.assign(response, pairImageAssetFields("image_B", trial.imageB));
       response.answer = value;
       response.answer_value = value === "A" ? 1 : value === "B" ? 2 : 0;
-      response.pair_order = trial.pairOrder;
-      response.pair_question_order = trial.questionOrder;
 
       setButtonsDisabled(true);
       sessionResponses.push(response);
@@ -229,18 +221,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       button.disabled = disabled;
     });
   }
-}
-
-function pairImageAssetFields(prefix, image) {
-  const asset = getImageAssetMetadata(image);
-
-  return {
-    [`${prefix}_asset_path`]: asset.path,
-    [`${prefix}_asset_variant`]: asset.variant,
-    [`${prefix}_asset_width`]: asset.width,
-    [`${prefix}_asset_height`]: asset.height,
-    [`${prefix}_asset_format`]: asset.format,
-  };
 }
 
 function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {

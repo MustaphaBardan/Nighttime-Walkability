@@ -187,15 +187,6 @@
       "scale": 5
     },
     {
-      "question_id": "lighting_plausibility",
-      "text": {
-        "en": "The lighting felt plausible for a night-time urban environment.",
-        "fr": "L'éclairage semblait plausible pour un environnement urbain nocturne."
-      },
-      "type": "scale",
-      "scale": 5
-    },
-    {
       "question_id": "panorama_helpfulness",
       "text": {
         "en": "The 360 degree view helped me understand the surrounding environment.",
@@ -205,33 +196,14 @@
       "scale": 5
     },
     {
-      "question_id": "lighting_security_contribution",
-      "text": {
-        "en": "To what extent did the lighting contribute to your feeling of security in these scenes?",
-        "fr": "Dans quelle mesure l'éclairage a-t-il contribué à votre sentiment de sécurité dans ces scènes ?"
-      },
-      "type": "scale",
-      "scale": 5,
-      "scale_labels": {
-        "min": {
-          "en": "Not at all",
-          "fr": "Pas du tout"
-        },
-        "max": {
-          "en": "Very strongly",
-          "fr": "Très fortement"
-        }
-      }
-    },
-    {
       "question_id": "atmosphere_improvement",
       "text": {
-        "en": "In your opinion, what could improve the atmosphere of these night scenes, especially in terms of light and/or sound?",
-        "fr": "À votre avis, qu'est-ce qui pourrait améliorer l'ambiance de ces scènes nocturnes, notamment en matière de lumière et/ou de son ?"
+        "en": "In your opinion, what could improve the atmosphere of these night scenes?",
+        "fr": "À votre avis, qu'est-ce qui pourrait améliorer l'ambiance de ces scènes nocturnes ?"
       },
       "helper": {
-        "en": "You may mention lighting level, dark areas, contrasts, path visibility, vegetation, people, sound atmosphere, calm, comfort, or discomfort.",
-        "fr": "Vous pouvez mentionner le niveau d'éclairage, les zones sombres, les contrastes, la visibilité du cheminement, la végétation, la présence de personnes, l'ambiance sonore, le calme, le confort ou l'inconfort."
+        "en": "You may mention lighting level, dark areas, contrasts, path visibility, vegetation, people, calm, comfort, or discomfort.",
+        "fr": "Vous pouvez mentionner le niveau d'éclairage, les zones sombres, les contrastes, la visibilité du cheminement, la végétation, la présence de personnes, le calme, le confort ou l'inconfort."
       },
       "type": "textarea",
       "optional": true

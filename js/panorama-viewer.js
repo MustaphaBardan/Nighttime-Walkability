@@ -246,7 +246,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     textureReady: false,
     renderQueued: false,
   };
-  const yawCoverage = createYawCoverageTracker(state.yaw, options.onYawCoverageChange);
+  const yawCoverage = createYawCoverageTracker(state.yaw, options.onYawCoverageChange, options.yawCoverageState);
   const vertexBuffer = gl.createBuffer();
   const texture = gl.createTexture();
 
@@ -402,9 +402,15 @@ function radiansToDegrees(value) {
   return Number(value || 0) * 180 / Math.PI;
 }
 
-function createYawCoverageTracker(initialYaw, onChange) {
-  const visitedBins = new Set([yawToDegreeBin(initialYaw)]);
-  let hasMoved = false;
+function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
+  const visitedBins = coverageState.visitedBins instanceof Set ? coverageState.visitedBins : new Set();
+
+  if (!visitedBins.size) {
+    visitedBins.add(yawToDegreeBin(initialYaw));
+  }
+
+  coverageState.visitedBins = visitedBins;
+  coverageState.hasMoved = Boolean(coverageState.hasMoved);
 
   function emit(yaw) {
     if (typeof onChange !== "function") {
@@ -412,7 +418,7 @@ function createYawCoverageTracker(initialYaw, onChange) {
     }
 
     onChange({
-      yawCoverageDegrees: hasMoved ? Math.min(360, visitedBins.size) : 0,
+      yawCoverageDegrees: coverageState.hasMoved ? Math.min(360, visitedBins.size) : 0,
       yawDegrees: normalizeDegrees(radiansToDegrees(yaw)),
     });
   }
@@ -429,7 +435,7 @@ function createYawCoverageTracker(initialYaw, onChange) {
         return;
       }
 
-      hasMoved = true;
+      coverageState.hasMoved = true;
       const steps = Math.max(1, Math.ceil(Math.abs(deltaDegrees)));
 
       for (let index = 0; index <= steps; index += 1) {

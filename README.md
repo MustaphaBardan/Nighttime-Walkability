@@ -53,7 +53,7 @@ The participant no longer chooses a method. This version follows one fixed path:
 - pairwise comparison for controlled scene preferences;
 - detailed 1-5 scene ratings for safety, comfort, visibility, obstacle detection, legibility, and route choice;
 - ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
-- realism and lighting-plausibility checks at the end.
+- realism and final viewing-quality checks at the end.
 
 The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
 
@@ -96,7 +96,6 @@ Study/admin fields are included on each answer row:
 
 - `participant_id`
 - `language`
-- `device`
 - `survey_completed_at`
 - `survey_duration_ms`
 
@@ -113,22 +112,11 @@ Anonymous profile fields are repeated on each answer row:
 - `profile_night_walking_comfort`
 - `profile_screen_brightness`
 - `profile_device_used`
-- `profile_vision_or_display_issue` legacy column, kept for older exports or future reuse
 
-Scene asset fields are also repeated on answer rows so later analysis can distinguish which responsive panorama file was rendered:
-
-- `image_asset_path`
-- `image_asset_variant`
-- `image_asset_width`
-- `image_asset_height`
-- `image_asset_format`
-
-Pairwise rows additionally include `image_A_*` and `image_B_*` asset fields, left/right placement fields, plus `pair_order` and `pair_question_order`. The placement fields are:
+Pairwise rows additionally include left/right placement fields:
 
 - `image_left`
 - `image_right`
-- `image_A_position`
-- `image_B_position`
 
 Ideal-scene-builder rows include `preview_variant_id`.
 

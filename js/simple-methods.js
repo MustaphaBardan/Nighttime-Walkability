@@ -2,7 +2,7 @@ import { getContextLanguage, localize, optionLabel, optionPreview, questionText,
 import { markMethodCompleted, saveLocalBackup } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, makeResponse, renderSurveyProgress } from "./survey-methods.js";
 import { createElement, getScenarioImages, getTrainingImage, takeDeterministicSubset } from "./utils.js";
-import { getImageAssetMetadata, renderSceneMedia } from "./panorama-viewer.js";
+import { renderSceneMedia } from "./panorama-viewer.js";
 
 const FINAL_COMMENT_CHARACTER_LIMIT = 300;
 
@@ -15,6 +15,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
   const image = getTrainingImage(context.images);
   let startedAt = Date.now();
   let yawCoverageDegrees = 0;
+  const yawCoverageState = {};
 
   function renderCurrent() {
     const language = getContextLanguage(context);
@@ -32,10 +33,10 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     );
     const panel = createElement("section", { className: "panel question-panel training-panel" });
     const actions = createElement("div", { className: "completion-actions" });
-    const coverageValue = createElement("strong", { text: t(language, "yawCoverageValue", { current: 0 }) });
+    const coverageValue = createElement("strong", { text: t(language, "yawCoverageValue", { current: yawCoverageDegrees }) });
     const fullscreenCoverageValue = createElement("div", {
       className: "training-yaw-fullscreen",
-      text: t(language, "yawCoverageValue", { current: 0 }),
+      text: t(language, "yawCoverageValue", { current: yawCoverageDegrees }),
     });
     const coverageRange = createElement("input", {
       className: "training-yaw-range",
@@ -43,7 +44,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
         type: "range",
         min: "0",
         max: "360",
-        value: "0",
+        value: String(yawCoverageDegrees),
         disabled: "disabled",
         "aria-label": t(language, "yawCoverageLabel"),
       },
@@ -65,7 +66,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     continueButton.addEventListener("click", () => {
       saveLocalBackup(makeResponse(context, methodId, question, 1, startedAt, {
         image_id: image.image_id,
-        ...singleImageAssetFields(image),
         answer: "viewed",
         answer_value: 1,
         yaw_coverage_degrees: yawCoverageDegrees,
@@ -89,6 +89,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
       renderSingleImage(image, language, {
         fullViewport: true,
         onYawCoverageChange: updateYawCoverage,
+        yawCoverageState,
         overlayElement: fullscreenCoverageValue,
       }),
       coverageMeter,
@@ -148,7 +149,6 @@ export function renderBatchClassification(root, context, onComplete, onRerenderR
       renderChoiceRow(question.answers, language, (answer, index) => {
         responses.push(makeResponse(context, methodId, question, currentIndex + 1, startedAt, {
           image_id: image.image_id,
-          ...singleImageAssetFields(image),
           answer,
           answer_value: index + 1,
         }));
@@ -274,7 +274,6 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     const question = questions[questionIndex];
     responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
       image_id: image.image_id,
-      ...singleImageAssetFields(image),
       answer: String(value),
       answer_value: value,
     }));
@@ -339,7 +338,6 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
         answer,
         answer_value: question.options.indexOf(answer) + 1,
         image_id: currentPreview.image_id,
-        ...singleImageAssetFields(currentPreview),
         preview_variant_id: currentPreview.variant_id || "",
       });
     });
@@ -532,18 +530,6 @@ function buildIdealPreviewImage(variant = {}, fallbackId = "ideal_scene_preview"
     view_type: variant.view_type || "panorama_360",
     initial_yaw_degrees: variant.initial_yaw_degrees ?? 90,
     description: localize(variant.description, "en") || "Ideal scene preview.",
-  };
-}
-
-function singleImageAssetFields(image) {
-  const asset = getImageAssetMetadata(image);
-
-  return {
-    image_asset_path: asset.path,
-    image_asset_variant: asset.variant,
-    image_asset_width: asset.width,
-    image_asset_height: asset.height,
-    image_asset_format: asset.format,
   };
 }
 
@@ -742,7 +728,10 @@ function renderTextArea(question, language, value = "") {
   }
 
   textarea.value = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
-  label.append(createElement("span", { text: questionText(question, language) }));
+  const labelText = question.optional
+    ? `${questionText(question, language)} (${t(language, "optionalMarker")})`
+    : questionText(question, language);
+  label.append(createElement("span", { text: labelText }));
 
   const helper = localize(question.helper, language);
   if (helper) {
