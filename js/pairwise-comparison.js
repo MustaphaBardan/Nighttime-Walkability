@@ -1,24 +1,27 @@
-import { CONFIG } from "./config.js";
 import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
-import { createElement, makePairs } from "./utils.js";
+import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
 import { getImageAssetMetadata, renderSceneMedia } from "./panorama-viewer.js";
 
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
-  const pairs = makePairs(context.images, CONFIG.pairwiseTrialCount);
-  const trials = pairs.flatMap((pair, pairIndex) => {
-    const [first, second] = Math.random() > 0.5 ? pair : [pair[1], pair[0]];
-    return questions.map((question, questionIndex) => ({
+  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, questions.length);
+  const questionOffset = questions.length ? hashString(`${context.session.participant_id}:pairwise-questions`) % questions.length : 0;
+  const trials = pairs.map((pair, pairIndex) => {
+    const shouldFlipSides = hashString(`${context.session.participant_id}:${pair[0].image_id}:${pair[1].image_id}:pair-side`) % 2 === 0;
+    const [first, second] = shouldFlipSides ? [pair[1], pair[0]] : pair;
+    const questionIndex = (pairIndex + questionOffset) % questions.length;
+
+    return {
       imageA: first,
       imageB: second,
       pairOrder: pairIndex + 1,
       questionOrder: questionIndex + 1,
-      question,
-      displayOrder: pairIndex * questions.length + questionIndex + 1,
-    }));
+      question: questions[questionIndex],
+      displayOrder: pairIndex + 1,
+    };
   });
 
   let currentIndex = 0;
@@ -43,8 +46,12 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     attrs: { "data-active-scene": activeScene },
   });
   const pairGrid = createElement("div", { className: "pair-grid pairwise-fullscreen-grid" });
-  const switchButton = createElement("button", {
-    className: "pairwise-switch-button",
+  const sceneAButton = createElement("button", {
+    className: "pairwise-scene-button",
+    attrs: { type: "button" },
+  });
+  const sceneBButton = createElement("button", {
+    className: "pairwise-scene-button",
     attrs: { type: "button" },
   });
   const exitFullscreenButton = createElement("button", {
@@ -53,13 +60,22 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     attrs: { type: "button" },
   });
   const overlay = createElement("div", { className: "pairwise-fullscreen-overlay" });
+  const overlayToggleButton = createElement("button", {
+    className: "pairwise-overlay-toggle",
+    text: "v",
+    attrs: { type: "button", "aria-expanded": "true" },
+  });
+  const overlayContent = createElement("div", { className: "pairwise-fullscreen-content" });
+  const overlayControls = createElement("div", { className: "pairwise-fullscreen-controls" });
   const overlayProgress = createElement("p", { className: "step-label" });
   const overlayQuestion = createElement("p", { className: "pairwise-overlay-question" });
   const overlayAnswers = createElement("div", { className: "answer-row pairwise-overlay-answers" });
   const normalAnswers = createElement("div", { className: "answer-row" });
 
-  shell.append(pairGrid, switchButton, exitFullscreenButton, overlay);
-  overlay.append(overlayProgress, overlayQuestion, overlayAnswers);
+  shell.append(pairGrid, overlay);
+  overlayControls.append(exitFullscreenButton, sceneAButton, sceneBButton);
+  overlayContent.append(overlayControls, overlayProgress, overlayQuestion, overlayAnswers);
+  overlay.append(overlayToggleButton, overlayContent);
   toolbar.append(toolbarTitle, back, progressSlot);
   panel.append(normalQuestion, shell, normalAnswers);
   root.append(toolbar, panel);
@@ -75,11 +91,25 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     updateTrial();
   });
 
-  switchButton.addEventListener("click", (event) => {
+  sceneAButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    activeScene = activeScene === "A" ? "B" : "A";
+    activeScene = "A";
     updateActiveScene();
+  });
+  sceneBButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    activeScene = "B";
+    updateActiveScene();
+  });
+  overlayToggleButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    overlay.classList.toggle("collapsed");
+    const collapsed = overlay.classList.contains("collapsed");
+    overlayToggleButton.textContent = collapsed ? "^" : "v";
+    overlayToggleButton.setAttribute("aria-expanded", String(!collapsed));
   });
   exitFullscreenButton.addEventListener("click", (event) => {
     event.preventDefault();
@@ -114,6 +144,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
     exitFullscreenButton.textContent = t(language, "exitFullScreen");
+    sceneAButton.textContent = `${t(language, "scene")} A`;
+    sceneBButton.textContent = `${t(language, "scene")} B`;
     progressSlot.replaceChildren(renderSurveyProgress(currentIndex + 1, trials.length, language));
     normalQuestion.textContent = questionText(trial.question, language);
     overlayProgress.textContent = `${t(language, "progress")} ${currentIndex + 1} / ${trials.length}`;
@@ -155,6 +187,10 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
       response.image_A = trial.imageA.image_id;
       response.image_B = trial.imageB.image_id;
+      response.image_left = trial.imageA.image_id;
+      response.image_right = trial.imageB.image_id;
+      response.image_A_position = "left";
+      response.image_B_position = "right";
       Object.assign(response, pairImageAssetFields("image_A", trial.imageA));
       Object.assign(response, pairImageAssetFields("image_B", trial.imageB));
       response.answer = value;
@@ -178,10 +214,11 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   }
 
   function updateActiveScene() {
-    const language = getContextLanguage(context);
-    const nextScene = activeScene === "A" ? "B" : "A";
     shell.dataset.activeScene = activeScene;
-    switchButton.textContent = `${t(language, "scene")} ${nextScene}`;
+    sceneAButton.classList.toggle("selected", activeScene === "A");
+    sceneBButton.classList.toggle("selected", activeScene === "B");
+    sceneAButton.setAttribute("aria-pressed", String(activeScene === "A"));
+    sceneBButton.setAttribute("aria-pressed", String(activeScene === "B"));
     pairGrid.querySelectorAll(".scene-option").forEach((scene) => {
       scene.classList.toggle("active", scene.dataset.sceneLabel === activeScene);
     });

@@ -7,6 +7,4 @@ export const CONFIG = {
   sessionStorageKey: "night_walkability_session_v4",
   languageStorageKey: "night_walkability_language_v4",
   themeStorageKey: "night_walkability_theme",
-  pairwiseTrialCount: 6,
-  detailedRatingSceneCount: 8,
 };

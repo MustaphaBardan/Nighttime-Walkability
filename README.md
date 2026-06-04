@@ -61,7 +61,9 @@ The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and
 
 Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
 
-With the current four placeholder scenes, the pairwise block uses all available unique pairs. When more scenes are added, `js/config.js` currently targets up to 6 pairwise pairs and 8 detailed-rating scenes per participant.
+The active scenario dataset uses five 360-degree scenario groups, A-E, with three variants per group. Pairwise comparison uses a deterministic participant-based batch: each participant receives as many within-group pairs as there are pairwise questions, and each pair is shown with one question. Pair selection and Scene A/B placement are seeded by participant ID, so the assignment is reproducible while rotating scenario coverage across participants. For group D, `scenario_D_overview.png` is currently used as D1.
+
+Detailed rating assigns one deterministic participant-based scenario panorama per detailed-rating question, without duplicates when enough scenario images are available.
 
 ## Configure Remote Saving
 
@@ -121,11 +123,18 @@ Scene asset fields are also repeated on answer rows so later analysis can distin
 - `image_asset_height`
 - `image_asset_format`
 
-Pairwise rows additionally include `image_A_*` and `image_B_*` asset fields, plus `pair_order` and `pair_question_order`. Ideal-scene-builder rows include `preview_variant_id`.
+Pairwise rows additionally include `image_A_*` and `image_B_*` asset fields, left/right placement fields, plus `pair_order` and `pair_question_order`. The placement fields are:
+
+- `image_left`
+- `image_right`
+- `image_A_position`
+- `image_B_position`
+
+Ideal-scene-builder rows include `preview_variant_id`.
 
 The training-scene row includes `yaw_coverage_degrees`, which stores how much of the 360-degree panorama the participant covered before continuing.
 
-The indicator table in `data/indicators.csv` is keyed by `image_id` and should match the IDs in `data/images.json`. The current rows are placeholders for the four panorama test scenes.
+The indicator table in `data/indicators.csv` is keyed by `image_id` and should match the IDs in `data/images.json`. Current indicator values are placeholders.
 
 Final submissions replace previous rows for the same `participant_id`.
 

@@ -1,8 +1,7 @@
-import { CONFIG } from "./config.js";
 import { getContextLanguage, localize, optionLabel, optionPreview, questionText, t } from "./i18n.js";
 import { markMethodCompleted, saveLocalBackup } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, makeResponse, renderSurveyProgress } from "./survey-methods.js";
-import { createElement, takeRandomSubset } from "./utils.js";
+import { createElement, getScenarioImages, getTrainingImage, takeDeterministicSubset } from "./utils.js";
 import { getImageAssetMetadata, renderSceneMedia } from "./panorama-viewer.js";
 
 const FINAL_COMMENT_CHARACTER_LIMIT = 300;
@@ -13,7 +12,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     question_id: "training_360_scene_viewed",
     text: { en: "Rotate the 360 degree scene before continuing.", fr: "Faites pivoter la scène à 360 degrés avant de continuer." },
   };
-  const image = context.images.find((item) => item.view_type === "panorama_360") || context.images[0];
+  const image = getTrainingImage(context.images);
   let startedAt = Date.now();
   let yawCoverageDegrees = 0;
 
@@ -167,9 +166,12 @@ export function renderBatchClassification(root, context, onComplete, onRerenderR
 export function renderDetailedRating(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
-  const images = takeRandomSubset(context.images, CONFIG.detailedRatingSceneCount);
+  const images = takeDeterministicSubset(
+    getScenarioImages(context.images),
+    questions.length,
+    `${context.session.participant_id}:detailed-rating`,
+  );
   const responses = [];
-  let imageIndex = 0;
   let questionIndex = 0;
   let displayOrder = 1;
   let startedAt = Date.now();
@@ -186,15 +188,32 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     attrs: { type: "button" },
   });
   const overlay = createElement("div", { className: "detailed-rating-overlay" });
+  const overlayToggleButton = createElement("button", {
+    className: "detailed-overlay-toggle",
+    text: "v",
+    attrs: { type: "button", "aria-expanded": "true" },
+  });
+  const overlayContent = createElement("div", { className: "detailed-fullscreen-content" });
+  const overlayControls = createElement("div", { className: "detailed-fullscreen-controls" });
   const overlayProgress = createElement("p", { className: "step-label" });
   const overlayQuestion = createElement("p", { className: "detailed-overlay-question" });
   const overlayAnswers = createElement("div", { className: "detailed-overlay-answers" });
   const normalAnswers = createElement("div", { className: "detailed-normal-answers" });
 
-  overlay.append(overlayProgress, overlayQuestion, overlayAnswers);
-  shell.append(mediaSlot, exitFullscreenButton, overlay);
+  overlayControls.append(exitFullscreenButton);
+  overlayContent.append(overlayControls, overlayProgress, overlayQuestion, overlayAnswers);
+  overlay.append(overlayToggleButton, overlayContent);
+  shell.append(mediaSlot, overlay);
   panel.append(questionTextElement, shell, normalAnswers);
   root.append(toolbarSlot, panel);
+  overlayToggleButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    overlay.classList.toggle("collapsed");
+    const collapsed = overlay.classList.contains("collapsed");
+    overlayToggleButton.textContent = collapsed ? "^" : "v";
+    overlayToggleButton.setAttribute("aria-expanded", String(!collapsed));
+  });
   exitFullscreenButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -205,23 +224,18 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
 
-    if (imageIndex >= images.length) {
+    if (questionIndex >= questions.length) {
       completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
         responses.pop();
         displayOrder -= 1;
         questionIndex -= 1;
-
-        if (questionIndex < 0) {
-          imageIndex -= 1;
-          questionIndex = questions.length - 1;
-        }
 
         renderCurrent();
       });
       return;
     }
 
-    const image = images[imageIndex];
+    const image = images[questionIndex];
     const question = questions[questionIndex];
     startedAt = Date.now();
 
@@ -238,20 +252,15 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
         displayOrder -= 1;
         questionIndex -= 1;
 
-        if (questionIndex < 0) {
-          imageIndex -= 1;
-          questionIndex = questions.length - 1;
-        }
-
         renderCurrent();
       },
       displayOrder === 1,
-      renderSurveyProgress(displayOrder, images.length * questions.length, language),
+      renderSurveyProgress(displayOrder, questions.length, language),
       language,
     );
     toolbarSlot.replaceChildren(toolbar);
     questionTextElement.textContent = questionText(question, language);
-    overlayProgress.textContent = `${t(language, "progress")} ${displayOrder} / ${images.length * questions.length}`;
+    overlayProgress.textContent = `${t(language, "progress")} ${displayOrder} / ${questions.length}`;
     overlayQuestion.textContent = questionText(question, language);
     mediaSlot.replaceChildren(renderSingleImage(image, language, {
       onFullscreenRequest: () => shell.requestFullscreen?.(),
@@ -261,7 +270,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   }
 
   function submitAnswer(value) {
-    const image = images[imageIndex];
+    const image = images[questionIndex];
     const question = questions[questionIndex];
     responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
       image_id: image.image_id,
@@ -272,11 +281,6 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
 
     displayOrder += 1;
     questionIndex += 1;
-
-    if (questionIndex >= questions.length) {
-      questionIndex = 0;
-      imageIndex += 1;
-    }
 
     renderCurrent();
   }
