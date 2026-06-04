@@ -25,6 +25,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   let currentIndex = 0;
   let trialStartedAt = Date.now();
   let activeScene = "A";
+  let syncedViewState = {};
   const sessionResponses = [];
 
   root.innerHTML = "";
@@ -138,6 +139,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     const trial = trials[currentIndex];
     trialStartedAt = Date.now();
     activeScene = "A";
+    syncedViewState = {};
 
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
@@ -150,8 +152,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     overlayQuestion.textContent = questionText(trial.question, language);
 
     pairGrid.replaceChildren(
-      renderScene("A", trial.imageA, language, enterComparisonFullscreen),
-      renderScene("B", trial.imageB, language, enterComparisonFullscreen),
+      renderScene("A", trial.imageA, language, enterComparisonFullscreen, syncedViewState),
+      renderScene("B", trial.imageB, language, enterComparisonFullscreen, syncedViewState),
     );
     normalAnswers.replaceChildren(...renderAnswerButtons(language));
     overlayAnswers.replaceChildren(...renderAnswerButtons(language));
@@ -199,10 +201,20 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     return button;
   }
 
-  function enterComparisonFullscreen(sceneLabel) {
+  async function enterComparisonFullscreen(sceneLabel, fallbackFrame) {
     activeScene = sceneLabel;
     updateActiveScene();
-    shell.requestFullscreen?.();
+
+    if (document.fullscreenElement === shell) {
+      return;
+    }
+
+    try {
+      await shell.requestFullscreen?.();
+    } catch (error) {
+      console.warn("Pairwise fullscreen request failed.", error);
+      await fallbackFrame?.requestFullscreen?.();
+    }
   }
 
   function updateActiveScene() {
@@ -246,7 +258,7 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
   root.append(panel);
 }
 
-function renderScene(label, image, language, onFullscreenRequest) {
+function renderScene(label, image, language, onFullscreenRequest, viewState) {
   const wrapper = createElement("article", {
     className: "scene-option",
     attrs: { "data-scene-label": label },
@@ -254,8 +266,9 @@ function renderScene(label, image, language, onFullscreenRequest) {
   const frame = renderSceneMedia(image, {
     alt: `${t(language, "surveyScene")} ${label}`,
     compact: true,
+    viewState,
     fullscreenLabel: t(language, "fullScreen"),
-    onFullscreenRequest: () => onFullscreenRequest(label),
+    onFullscreenRequest: (frame) => onFullscreenRequest(label, frame),
   });
 
   const footer = createElement("div", { className: "scene-footer" });

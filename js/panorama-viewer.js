@@ -178,6 +178,7 @@ function appendFullscreenButton(frame, options = {}) {
     return;
   }
 
+  let requestedOnPointerDown = false;
   const fullscreenButton = createElement("button", {
     className: "panorama-fullscreen-button",
     text: options.fullscreenLabel || "Full screen",
@@ -185,11 +186,25 @@ function appendFullscreenButton(frame, options = {}) {
   });
 
   fullscreenButton.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
     event.stopPropagation();
+
+    if (!options.onFullscreenRequest || document.fullscreenElement === frame) {
+      requestedOnPointerDown = false;
+      return;
+    }
+
+    requestedOnPointerDown = true;
+    options.onFullscreenRequest(frame);
   });
   fullscreenButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
+
+    if (requestedOnPointerDown) {
+      requestedOnPointerDown = false;
+      return;
+    }
 
     if (document.fullscreenElement === frame) {
       document.exitFullscreen?.();
@@ -236,10 +251,12 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     aspect: gl.getUniformLocation(program, "u_aspect"),
     texture: gl.getUniformLocation(program, "u_texture"),
   };
+  const sharedView = createSharedViewState(options.viewState, options.initialYaw || 0);
+  const viewerId = Symbol("panorama-viewer");
   const state = {
-    yaw: options.initialYaw || 0,
-    pitch: 0,
-    fov: 72,
+    yaw: sharedView?.yaw ?? options.initialYaw ?? 0,
+    pitch: sharedView?.pitch ?? 0,
+    fov: sharedView?.fov ?? 72,
     dragging: false,
     lastX: 0,
     lastY: 0,
@@ -249,6 +266,12 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   const yawCoverage = createYawCoverageTracker(state.yaw, options.onYawCoverageChange, options.yawCoverageState);
   const vertexBuffer = gl.createBuffer();
   const texture = gl.createTexture();
+  const unsubscribeSharedView = subscribeSharedViewState(sharedView, viewerId, (nextView) => {
+    state.yaw = nextView.yaw;
+    state.pitch = clamp(nextView.pitch, -MAX_PITCH, MAX_PITCH);
+    state.fov = clamp(nextView.fov, MIN_FOV, MAX_FOV);
+    requestRender();
+  });
 
   gl.useProgram(program);
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -322,6 +345,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     state.yaw = nextYaw;
     state.pitch = clamp(nextPitch, -MAX_PITCH, MAX_PITCH);
     yawCoverage.record(previousYaw, state.yaw);
+    notifySharedViewState(sharedView, viewerId, state);
     requestRender();
   }
 
@@ -351,6 +375,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   frame.addEventListener("wheel", (event) => {
     event.preventDefault();
     state.fov = clamp(state.fov + Math.sign(event.deltaY) * 4, MIN_FOV, MAX_FOV);
+    notifySharedViewState(sharedView, viewerId, state);
     requestRender();
   }, { passive: false });
   frame.addEventListener("keydown", (event) => {
@@ -377,6 +402,8 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
 
   requestAnimationFrame(resizeCanvas);
   yawCoverage.notify();
+
+  frame.addEventListener("panorama-viewer-destroy", unsubscribeSharedView, { once: true });
 }
 
 function renderImageFallback(frame, imagePath, options) {
@@ -392,6 +419,57 @@ function endDrag(frame, state) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function createSharedViewState(viewState, initialYaw) {
+  if (!viewState || typeof viewState !== "object") {
+    return null;
+  }
+
+  if (!viewState.listeners) {
+    Object.defineProperty(viewState, "listeners", {
+      value: new Set(),
+      enumerable: false,
+      configurable: true,
+    });
+  }
+
+  if (!viewState.initialized) {
+    viewState.yaw = Number.isFinite(viewState.yaw) ? viewState.yaw : initialYaw;
+    viewState.pitch = Number.isFinite(viewState.pitch) ? viewState.pitch : 0;
+    viewState.fov = Number.isFinite(viewState.fov) ? viewState.fov : 72;
+    viewState.initialized = true;
+  }
+
+  return viewState;
+}
+
+function subscribeSharedViewState(sharedView, viewerId, applyView) {
+  if (!sharedView?.listeners) {
+    return () => {};
+  }
+
+  const listener = ({ sourceId }) => {
+    if (sourceId === viewerId) {
+      return;
+    }
+
+    applyView(sharedView);
+  };
+
+  sharedView.listeners.add(listener);
+  return () => sharedView.listeners.delete(listener);
+}
+
+function notifySharedViewState(sharedView, sourceId, state) {
+  if (!sharedView?.listeners) {
+    return;
+  }
+
+  sharedView.yaw = state.yaw;
+  sharedView.pitch = state.pitch;
+  sharedView.fov = state.fov;
+  sharedView.listeners.forEach((listener) => listener({ sourceId }));
 }
 
 function degreesToRadians(value) {

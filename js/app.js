@@ -480,6 +480,10 @@ function setCurrentViewRenderer(callback) {
 
 function initDeviceGateResizeWatcher() {
   window.addEventListener("resize", () => {
+    if (document.fullscreenElement) {
+      return;
+    }
+
     const allowedDevice = getDeviceType() === "desktop";
 
     if (allowedDevice === lastAllowedDeviceState) {
