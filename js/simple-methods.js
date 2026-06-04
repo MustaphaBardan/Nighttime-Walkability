@@ -729,7 +729,7 @@ function renderTextArea(question, language, value = "") {
 
   textarea.value = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
   const labelText = question.optional
-    ? `${questionText(question, language)} (${t(language, "optionalMarker")})`
+    ? `${questionText(question, language)}`
     : questionText(question, language);
   label.append(createElement("span", { text: labelText }));
 
