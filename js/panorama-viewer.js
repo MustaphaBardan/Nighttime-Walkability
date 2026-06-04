@@ -123,7 +123,13 @@ function renderPanoramaViewer(image, options = {}) {
     className: "panorama-canvas",
     attrs: { "aria-hidden": "true" },
   });
-  frame.append(canvas);
+  const badge = createElement("span", {
+    className: "panorama-badge",
+    text: "360",
+    attrs: { "aria-hidden": "true" },
+  });
+
+  frame.append(canvas, badge);
 
   if (options.overlayElement instanceof HTMLElement) {
     frame.append(options.overlayElement);
