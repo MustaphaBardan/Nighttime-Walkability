@@ -278,11 +278,11 @@ function renderProfile(context, draft = null) {
     ], true, values.night_walk_frequency),
     renderSelect("night_walking_comfort", t(language, "nightWalkingComfort"), [
       ["", t(language, "selectOption")],
-      ["not_comfortable_at_all", `1 - ${t(language, "notComfortableAtAll")}`],
-      ["slightly_comfortable", "2"],
-      ["moderately_comfortable", "3"],
-      ["comfortable", "4"],
-      ["very_comfortable", `5 - ${t(language, "veryComfortable")}`],
+      ["not_comfortable_at_all", t(language, "notComfortableAtAll")],
+      ["slightly_comfortable", t(language, "slightlyComfortable")],
+      ["moderately_comfortable", t(language, "moderatelyComfortable")],
+      ["comfortable", t(language, "comfortable")],
+      ["very_comfortable", t(language, "veryComfortable")],
     ], true, values.night_walking_comfort),
     renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
       ["", t(language, "selectOption")],
