@@ -57,7 +57,7 @@ The participant no longer chooses a method. This version follows one fixed path:
 
 The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
 
-The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and asks participants to use a computer or laptop with a desktop-sized browser window before starting or continuing.
+The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and asks participants to use a computer or laptop with a desktop-sized browser window before starting or continuing. The anonymous profile also blocks continuation if the participant declares a device other than computer/laptop.
 
 Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
 

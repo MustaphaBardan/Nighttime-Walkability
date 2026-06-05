@@ -132,6 +132,11 @@ function routeAfterWelcome(context) {
     return;
   }
 
+  if (!hasAllowedDeclaredDevice(context)) {
+    renderProfile(context);
+    return;
+  }
+
   warmUpSurveyMedia(context);
 
   if (allMethodsCompleted()) {
@@ -197,6 +202,11 @@ function routeToNextProtocolStep(context) {
   const progress = getProgress();
 
   if (!progress.profile_completed) {
+    renderProfile(context);
+    return;
+  }
+
+  if (!hasAllowedDeclaredDevice(context)) {
     renderProfile(context);
     return;
   }
@@ -293,11 +303,11 @@ function renderProfile(context, draft = null) {
       ["computer_laptop", t(language, "computerLaptop")],
       ["tablet", t(language, "tablet")],
       ["smartphone", t(language, "smartphone")],
-      ["vr_headset", t(language, "vrHeadset")],
       ["other", t(language, "other")],
     ], true, values.device_used),
   );
 
+  const declaredDeviceNotice = renderDeclaredDeviceOnlyNotice(context);
   const actions = createElement("div", { className: "completion-actions" });
   const back = createElement("button", {
     className: "secondary-button",
@@ -309,11 +319,28 @@ function renderProfile(context, draft = null) {
     text: t(language, "continue"),
     attrs: { type: "submit" },
   });
+  const deviceSelect = form.querySelector('[name="device_used"]');
+
+  function updateDeclaredDeviceGate() {
+    const deviceAllowed = isAllowedDeclaredDevice(deviceSelect.value);
+    const deviceSelected = Boolean(deviceSelect.value);
+    declaredDeviceNotice.hidden = !deviceSelected || deviceAllowed;
+    next.disabled = deviceSelected && !deviceAllowed;
+  }
 
   back.addEventListener("click", () => renderWelcome(context));
+  deviceSelect.addEventListener("change", updateDeclaredDeviceGate);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(form);
+    const declaredDevice = formData.get("device_used");
+
+    if (!isAllowedDeclaredDevice(declaredDevice)) {
+      declaredDeviceNotice.hidden = false;
+      next.disabled = true;
+      deviceSelect.focus();
+      return;
+    }
 
     updateSessionProfile(context.session, {
       age_range: formData.get("age_range"),
@@ -322,16 +349,18 @@ function renderProfile(context, draft = null) {
       night_walking_comfort: formData.get("night_walking_comfort"),
       place_familiarity: formData.get("place_familiarity"),
       screen_brightness: formData.get("screen_brightness"),
-      device_used: formData.get("device_used"),
+      device_used: declaredDevice,
     });
 
     routeToNextProtocolStep(context);
   });
 
   actions.append(back, next);
+  form.append(declaredDeviceNotice);
   form.append(actions);
   panel.append(form);
   app.append(panel);
+  updateDeclaredDeviceGate();
 }
 
 function renderSelect(name, label, options, required = true, selectedValue = "") {
@@ -410,12 +439,32 @@ function isDesktopSurveyDevice(context) {
   return currentDevice === "desktop";
 }
 
+function hasAllowedDeclaredDevice(context) {
+  const progress = getProgress();
+  const declaredDevice = context?.session?.profile?.device_used || progress.profile?.device_used || "";
+  return isAllowedDeclaredDevice(declaredDevice);
+}
+
+function isAllowedDeclaredDevice(device) {
+  return device === "computer_laptop";
+}
+
 function renderDesktopOnlyNotice(context) {
   const language = getContextLanguage(context);
 
   return createElement("div", {
     className: "device-block-notice",
     html: `<strong>${t(language, "desktopOnlyTitle")}</strong><p>${t(language, "desktopOnlyBody")}</p>`,
+  });
+}
+
+function renderDeclaredDeviceOnlyNotice(context) {
+  const language = getContextLanguage(context);
+
+  return createElement("div", {
+    className: "device-block-notice",
+    attrs: { hidden: "hidden" },
+    html: `<strong>${t(language, "declaredDeviceOnlyTitle")}</strong><p>${t(language, "declaredDeviceOnlyBody")}</p>`,
   });
 }
 

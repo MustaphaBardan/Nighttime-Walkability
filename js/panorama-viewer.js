@@ -5,7 +5,6 @@ const KEY_STEP = Math.PI / 36;
 const MAX_PITCH = Math.PI * 0.47;
 const MIN_FOV = 42;
 const MAX_FOV = 94;
-const MOBILE_IMAGE_QUERY = "(max-width: 719px)";
 const imageCache = new Map();
 const renderedAssetCache = new WeakMap();
 const textureSourceCache = new WeakMap();
@@ -59,12 +58,7 @@ export function getImageAssetMetadata(image) {
 
 export function resolveSceneImageSource(image = {}) {
   const responsiveSources = image.responsive_sources || {};
-  const mobileSource = responsiveSources.mobile;
   const desktopSource = responsiveSources.desktop;
-
-  if (mobileSource?.path && isMobileImageViewport()) {
-    return normalizeImageSource(mobileSource, "mobile");
-  }
 
   if (desktopSource?.path) {
     return normalizeImageSource(desktopSource, "desktop");
@@ -149,14 +143,6 @@ function rememberRenderedImageSource(image, source) {
   if (image && typeof image === "object") {
     renderedAssetCache.set(image, source);
   }
-}
-
-function isMobileImageViewport() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  return Boolean(window.matchMedia?.(MOBILE_IMAGE_QUERY).matches || window.innerWidth < 720);
 }
 
 function normalizeImageSource(source = {}, variant) {

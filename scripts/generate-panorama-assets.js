@@ -17,7 +17,6 @@ const OUTPUTS = [
     input: "assets/images/Test_image_panoramic.png",
     variants: [
       { width: 4096, height: 2048, output: "assets/images/Test_image_panoramic_4k.png" },
-      { width: 2048, height: 1024, output: "assets/images/Test_image_panoramic_2k.png" },
     ],
   },
 ];

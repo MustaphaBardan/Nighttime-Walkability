@@ -4,13 +4,6 @@
     "path": "assets/images/Test_image_panoramic_4k.png",
     "source_path": "assets/images/Test_image_panoramic.png",
     "responsive_sources": {
-      "mobile": {
-        "variant": "mobile_2k",
-        "path": "assets/images/Test_image_panoramic_2k.png",
-        "width": 2048,
-        "height": 1024,
-        "format": "png"
-      },
       "desktop": {
         "variant": "desktop_4k",
         "path": "assets/images/Test_image_panoramic_4k.png",
@@ -30,13 +23,6 @@
       "path": "assets/images/Test_image_panoramic_4k.png",
       "source_path": "assets/images/Test_image_panoramic.png",
       "responsive_sources": {
-        "mobile": {
-          "variant": "mobile_2k",
-          "path": "assets/images/Test_image_panoramic_2k.png",
-          "width": 2048,
-          "height": 1024,
-          "format": "png"
-        },
         "desktop": {
           "variant": "desktop_4k",
           "path": "assets/images/Test_image_panoramic_4k.png",
@@ -54,13 +40,6 @@
       "path": "assets/images/Test_image_panoramic_4k.png",
       "source_path": "assets/images/Test_image_panoramic.png",
       "responsive_sources": {
-        "mobile": {
-          "variant": "mobile_2k",
-          "path": "assets/images/Test_image_panoramic_2k.png",
-          "width": 2048,
-          "height": 1024,
-          "format": "png"
-        },
         "desktop": {
           "variant": "desktop_4k",
           "path": "assets/images/Test_image_panoramic_4k.png",
@@ -78,13 +57,6 @@
       "path": "assets/images/Test_image_panoramic_4k.png",
       "source_path": "assets/images/Test_image_panoramic.png",
       "responsive_sources": {
-        "mobile": {
-          "variant": "mobile_2k",
-          "path": "assets/images/Test_image_panoramic_2k.png",
-          "width": 2048,
-          "height": 1024,
-          "format": "png"
-        },
         "desktop": {
           "variant": "desktop_4k",
           "path": "assets/images/Test_image_panoramic_4k.png",
@@ -107,13 +79,6 @@
       "path": "assets/images/Test_image_panoramic_4k.png",
       "source_path": "assets/images/Test_image_panoramic.png",
       "responsive_sources": {
-        "mobile": {
-          "variant": "mobile_2k",
-          "path": "assets/images/Test_image_panoramic_2k.png",
-          "width": 2048,
-          "height": 1024,
-          "format": "png"
-        },
         "desktop": {
           "variant": "desktop_4k",
           "path": "assets/images/Test_image_panoramic_4k.png",
