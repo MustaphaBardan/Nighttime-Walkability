@@ -229,8 +229,8 @@
     {
       "question_id": "post_viewing_difficulty_reason",
       "text": {
-        "en": "What made it difficult?",
-        "fr": "Qu'est-ce qui a rendu le jugement difficile ?"
+        "en": "if yes, what made it difficult?",
+        "fr": "Si oui, qu'est-ce qui a rendu le jugement difficile ?"
       },
       "type": "textarea",
       "optional": true
