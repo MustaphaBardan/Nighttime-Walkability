@@ -257,7 +257,7 @@ function renderProfile(context, draft = null) {
       ["35_44", "35-44"],
       ["45_54", "45-54"],
       ["55_64", "55-64"],
-      ["65_plus", "65+"],
+      ["65_plus", t(language, "sixtyFiveOrOlder")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
     ], true, values.age_range),
     renderSelect("gender", t(language, "gender"), [
@@ -265,7 +265,6 @@ function renderProfile(context, draft = null) {
       ["woman", t(language, "woman")],
       ["man", t(language, "man")],
       ["non_binary", t(language, "nonBinary")],
-      ["self_describe", t(language, "selfDescribe")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
     ], true, values.gender),
     renderSelect("night_walk_frequency", t(language, "nightWalkFrequency"), [
@@ -279,11 +278,11 @@ function renderProfile(context, draft = null) {
     ], true, values.night_walk_frequency),
     renderSelect("night_walking_comfort", t(language, "nightWalkingComfort"), [
       ["", t(language, "selectOption")],
-      ["not_comfortable_at_all", t(language, "notComfortableAtAll")],
-      ["slightly_comfortable", t(language, "slightlyComfortable")],
-      ["moderately_comfortable", t(language, "moderatelyComfortable")],
-      ["comfortable", t(language, "comfortable")],
-      ["very_comfortable", t(language, "veryComfortable")],
+      ["not_comfortable_at_all", `1 - ${t(language, "notComfortableAtAll")}`],
+      ["slightly_comfortable", "2"],
+      ["moderately_comfortable", "3"],
+      ["comfortable", "4"],
+      ["very_comfortable", `5 - ${t(language, "veryComfortable")}`],
     ], true, values.night_walking_comfort),
     renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
       ["", t(language, "selectOption")],

@@ -880,6 +880,11 @@ p {
   outline: none;
 }
 
+.choice-button.selected {
+  border-color: var(--accent-strong);
+  background: var(--surface-3);
+}
+
 .choice-button {
   min-width: 170px;
 }

@@ -10,11 +10,11 @@ const UI_TEXT = {
     welcome: "Welcome",
     stepOf: "Step {current} of {total}",
     welcomeIntro:
-      "You are invited to answer this online questionnaire as part of a research project on the perception of night-time urban environments. The estimated completion time is about 10 minutes.",
+      "You will see several night-time urban scenes in 360 degrees. For each scene, imagine that you are standing at this exact position at night.",
     welcomePath:
-      "You will answer short questions about simulated urban scenes, including safety, comfort, visibility, and route preference.",
+      "You cannot move forward, but you can rotate the view to look around. Before answering, please rotate the scene and judge it based on what you can see.",
     welcomePrivacy:
-      "To respect participants' rights and privacy, the collected data are anonymous and used only for research analysis.",
+      "There are no right or wrong answers. We are interested in your first impression. The collected data are anonymous and used only for research analysis.",
     desktopOnlyTitle: "Computer required",
     desktopOnlyBody:
       "This survey must be completed on a computer or laptop with a desktop-sized browser window. Please switch device or enlarge the browser window before starting.",
@@ -41,23 +41,25 @@ const UI_TEXT = {
     pairwiseIntro: "Imagine that you have to walk through one of these places at night.",
     pairwiseStart: "Start pairwise comparison",
     pairwiseIntroBody:
-      "You will compare pairs of static 360 degree night scenes. Rotate each view before choosing the scene that best matches each question.",
+      "Please evaluate the following two environments. Visualize yourself having to traverse one of these locations during the night.",
     scene: "Scene",
-    noClearDifference: "No clear difference",
+    noClearDifference: "No discernible difference",
     progress: "Progress",
     trainingTitle: "Training 360 degree scene",
-    trainingIntro: "Click Full screen to enter the 360 degree image, then rotate once before the real questions.",
+    trainingIntro: "This serves as a practice scene. Please ensure you rotate the panoramic image before proceeding.",
     fullScreen: "Full screen",
     exitFullScreen: "Exit full screen",
     yawCoverageLabel: "360 degree coverage",
     yawCoverageValue: "{current} / 360 degrees covered",
     detailedTitle: "Detailed scene rating",
     builderTitle: "Ideal scene builder",
+    builderIntro:
+      "Build the type of night-time walking environment you would personally prefer. There is no correct answer. Choose the options that would make you more willing to walk there at night.",
     validateContinue: "Validate and continue",
     finalSection: "Final section",
     realismTitle: "Realism check",
     realismIntro:
-      "These last questions help interpret whether the simulated 360 degree scenes were plausible enough to judge.",
+      "These last questions help interpret whether the simulated scenes and lighting were plausible enough for perception analysis.",
     finishSurvey: "Finish survey",
     optionalComment: "Optional comment",
     characterLimit: "{current} / {limit} characters",
@@ -80,17 +82,17 @@ const UI_TEXT = {
     declaredDeviceOnlyBody:
       "Please complete this questionnaire on a computer or laptop. Other devices cannot continue because the 360 degree scenes need a desktop viewing setup.",
     under18: "Under 18",
+    sixtyFiveOrOlder: "65 or older",
     preferNotToSay: "Prefer not to say",
     woman: "Woman",
     man: "Man",
-    nonBinary: "Non-binary",
-    selfDescribe: "Prefer to self-describe",
+    nonBinary: "Non-binary / other",
     neverOrAlmostNever: "Never or almost never",
     rarelyLessThanMonthly: "Rarely, less than once a month",
     occasionallyFewTimesMonthly: "Occasionally, a few times per month",
     regularlyOneTwoWeekly: "Regularly, 1-2 times per week",
     oftenThreeFiveWeekly: "Often, 3-5 times per week",
-    almostEveryNight: "Almost every night",
+    almostEveryNight: "Very often, almost every night",
     yesVeryFamiliarNantes: "Yes, very familiar with Nantes",
     somewhatFamiliarNantes: "Somewhat familiar with Nantes",
     similarUrbanEnvironment: "Not familiar with Nantes, but familiar with similar urban environments",
@@ -118,11 +120,11 @@ const UI_TEXT = {
     welcome: "Bienvenue",
     stepOf: "Étape {current} sur {total}",
     welcomeIntro:
-      "Vous êtes invité(e)s à répondre à ce questionnaire en ligne dans le cadre d'un projet de recherche sur la perception des environnements urbains nocturnes. Le temps de réponse estimé est d'environ 10 minutes.",
+      "Vous verrez plusieurs scènes urbaines nocturnes à 360 degrés. Pour chaque scène, imaginez que vous vous trouvez exactement à cette position la nuit.",
     welcomePath:
-      "Vous répondrez à de courtes questions sur des scènes urbaines simulées, notamment sur la sécurité ressentie, le confort, la visibilité et la préférence d'itinéraire.",
+      "Vous ne pouvez pas avancer, mais vous pouvez faire pivoter la vue pour regarder autour de vous. Avant de répondre, veuillez faire pivoter la scène et la juger à partir de ce que vous pouvez voir.",
     welcomePrivacy:
-      "Afin de respecter les droits et la vie privée des participant(e)s, les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
+      "Il n'y a pas de bonne ou de mauvaise réponse. Nous nous intéressons à votre première impression. Les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
     desktopOnlyTitle: "Ordinateur requis",
     desktopOnlyBody:
       "Ce questionnaire doit être réalisé sur un ordinateur avec une fenêtre de navigateur de taille bureau. Veuillez changer d'appareil ou agrandir la fenêtre avant de commencer.",
@@ -149,23 +151,25 @@ const UI_TEXT = {
     pairwiseIntro: "Imaginez que vous devez marcher dans l'un de ces lieux la nuit.",
     pairwiseStart: "Commencer la comparaison",
     pairwiseIntroBody:
-      "Vous allez comparer des paires de scènes nocturnes simulées à 360 degrés. Faites pivoter chaque vue avant de choisir la scène qui correspond le mieux à chaque question.",
+      "Veuillez évaluer les deux environnements suivants. Imaginez que vous devez traverser l'un de ces lieux pendant la nuit.",
     scene: "Scène",
-    noClearDifference: "Pas de différence claire",
+    noClearDifference: "Pas de différence discernable",
     progress: "Progression",
     trainingTitle: "Scène d'entraînement à 360 degrés",
-    trainingIntro: "Cliquez sur Plein écran pour entrer dans l'image à 360 degrés, puis faites un tour avant les vraies questions.",
+    trainingIntro: "Cette scène sert d'entraînement. Veuillez vous assurer de faire pivoter l'image panoramique avant de continuer.",
     fullScreen: "Plein écran",
     exitFullScreen: "Quitter le plein écran",
     yawCoverageLabel: "Couverture à 360 degrés",
     yawCoverageValue: "{current} / 360 degrés couverts",
     detailedTitle: "Évaluation détaillée de la scène",
     builderTitle: "Construction de la scène idéale",
+    builderIntro:
+      "Construisez le type d'environnement de marche nocturne que vous préféreriez personnellement. Il n'y a pas de bonne réponse. Choisissez les options qui vous donneraient davantage envie d'y marcher la nuit.",
     validateContinue: "Valider et continuer",
     finalSection: "Dernière section",
     realismTitle: "Contrôle du réalisme",
     realismIntro:
-      "Ces dernières questions aident à savoir si les scènes simulées à 360 degrés étaient suffisamment plausibles pour être jugées.",
+      "Ces dernières questions aident à savoir si les scènes simulées et l'éclairage étaient suffisamment plausibles pour l'analyse des perceptions.",
     finishSurvey: "Terminer le questionnaire",
     optionalComment: "Commentaire facultatif",
     characterLimit: "{current} / {limit} caractères",
@@ -188,17 +192,17 @@ const UI_TEXT = {
     declaredDeviceOnlyBody:
       "Veuillez réaliser ce questionnaire sur un ordinateur. Les autres appareils ne peuvent pas continuer, car les scènes à 360 degrés nécessitent une configuration de visualisation de bureau.",
     under18: "Moins de 18 ans",
+    sixtyFiveOrOlder: "65 ans ou plus",
     preferNotToSay: "Préfère ne pas répondre",
     woman: "Femme",
     man: "Homme",
-    nonBinary: "Non binaire",
-    selfDescribe: "Préfère se décrire",
+    nonBinary: "Non binaire / autre",
     neverOrAlmostNever: "Jamais ou presque jamais",
     rarelyLessThanMonthly: "Rarement, moins d'une fois par mois",
     occasionallyFewTimesMonthly: "Occasionnellement, quelques fois par mois",
     regularlyOneTwoWeekly: "Régulièrement, 1 à 2 fois par semaine",
     oftenThreeFiveWeekly: "Souvent, 3 à 5 fois par semaine",
-    almostEveryNight: "Presque toutes les nuits",
+    almostEveryNight: "Très souvent, presque toutes les nuits",
     yesVeryFamiliarNantes: "Oui, très familier avec Nantes",
     somewhatFamiliarNantes: "Assez familier avec Nantes",
     similarUrbanEnvironment: "Pas familier avec Nantes, mais familier avec des environnements urbains similaires",
@@ -231,18 +235,61 @@ const OPTION_LABELS = {
   open: { en: "Open", fr: "Ouverte" },
   narrow_discontinuous: { en: "Narrow/discontinuous", fr: "Étroit/discontinu" },
   ordinary: { en: "Ordinary", fr: "Ordinaire" },
-  wide_continuous: { en: "Wide/continuous", fr: "Large/continu" },
   none: { en: "None", fr: "Aucun" },
   few: { en: "Few", fr: "Quelques-uns" },
   many: { en: "Many", fr: "Nombreux" },
   empty: { en: "Empty", fr: "Vide" },
   some_activity: { en: "Some activity", fr: "Un peu d'activité" },
   active_frontage: { en: "Active frontage", fr: "Façade active" },
+  partly: { en: "Partly", fr: "Partiellement" },
+  slightly: { en: "Slightly", fr: "Légèrement" },
+  moderately: { en: "Moderately", fr: "Modérément" },
+  a_lot: { en: "A lot", fr: "Beaucoup" },
   dont_know: { en: "I do not know", fr: "Je ne sais pas" },
   yes: { en: "Yes", fr: "Oui" },
   no: { en: "No", fr: "Non" },
   not_sure: { en: "I do not know", fr: "Je ne sais pas" },
-  no_clear_difference: { en: "No clear difference", fr: "Pas de différence claire" },
+  no_clear_difference: { en: "No discernible difference", fr: "Pas de différence discernable" },
+};
+
+const QUESTION_OPTION_LABELS = {
+  preferred_lighting_intensity: {
+    low: { en: "Low lighting", fr: "Éclairage faible" },
+    medium: { en: "Medium lighting", fr: "Éclairage moyen" },
+    high: { en: "High lighting", fr: "Éclairage élevé" },
+  },
+  preferred_lighting_distribution: {
+    uniform: { en: "Even lighting along the path", fr: "Éclairage régulier le long du chemin" },
+    contrasted: { en: "Some brighter and darker areas", fr: "Quelques zones plus claires et plus sombres" },
+    punctual: { en: "A few punctual light sources", fr: "Quelques sources lumineuses ponctuelles" },
+  },
+  preferred_vegetation_density: {
+    low: { en: "Little or no vegetation", fr: "Peu ou pas de végétation" },
+    medium: { en: "Moderate, well-lit vegetation", fr: "Végétation modérée et bien éclairée" },
+    high: { en: "Dense vegetation", fr: "Végétation dense" },
+  },
+  preferred_spatial_openness: {
+    open: { en: "Open, with long views", fr: "Ouvert, avec des vues longues" },
+    balanced: {
+      en: "Balanced, partly enclosed but still easy to see",
+      fr: "Équilibré, partiellement fermé mais encore facile à voir",
+    },
+    enclosed: { en: "More enclosed and intimate", fr: "Plus fermé et intime" },
+  },
+  preferred_sidewalk_condition: {
+    ordinary: { en: "Ordinary sidewalk", fr: "Trottoir ordinaire" },
+    narrow_discontinuous: { en: "Narrow or discontinuous sidewalk", fr: "Trottoir étroit ou discontinu" },
+  },
+  preferred_obstacles: {
+    none: { en: "No visible obstacles", fr: "Aucun obstacle visible" },
+    few: { en: "A few minor obstacles", fr: "Quelques obstacles mineurs" },
+    many: { en: "Many obstacles or irregular areas", fr: "De nombreux obstacles ou zones irrégulières" },
+  },
+  preferred_activity_indicators: {
+    empty: { en: "Quiet and empty", fr: "Calme et vide" },
+    some_activity: { en: "Some visible activity", fr: "Un peu d'activité visible" },
+    active_frontage: { en: "Active / lively street", fr: "Rue active / animée" },
+  },
 };
 
 const BUILDER_PREVIEWS = {
@@ -311,10 +358,6 @@ const BUILDER_PREVIEWS = {
       en: "A standard continuous walking surface.",
       fr: "Une surface de marche continue et ordinaire.",
     },
-    wide_continuous: {
-      en: "A wider continuous route with more room to walk.",
-      fr: "Un parcours continu plus large, avec davantage d'espace pour marcher.",
-    },
   },
   preferred_obstacles: {
     none: {
@@ -377,8 +420,12 @@ export function questionText(question, language) {
   return localize(question?.text, language);
 }
 
-export function optionLabel(value, language) {
-  return localize(OPTION_LABELS[value], language) || String(value).replaceAll("_", " ");
+export function optionLabel(value, language, questionId = null) {
+  return (
+    localize(QUESTION_OPTION_LABELS[questionId]?.[value], language) ||
+    localize(OPTION_LABELS[value], language) ||
+    String(value).replaceAll("_", " ")
+  );
 }
 
 export function optionPreview(questionId, option, language) {

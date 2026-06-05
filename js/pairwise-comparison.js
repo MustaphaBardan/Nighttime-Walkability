@@ -4,22 +4,22 @@ import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
+const PAIRWISE_PAIR_COUNT = 6;
+
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
-  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, questions.length);
-  const questionOffset = questions.length ? hashString(`${context.session.participant_id}:pairwise-questions`) % questions.length : 0;
-  const trials = pairs.map((pair, pairIndex) => {
+  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, PAIRWISE_PAIR_COUNT);
+  const trials = pairs.flatMap((pair, pairIndex) => {
     const shouldFlipSides = hashString(`${context.session.participant_id}:${pair[0].image_id}:${pair[1].image_id}:pair-side`) % 2 === 0;
     const [first, second] = shouldFlipSides ? [pair[1], pair[0]] : pair;
-    const questionIndex = (pairIndex + questionOffset) % questions.length;
 
-    return {
+    return questions.map((question, questionIndex) => ({
       imageA: first,
       imageB: second,
-      question: questions[questionIndex],
-      displayOrder: pairIndex + 1,
-    };
+      question,
+      displayOrder: (pairIndex * questions.length) + questionIndex + 1,
+    }));
   });
 
   let currentIndex = 0;

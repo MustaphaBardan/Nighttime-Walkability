@@ -15,12 +15,14 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
   const image = getTrainingImage(context.images);
   let startedAt = Date.now();
   let yawCoverageDegrees = 0;
+  let selectedAnswer = "";
   const yawCoverageState = {};
 
   function renderCurrent() {
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
     startedAt = Date.now();
+    selectedAnswer = "";
     root.innerHTML = "";
 
     const toolbar = renderQuestionToolbar(
@@ -53,8 +55,17 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     const continueButton = createElement("button", {
       className: "primary-button",
       text: t(language, "continue"),
-      attrs: { type: "button" },
+      attrs: { type: "button", disabled: "disabled" },
     });
+    const answerRow = renderChoiceRow(question.options || ["yes", "partly", "no"], language, (answer) => {
+      selectedAnswer = answer;
+      answerRow.querySelectorAll(".choice-button").forEach((button) => {
+        const isSelected = button.dataset.value === answer;
+        button.classList.toggle("selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+      });
+      continueButton.disabled = false;
+    }, question.question_id);
 
     function updateYawCoverage({ yawCoverageDegrees: nextCoverage }) {
       yawCoverageDegrees = Math.max(0, Math.min(360, Math.round(nextCoverage || 0)));
@@ -64,10 +75,15 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     }
 
     continueButton.addEventListener("click", () => {
+      if (!selectedAnswer) {
+        return;
+      }
+
+      const answerValue = (question.options || []).indexOf(selectedAnswer) + 1;
       saveLocalBackup(makeResponse(context, methodId, question, 1, startedAt, {
         image_id: image.image_id,
-        answer: "viewed",
-        answer_value: 1,
+        answer: selectedAnswer,
+        answer_value: answerValue || null,
         yaw_coverage_degrees: yawCoverageDegrees,
       }));
       markMethodCompleted(methodId);
@@ -93,6 +109,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
         overlayElement: fullscreenCoverageValue,
       }),
       coverageMeter,
+      answerRow,
       actions,
     );
     root.append(toolbar, panel);
@@ -362,7 +379,7 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
 
     const toolbar = renderQuestionToolbar(
       t(language, "builderTitle"),
-      null,
+      t(language, "builderIntro"),
       () => onComplete(context),
       true,
       renderSurveyProgress(countSelectedQuestions(), questions.length, language),
@@ -482,7 +499,7 @@ function renderBuilderParameterControl(question, language, selectedAnswer, onSel
   question.options.forEach((option) => {
     const button = createElement("button", {
       className: option === selectedAnswer ? "builder-option selected" : "builder-option",
-      text: optionLabel(option, language),
+      text: optionLabel(option, language, question.question_id),
       attrs: {
         type: "button",
         "aria-pressed": String(option === selectedAnswer),
@@ -566,7 +583,7 @@ function renderPreviewChoiceGrid(question, language, onSelect) {
         className: `preview-card-image ${getPreviewClass(question.question_id, option)}`,
         attrs: { "aria-hidden": "true" },
       }),
-      createElement("strong", { text: optionLabel(option, language) }),
+      createElement("strong", { text: optionLabel(option, language, question.question_id) }),
       createElement("span", { text: optionPreview(question.question_id, option, language) }),
     );
 
@@ -602,13 +619,13 @@ function renderSingleImage(image, language = "en", options = {}) {
   return wrapper;
 }
 
-function renderChoiceRow(options, language, onSelect) {
+function renderChoiceRow(options, language, onSelect, questionId = null) {
   const row = createElement("div", { className: "answer-row" });
   options.forEach((option, index) => {
     const button = createElement("button", {
       className: "choice-button",
-      text: optionLabel(option, language),
-      attrs: { type: "button" },
+      text: optionLabel(option, language, questionId),
+      attrs: { type: "button", "data-value": option, "aria-pressed": "false" },
     });
     button.addEventListener("click", () => onSelect(option, index));
     row.append(button);
@@ -700,7 +717,7 @@ function renderChoiceField(question, order, language, selectedValue = "") {
       input.checked = true;
     }
 
-    label.append(input, createElement("span", { text: optionLabel(option, language) }));
+    label.append(input, createElement("span", { text: optionLabel(option, language, question.question_id) }));
     row.append(label);
   });
 
@@ -823,7 +840,6 @@ function getPreviewClass(questionId, option) {
     preferred_sidewalk_condition: {
       narrow_discontinuous: "preview-tile-narrow-sidewalk",
       ordinary: "preview-tile-ordinary-sidewalk",
-      wide_continuous: "preview-tile-wide-sidewalk",
     },
     preferred_obstacles: {
       none: "preview-tile-no-obstacles",

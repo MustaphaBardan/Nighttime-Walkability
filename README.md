@@ -51,7 +51,7 @@ The participant no longer chooses a method. This version follows one fixed path:
 
 - one 360-degree training scene so participants can learn the viewer controls;
 - pairwise comparison for controlled scene preferences;
-- detailed 1-5 scene ratings for safety, comfort, visibility, obstacle detection, legibility, and route choice;
+- detailed 1-5 scene ratings for safety, comfort/atmosphere, practical visibility, orientation, dark/hidden areas, and willingness to walk;
 - ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
 - realism and final viewing-quality checks at the end.
 
@@ -61,7 +61,7 @@ The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and
 
 Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
 
-The active scenario dataset uses five 360-degree scenario groups, A-E, with three variants per group. Pairwise comparison uses a deterministic participant-based batch: each participant receives as many within-group pairs as there are pairwise questions, and each pair is shown with one question. Pair selection and Scene A/B placement are seeded by participant ID, so the assignment is reproducible while rotating scenario coverage across participants. For group D, `scenario_D_overview.png` is currently used as D1.
+The active scenario dataset uses five 360-degree scenario groups, A-E, with three variants per group. Pairwise comparison uses a deterministic participant-based batch: each participant receives up to six within-group pairs, and each pair is evaluated with the six pairwise questions. Pair selection and Scene A/B placement are seeded by participant ID, so the assignment is reproducible while rotating scenario coverage across participants. For group D, `scenario_D_overview.png` is currently used as D1.
 
 Detailed rating assigns one deterministic participant-based scenario panorama per detailed-rating question, without duplicates when enough scenario images are available.
 

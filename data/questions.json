@@ -3,10 +3,11 @@
     {
       "question_id": "training_360_scene_viewed",
       "text": {
-        "en": "Enter the 360 degree scene, make at least one turn, and inspect the surroundings before continuing.",
-        "fr": "Entrez dans la scène à 360 degrés, faites au moins un tour, puis observez les environs avant de continuer."
+        "en": "Were you successful in rotating the view to inspect the surroundings?",
+        "fr": "Avez-vous réussi à faire pivoter la vue pour inspecter les environs ?"
       },
-      "type": "instruction"
+      "type": "choice",
+      "options": ["yes", "partly", "no"]
     }
   ],
   "batch_classification": [
@@ -23,24 +24,48 @@
     {
       "question_id": "pairwise_safety",
       "text": {
-        "en": "Which scene feels safer for walking at night?",
-        "fr": "Quelle scène semble la plus sûre pour marcher la nuit ?"
+        "en": "Which of these scenes provides a greater sense of security at night?",
+        "fr": "Laquelle de ces scènes procure le plus grand sentiment de sécurité la nuit ?"
       },
       "answers": ["A", "B", "no_clear_difference"]
     },
     {
-      "question_id": "pairwise_legibility",
+      "question_id": "pairwise_comfort_atmosphere",
       "text": {
-        "en": "Which scene feels easier to understand and navigate?",
-        "fr": "Quelle scène semble la plus facile à comprendre et à parcourir ?"
+        "en": "In which location would you feel more pleasant and comfortable walking through at night?",
+        "fr": "Dans quel lieu vous sentiriez-vous plus agréablement et confortablement en marchant la nuit ?"
       },
       "answers": ["A", "B", "no_clear_difference"]
     },
     {
-      "question_id": "pairwise_comfort",
+      "question_id": "pairwise_practical_visibility",
       "text": {
-        "en": "Which scene has the more comfortable night atmosphere?",
-        "fr": "Quelle scène a l'ambiance nocturne la plus confortable ?"
+        "en": "In which location is the walking surface clearer and ground hazards easier to recognize?",
+        "fr": "Dans quel lieu la surface de marche est-elle plus claire et les dangers au sol plus faciles à reconnaître ?"
+      },
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_route_continuation",
+      "text": {
+        "en": "In which scene is the continuation of the route more clearly seen?",
+        "fr": "Dans quelle scène la continuité de l'itinéraire est-elle vue plus clairement ?"
+      },
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_hidden_dark_areas",
+      "text": {
+        "en": "Which scene has fewer dark or hidden areas that make you feel uncomfortable?",
+        "fr": "Quelle scène présente moins de zones sombres ou cachées qui vous mettent mal à l'aise ?"
+      },
+      "answers": ["A", "B", "no_clear_difference"]
+    },
+    {
+      "question_id": "pairwise_route_preference",
+      "text": {
+        "en": "If you had to walk at night, which route would you prefer to take?",
+        "fr": "Si vous deviez marcher la nuit, quel itinéraire préféreriez-vous emprunter ?"
       },
       "answers": ["A", "B", "no_clear_difference"]
     }
@@ -49,64 +74,48 @@
     {
       "question_id": "perceived_safety",
       "text": {
-        "en": "This scene feels safe for walking at night.",
-        "fr": "Cette scène semble sûre pour marcher la nuit."
+        "en": "I would feel safe standing or walking here at night.",
+        "fr": "Je me sentirais en sécurité en restant ou en marchant ici la nuit."
       },
       "scale": 5
     },
     {
       "question_id": "comfort",
       "text": {
-        "en": "I would feel comfortable walking through this scene at night.",
-        "fr": "Je me sentirais à l'aise en marchant dans cette scène la nuit."
+        "en": "This place feels pleasant and comfortable to walk through at night.",
+        "fr": "Cet endroit semble agréable et confortable à traverser à pied la nuit."
       },
       "scale": 5
     },
     {
       "question_id": "path_visibility",
       "text": {
-        "en": "The walking path is clearly visible.",
-        "fr": "Le cheminement piéton est clairement visible."
-      },
-      "scale": 5
-    },
-    {
-      "question_id": "obstacle_detection",
-      "text": {
-        "en": "Obstacles, uneven areas, or risky zones would be easy to detect.",
-        "fr": "Les obstacles, irrégularités ou zones à risque seraient faciles à repérer."
+        "en": "I can clearly see the ground, the walking surface and my surroundings.",
+        "fr": "Je peux clairement voir le sol, la surface de marche et mon environnement."
       },
       "scale": 5
     },
     {
       "question_id": "legibility_orientation",
       "text": {
-        "en": "It is easy to understand where to go from this position.",
-        "fr": "Il est facile de comprendre où aller depuis cette position."
-      },
-      "scale": 5
-    },
-    {
-      "question_id": "prospect_anticipation",
-      "text": {
-        "en": "I can see far enough ahead to anticipate what is around me.",
-        "fr": "Je vois assez loin pour anticiper ce qui m'entoure."
+        "en": "The continuation of the route is clear.",
+        "fr": "La continuité de l'itinéraire est claire."
       },
       "scale": 5
     },
     {
       "question_id": "dark_areas_uncertainty",
       "text": {
-        "en": "Dark or hidden areas in this scene make me feel uncertain.",
-        "fr": "Les zones sombres ou cachées de cette scène me rendent incertain(e)."
+        "en": "Some dark or hidden areas here make me uncomfortable.",
+        "fr": "Certaines zones sombres ou cachées ici me mettent mal à l'aise."
       },
       "scale": 5
     },
     {
       "question_id": "route_choice",
       "text": {
-        "en": "I would choose this route if I had to walk at night.",
-        "fr": "Je choisirais cet itinéraire si je devais marcher la nuit."
+        "en": "I would choose to walk through this place at night.",
+        "fr": "Je choisirais de traverser cet endroit à pied la nuit."
       },
       "scale": 5
     }
@@ -115,8 +124,8 @@
     {
       "question_id": "preferred_lighting_intensity",
       "text": {
-        "en": "Preferred lighting level",
-        "fr": "Niveau d'éclairage préféré"
+        "en": "How bright would you prefer the place to be?",
+        "fr": "À quel point préféreriez-vous que le lieu soit éclairé ?"
       },
       "type": "choice",
       "options": ["low", "medium", "high"]
@@ -124,8 +133,8 @@
     {
       "question_id": "preferred_lighting_distribution",
       "text": {
-        "en": "Preferred lighting distribution",
-        "fr": "Répartition de l'éclairage préférée"
+        "en": "How would you prefer the light to be distributed?",
+        "fr": "Comment préféreriez-vous que la lumière soit répartie ?"
       },
       "type": "choice",
       "options": ["uniform", "contrasted", "punctual", "dont_know"]
@@ -133,8 +142,8 @@
     {
       "question_id": "preferred_vegetation_density",
       "text": {
-        "en": "Preferred vegetation near the path",
-        "fr": "Végétation préférée près du cheminement"
+        "en": "What type of vegetation would you prefer near the walking area?",
+        "fr": "Quel type de végétation préféreriez-vous près de la zone de marche ?"
       },
       "type": "choice",
       "options": ["low", "medium", "high", "dont_know"]
@@ -142,8 +151,8 @@
     {
       "question_id": "preferred_spatial_openness",
       "text": {
-        "en": "Preferred spatial feeling",
-        "fr": "Sensation spatiale préférée"
+        "en": "What type of space would you prefer?",
+        "fr": "Quel type d'espace préféreriez-vous ?"
       },
       "type": "choice",
       "options": ["open", "balanced", "enclosed", "dont_know"]
@@ -151,26 +160,26 @@
     {
       "question_id": "preferred_sidewalk_condition",
       "text": {
-        "en": "Preferred sidewalk condition",
-        "fr": "État du cheminement préféré"
+        "en": "What type of walking surface would you prefer?",
+        "fr": "Quel type de surface de marche préféreriez-vous ?"
       },
       "type": "choice",
-      "options": ["wide_continuous", "ordinary", "narrow_discontinuous"]
+      "options": ["ordinary", "narrow_discontinuous", "dont_know"]
     },
     {
       "question_id": "preferred_obstacles",
       "text": {
-        "en": "Preferred level of obstacles",
-        "fr": "Niveau d'obstacles préféré"
+        "en": "How many obstacles or irregular areas would you accept?",
+        "fr": "Combien d'obstacles ou de zones irrégulières accepteriez-vous ?"
       },
       "type": "choice",
-      "options": ["none", "few", "many"]
+      "options": ["none", "few", "many", "dont_know"]
     },
     {
       "question_id": "preferred_activity_indicators",
       "text": {
-        "en": "Preferred night activity level",
-        "fr": "Niveau d'activité nocturne préféré"
+        "en": "How active would you prefer the place to feel at night?",
+        "fr": "À quel point préféreriez-vous que le lieu semble actif la nuit ?"
       },
       "type": "choice",
       "options": ["empty", "some_activity", "active_frontage", "dont_know"]
@@ -180,8 +189,8 @@
     {
       "question_id": "simulation_realism",
       "text": {
-        "en": "The scenes felt realistic enough to judge them as night-time urban environments.",
-        "fr": "Les scènes semblaient suffisamment réalistes pour être évaluées comme des environnements urbains nocturnes."
+        "en": "The scenes looked realistic enough for me to judge them.",
+        "fr": "Les scènes semblaient suffisamment réalistes pour que je puisse les juger."
       },
       "type": "scale",
       "scale": 5
@@ -189,8 +198,8 @@
     {
       "question_id": "panorama_helpfulness",
       "text": {
-        "en": "The 360 degree view helped me understand the surrounding environment.",
-        "fr": "La vue à 360 degrés m'a aidé(e) à comprendre l'environnement autour de moi."
+        "en": "Being able to look around helped me judge the scenes.",
+        "fr": "Le fait de pouvoir regarder autour de moi m'a aidé(e) à juger les scènes."
       },
       "type": "scale",
       "scale": 5
@@ -198,12 +207,12 @@
     {
       "question_id": "atmosphere_improvement",
       "text": {
-        "en": "In your opinion, what could improve the atmosphere of these night scenes?",
-        "fr": "À votre avis, qu'est-ce qui pourrait améliorer l'ambiance de ces scènes nocturnes ?"
+        "en": "What would improve these night-time scenes for walking?",
+        "fr": "Qu'est-ce qui améliorerait ces scènes nocturnes pour la marche ?"
       },
       "helper": {
-        "en": "You may mention lighting level, dark areas, contrasts, path visibility, vegetation, people, calm, comfort, or discomfort.",
-        "fr": "Vous pouvez mentionner le niveau d'éclairage, les zones sombres, les contrastes, la visibilité du cheminement, la végétation, la présence de personnes, le calme, le confort ou l'inconfort."
+        "en": "You may mention lighting, dark areas, visibility, vegetation, obstacles, people, activity, atmosphere, comfort, or anything else.",
+        "fr": "Vous pouvez mentionner l'éclairage, les zones sombres, la visibilité, la végétation, les obstacles, les personnes, l'activité, l'ambiance, le confort ou tout autre élément."
       },
       "type": "textarea",
       "optional": true
@@ -211,11 +220,11 @@
     {
       "question_id": "post_viewing_difficulty",
       "text": {
-        "en": "After viewing the scenes, did your screen, device, or vision make image judgment difficult?",
-        "fr": "Après avoir observé les scènes, votre écran, votre appareil ou votre vision ont-ils rendu le jugement des images difficile ?"
+        "en": "Did your screen, device, or vision make it difficult to judge the scenes?",
+        "fr": "Votre écran, votre appareil ou votre vision ont-ils rendu le jugement des scènes difficile ?"
       },
       "type": "choice",
-      "options": ["yes", "no", "not_sure"]
+      "options": ["no", "slightly", "moderately", "a_lot"]
     },
     {
       "question_id": "post_viewing_difficulty_reason",
