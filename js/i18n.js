@@ -1,5 +1,6 @@
 export const SUPPORTED_LANGUAGES = ["en", "fr"];
 
+// this object contains all interface text in english and french
 const UI_TEXT = {
   en: {
     appEyebrow: "Research Survey",
@@ -223,6 +224,7 @@ const UI_TEXT = {
   },
 };
 
+// this object contains labels for shared answer options
 const OPTION_LABELS = {
   low: { en: "Low", fr: "Faible" },
   medium: { en: "Medium", fr: "Moyenne" },
@@ -252,6 +254,7 @@ const OPTION_LABELS = {
   no_clear_difference: { en: "No discernible difference", fr: "Pas de différence discernable" },
 };
 
+// this object contains labels that depend on the question
 const QUESTION_OPTION_LABELS = {
   preferred_lighting_intensity: {
     low: { en: "Low lighting", fr: "Éclairage faible" },
@@ -292,6 +295,7 @@ const QUESTION_OPTION_LABELS = {
   },
 };
 
+// this object contains the descriptions shown for ideal builder options
 const BUILDER_PREVIEWS = {
   preferred_lighting_intensity: {
     low: {
@@ -389,14 +393,17 @@ const BUILDER_PREVIEWS = {
   },
 };
 
+// this function is for making sure the language is supported
 export function normalizeLanguage(language) {
   return SUPPORTED_LANGUAGES.includes(language) ? language : "en";
 }
 
+// this function is for getting the current language from the survey context
 export function getContextLanguage(context) {
   return normalizeLanguage(context?.session?.language || document.documentElement.lang || "en");
 }
 
+// this function is for choosing the translated value from an object
 export function localize(value, language) {
   const lang = normalizeLanguage(language);
 
@@ -407,6 +414,7 @@ export function localize(value, language) {
   return value ?? "";
 }
 
+// this function is for translating a text key and replacing variables
 export function t(language, key, replacements = {}) {
   const template = UI_TEXT[normalizeLanguage(language)]?.[key] || UI_TEXT.en[key] || key;
 
@@ -416,10 +424,12 @@ export function t(language, key, replacements = {}) {
   );
 }
 
+// this function is for reading the translated question text
 export function questionText(question, language) {
   return localize(question?.text, language);
 }
 
+// this function is for reading the translated option label
 export function optionLabel(value, language, questionId = null) {
   return (
     localize(QUESTION_OPTION_LABELS[questionId]?.[value], language) ||
@@ -428,6 +438,7 @@ export function optionLabel(value, language, questionId = null) {
   );
 }
 
+// this function is for reading the preview text of a builder option
 export function optionPreview(questionId, option, language) {
   return (
     localize(BUILDER_PREVIEWS[questionId]?.[option], language) ||

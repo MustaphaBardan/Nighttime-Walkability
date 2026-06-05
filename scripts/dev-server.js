@@ -6,6 +6,7 @@ const root = process.cwd();
 const port = Number(process.env.PORT || 8000);
 const host = process.env.HOST || "0.0.0.0";
 
+// this object is for sending the correct content type for each file
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -16,6 +17,7 @@ const contentTypes = {
   ".webp": "image/webp",
 };
 
+// this function is for converting a browser url into a safe local file path
 function resolveRequestPath(urlPath) {
   const decodedPath = decodeURIComponent(urlPath.split("?")[0]);
   const cleanedPath = normalize(decodedPath).replace(/^(\.\.[/\\])+/, "");
@@ -32,6 +34,7 @@ function resolveRequestPath(urlPath) {
   return filePath;
 }
 
+// this server is for testing the static survey website locally
 const server = createServer((request, response) => {
   const filePath = resolveRequestPath(request.url || "/");
 

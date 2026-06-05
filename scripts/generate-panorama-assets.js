@@ -2,7 +2,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 import { deflateSync, inflateSync } from "node:zlib";
 
+// this signature is for checking that the file is a png
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+// this table is for calculating png chunk crc values
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
   let value = index;
 
@@ -12,6 +15,8 @@ const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
 
   return value >>> 0;
 });
+
+// this list contains the panorama assets that we need to generate
 const OUTPUTS = [
   {
     input: "assets/images/Test_image_panoramic.png",
@@ -21,6 +26,7 @@ const OUTPUTS = [
   },
 ];
 
+// we read the source image, resize it, and write each output file
 for (const job of OUTPUTS) {
   const source = decodePng(readFileSync(job.input));
 
@@ -31,6 +37,7 @@ for (const job of OUTPUTS) {
   }
 }
 
+// this function is for decoding a png file into rgba pixels
 function decodePng(buffer) {
   if (!buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
     throw new Error("Input is not a PNG file.");
@@ -90,6 +97,7 @@ function decodePng(buffer) {
   return { width, height, pixels };
 }
 
+// this function is for undoing the png row filter
 function unfilterScanline(filter, row, current, previous, bytesPerPixel) {
   for (let index = 0; index < row.length; index += 1) {
     const left = index >= bytesPerPixel ? current[index - bytesPerPixel] : 0;
@@ -113,6 +121,7 @@ function unfilterScanline(filter, row, current, previous, bytesPerPixel) {
   }
 }
 
+// this function is for copying rgb or rgba rows into rgba pixels
 function copyRowToRgba(row, pixels, targetOffset, channels) {
   if (channels === 4) {
     row.copy(pixels, targetOffset);
@@ -127,6 +136,7 @@ function copyRowToRgba(row, pixels, targetOffset, channels) {
   }
 }
 
+// this function is for resizing the image with a simple box average
 function resizeBox(source, targetWidth, targetHeight) {
   const scaleX = source.width / targetWidth;
   const scaleY = source.height / targetHeight;
@@ -169,6 +179,7 @@ function resizeBox(source, targetWidth, targetHeight) {
   return { width: targetWidth, height: targetHeight, pixels };
 }
 
+// this function is for encoding rgba pixels back into a png
 function encodePng(image) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(image.width, 0);
@@ -187,6 +198,7 @@ function encodePng(image) {
   ]);
 }
 
+// this function is for choosing the best png filter for each row
 function filterScanlines(image) {
   const stride = image.width * 4;
   const filtered = Buffer.allocUnsafe((stride + 1) * image.height);
@@ -215,6 +227,7 @@ function filterScanlines(image) {
   return filtered;
 }
 
+// this function is for applying one png filter and scoring it
 function applyFilter(filter, row, previous, output) {
   let score = 0;
 
@@ -242,6 +255,7 @@ function applyFilter(filter, row, previous, output) {
   return score;
 }
 
+// this function is for creating one png chunk
 function makeChunk(type, data) {
   const typeBuffer = Buffer.from(type);
   const chunk = Buffer.alloc(12 + data.length);
@@ -252,6 +266,7 @@ function makeChunk(type, data) {
   return chunk;
 }
 
+// this function is for calculating the crc32 checksum
 function crc32(buffer) {
   let crc = 0xffffffff;
 
@@ -262,6 +277,7 @@ function crc32(buffer) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+// this function is for the paeth png predictor
 function paeth(left, up, upperLeft) {
   const prediction = left + up - upperLeft;
   const leftDistance = Math.abs(prediction - left);

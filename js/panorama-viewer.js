@@ -9,11 +9,13 @@ const imageCache = new Map();
 const renderedAssetCache = new WeakMap();
 const textureSourceCache = new WeakMap();
 
+// this function is for preloading image files before they are shown
 export function preloadSurveyImages(images = []) {
   const paths = [...new Set(images.map((image) => resolveSceneImageSource(image).path).filter(Boolean))];
   return Promise.allSettled(paths.map((path) => loadCachedImage(path)));
 }
 
+// this function is for warming up one panorama texture before the real questions
 export function warmUpPanoramaTextures(images = []) {
   const panorama = images.find((image) => image.view_type === "panorama_360");
 
@@ -33,6 +35,7 @@ export function warmUpPanoramaTextures(images = []) {
   window.setTimeout(() => warmup.remove(), 1800);
 }
 
+// this function is for deciding if we show a 360 panorama or a normal image
 export function renderSceneMedia(image, options = {}) {
   if (image?.view_type === "panorama_360") {
     return renderPanoramaViewer(image, {
@@ -44,6 +47,7 @@ export function renderSceneMedia(image, options = {}) {
   return renderFlatImage(image, options);
 }
 
+// this function is for getting the image file metadata used in saved responses
 export function getImageAssetMetadata(image) {
   const source = getRenderedImageSource(image) || resolveSceneImageSource(image);
 
@@ -56,6 +60,7 @@ export function getImageAssetMetadata(image) {
   };
 }
 
+// this function is for choosing the correct image source for the current device
 export function resolveSceneImageSource(image = {}) {
   const responsiveSources = image.responsive_sources || {};
   const desktopSource = responsiveSources.desktop;
@@ -72,6 +77,7 @@ export function resolveSceneImageSource(image = {}) {
   }, "default");
 }
 
+// this function is for rendering a normal flat image
 function renderFlatImage(image, options = {}) {
   const source = resolveSceneImageSource(image);
   rememberRenderedImageSource(image, source);
@@ -92,6 +98,7 @@ function renderFlatImage(image, options = {}) {
   return frame;
 }
 
+// this function is for rendering a 360 panorama viewer
 function renderPanoramaViewer(image, options = {}) {
   const source = resolveSceneImageSource(image);
   rememberRenderedImageSource(image, source);
@@ -135,16 +142,19 @@ function renderPanoramaViewer(image, options = {}) {
   return frame;
 }
 
+// this function is for reading the rendered source stored for an image
 function getRenderedImageSource(image) {
   return image && typeof image === "object" ? renderedAssetCache.get(image) : null;
 }
 
+// this function is for remembering which source was actually rendered
 function rememberRenderedImageSource(image, source) {
   if (image && typeof image === "object") {
     renderedAssetCache.set(image, source);
   }
 }
 
+// this function is for making an image source object consistent
 function normalizeImageSource(source = {}, variant) {
   return {
     path: source.path || "",
@@ -155,10 +165,12 @@ function normalizeImageSource(source = {}, variant) {
   };
 }
 
+// this function is for reading the file extension from a path
 function getFileExtension(path = "") {
   return path.split(".").pop()?.toLowerCase() || "";
 }
 
+// this function is for adding the fullscreen button to an image frame
 function appendFullscreenButton(frame, options = {}) {
   if (options.fullscreenControl === false || !document.fullscreenEnabled) {
     return;
@@ -207,6 +219,7 @@ function appendFullscreenButton(frame, options = {}) {
   frame.append(fullscreenButton);
 }
 
+// this function is for creating the webgl spherical panorama viewer
 function createSphericalViewer(frame, canvas, imagePath, options) {
   const gl = canvas.getContext("webgl", {
     alpha: false,
@@ -277,6 +290,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   gl.uniform1i(locations.texture, 0);
 
   loadCachedImage(imagePath).then((panoramaImage) => {
+    // we upload the panorama image into the webgl texture
     const textureSource = getTextureSource(gl, panoramaImage);
 
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -286,6 +300,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     requestRender();
   }).catch(() => renderImageFallback(frame, imagePath, options));
 
+  // this function is for resizing the canvas to the visible frame
   function resizeCanvas() {
     const rect = frame.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width * window.devicePixelRatio));
@@ -300,6 +315,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     requestRender();
   }
 
+  // this function is for scheduling a redraw
   function requestRender() {
     if (state.renderQueued) {
       return;
@@ -309,6 +325,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     requestAnimationFrame(render);
   }
 
+  // this function is for drawing the panorama frame
   function render() {
     state.renderQueued = false;
 
@@ -326,6 +343,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
+  // this function is for changing the yaw and pitch
   function setView(nextYaw, nextPitch) {
     const previousYaw = state.yaw;
     state.yaw = nextYaw;
@@ -336,6 +354,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   }
 
   frame.addEventListener("pointerdown", (event) => {
+    // we start dragging when the participant presses on the panorama
     state.dragging = true;
     state.lastX = event.clientX;
     state.lastY = event.clientY;
@@ -344,6 +363,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   });
 
   frame.addEventListener("pointermove", (event) => {
+    // we rotate the view while the participant drags
     if (!state.dragging) {
       return;
     }
@@ -359,12 +379,14 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   frame.addEventListener("pointercancel", () => endDrag(frame, state));
   frame.addEventListener("lostpointercapture", () => endDrag(frame, state));
   frame.addEventListener("wheel", (event) => {
+    // we zoom in or out with the mouse wheel
     event.preventDefault();
     state.fov = clamp(state.fov + Math.sign(event.deltaY) * 4, MIN_FOV, MAX_FOV);
     notifySharedViewState(sharedView, viewerId, state);
     requestRender();
   }, { passive: false });
   frame.addEventListener("keydown", (event) => {
+    // we allow arrow keys to rotate the panorama
     const handlers = {
       ArrowLeft: () => setView(state.yaw + KEY_STEP, state.pitch),
       ArrowRight: () => setView(state.yaw - KEY_STEP, state.pitch),
@@ -392,21 +414,25 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   frame.addEventListener("panorama-viewer-destroy", unsubscribeSharedView, { once: true });
 }
 
+// this function is for showing a normal image if webgl fails
 function renderImageFallback(frame, imagePath, options) {
   frame.innerHTML = "";
   frame.classList.add("panorama-fallback");
   frame.append(renderFlatImage({ path: imagePath }, options).firstElementChild);
 }
 
+// this function is for stopping drag mode
 function endDrag(frame, state) {
   state.dragging = false;
   frame.classList.remove("dragging");
 }
 
+// this function is for keeping a value inside a min and max
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+// this function is for sharing the same view between two panoramas
 function createSharedViewState(viewState, initialYaw) {
   if (!viewState || typeof viewState !== "object") {
     return null;
@@ -430,6 +456,7 @@ function createSharedViewState(viewState, initialYaw) {
   return viewState;
 }
 
+// this function is for subscribing one viewer to the shared view state
 function subscribeSharedViewState(sharedView, viewerId, applyView) {
   if (!sharedView?.listeners) {
     return () => {};
@@ -447,6 +474,7 @@ function subscribeSharedViewState(sharedView, viewerId, applyView) {
   return () => sharedView.listeners.delete(listener);
 }
 
+// this function is for telling the other viewers that the view changed
 function notifySharedViewState(sharedView, sourceId, state) {
   if (!sharedView?.listeners) {
     return;
@@ -458,14 +486,17 @@ function notifySharedViewState(sharedView, sourceId, state) {
   sharedView.listeners.forEach((listener) => listener({ sourceId }));
 }
 
+// this function is for converting degrees to radians
 function degreesToRadians(value) {
   return Number(value || 0) * Math.PI / 180;
 }
 
+// this function is for converting radians to degrees
 function radiansToDegrees(value) {
   return Number(value || 0) * 180 / Math.PI;
 }
 
+// this function is for tracking how much of the 360 view was visited
 function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
   const visitedBins = coverageState.visitedBins instanceof Set ? coverageState.visitedBins : new Set();
 
@@ -477,6 +508,7 @@ function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
   coverageState.hasMoved = Boolean(coverageState.hasMoved);
 
   function emit(yaw) {
+    // we send the coverage value back to the training screen
     if (typeof onChange !== "function") {
       return;
     }
@@ -512,14 +544,17 @@ function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
   };
 }
 
+// this function is for converting yaw to a one degree bin
 function yawToDegreeBin(yaw) {
   return Math.floor(normalizeDegrees(radiansToDegrees(yaw)));
 }
 
+// this function is for keeping degrees between 0 and 359
 function normalizeDegrees(value) {
   return ((value % 360) + 360) % 360;
 }
 
+// this function is for loading an image once and reusing it
 function loadCachedImage(path) {
   if (imageCache.has(path)) {
     return imageCache.get(path).promise;
@@ -546,6 +581,7 @@ function loadCachedImage(path) {
   return promise;
 }
 
+// this function is for resizing a texture if the image is too large for webgl
 function getTextureSource(gl, image) {
   const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
   const cachedSources = textureSourceCache.get(image) || new Map();
@@ -568,6 +604,7 @@ function getTextureSource(gl, image) {
   return canvas;
 }
 
+// this function is for creating the rotation matrix used by the panorama shader
 function makeRotationMatrix(yaw, pitch) {
   const cy = Math.cos(yaw);
   const sy = Math.sin(yaw);
@@ -581,6 +618,7 @@ function makeRotationMatrix(yaw, pitch) {
   ]);
 }
 
+// this function is for creating the webgl shader program
 function createProgram(gl, vertexSource, fragmentSource) {
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
@@ -601,6 +639,7 @@ function createProgram(gl, vertexSource, fragmentSource) {
   return program;
 }
 
+// this function is for compiling one webgl shader
 function compileShader(gl, type, source) {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);

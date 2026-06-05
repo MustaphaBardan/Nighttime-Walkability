@@ -29,6 +29,8 @@ import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.j
 const app = byId("app");
 const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
+
+// this keeps the last screen renderer so we can redraw it when language/device changes
 let rerenderCurrentView = () => {};
 let mediaWarmupStarted = false;
 let lastAllowedDeviceState = null;
@@ -37,20 +39,25 @@ initThemeToggle();
 applyLanguage(session.language);
 renderHeaderLanguageSelector();
 
+// this function is for starting the survey app and loading the json files
 async function init() {
   try {
+    // we call the json files needed by the website
     const [images, questions, idealSceneVariants] = await Promise.all([
       fetchJson("data/images.json"),
       fetchJson("data/questions.json"),
       fetchJson("data/ideal_scene_variants.json"),
     ]);
 
+    // we keep the survey data in one context object used by all sections
     window.surveyContext = {
       session,
       images,
       questions,
       idealSceneVariants,
     };
+
+    // we start loading images early so the survey feels faster
     preloadSurveyImages([
       ...images,
       idealSceneVariants.default,
@@ -69,6 +76,7 @@ async function init() {
   }
 }
 
+// this function is for reading a json file and checking if it loaded correctly
 async function fetchJson(path) {
   const response = await fetch(path);
 
@@ -79,6 +87,7 @@ async function fetchJson(path) {
   return response.json();
 }
 
+// this function is for showing the first welcome screen
 function renderWelcome(context) {
   const language = getContextLanguage(context);
   const progress = getProgress();
@@ -108,6 +117,7 @@ function renderWelcome(context) {
   });
 
   start.addEventListener("click", () => {
+    // we save the starting time only when the survey is not finished yet
     if (!allMethodsCompleted()) {
       markSurveyStarted(context.session);
     }
@@ -119,6 +129,7 @@ function renderWelcome(context) {
   app.append(panel);
 }
 
+// this function is for deciding where the user goes after the welcome screen
 function routeAfterWelcome(context) {
   if (!isDesktopSurveyDevice(context)) {
     renderWelcome(context);
@@ -147,6 +158,7 @@ function routeAfterWelcome(context) {
   routeToNextProtocolStep(context);
 }
 
+// this function is for knowing if the browser already has unfinished answers
 function hasSavedPartialProgress(progress) {
   return !allMethodsCompleted() && (
     Boolean(progress.profile_completed) ||
@@ -154,6 +166,7 @@ function hasSavedPartialProgress(progress) {
   );
 }
 
+// this function is for showing the message when the survey was already completed
 function renderCompletedPrompt(context) {
   const language = getContextLanguage(context);
   setCurrentViewRenderer(() => renderCompletedPrompt(context));
@@ -179,6 +192,7 @@ function renderCompletedPrompt(context) {
       return;
     }
 
+    // we remove old method answers before starting the survey again
     getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
     markSurveyStarted(context.session, { reset: true });
     routeToNextProtocolStep(context);
@@ -193,6 +207,7 @@ function renderCompletedPrompt(context) {
   app.append(panel);
 }
 
+// this function is for routing to the next unfinished survey section
 function routeToNextProtocolStep(context) {
   if (!isDesktopSurveyDevice(context)) {
     renderWelcome(context);
@@ -222,6 +237,7 @@ function routeToNextProtocolStep(context) {
   startMethod(context, nextMethod.id);
 }
 
+// this function is for preparing panorama textures once after the profile
 function warmUpSurveyMedia(context) {
   if (mediaWarmupStarted) {
     return;
@@ -231,6 +247,7 @@ function warmUpSurveyMedia(context) {
   warmUpPanoramaTextures(context.images);
 }
 
+// this function is for showing the anonymous profile questions
 function renderProfile(context, draft = null) {
   const language = getContextLanguage(context);
   if (!isDesktopSurveyDevice(context)) {
@@ -320,6 +337,7 @@ function renderProfile(context, draft = null) {
   });
   const deviceSelect = form.querySelector('[name="device_used"]');
 
+  // this function is for blocking the survey if the declared device is not a computer
   function updateDeclaredDeviceGate() {
     const deviceAllowed = isAllowedDeclaredDevice(deviceSelect.value);
     const deviceSelected = Boolean(deviceSelect.value);
@@ -334,6 +352,7 @@ function renderProfile(context, draft = null) {
     const formData = new FormData(form);
     const declaredDevice = formData.get("device_used");
 
+    // we do not continue if the user says they are not using a computer
     if (!isAllowedDeclaredDevice(declaredDevice)) {
       declaredDeviceNotice.hidden = false;
       next.disabled = true;
@@ -362,6 +381,7 @@ function renderProfile(context, draft = null) {
   updateDeclaredDeviceGate();
 }
 
+// this function is for making a select input with translated options
 function renderSelect(name, label, options, required = true, selectedValue = "") {
   const field = createElement("label", { className: "form-field" });
   const attrs = { name };
@@ -397,6 +417,7 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
   return field;
 }
 
+// this function is for calling the renderer of each survey method
 function startMethod(context, methodId) {
   if (!isDesktopSurveyDevice(context)) {
     renderWelcome(context);
@@ -428,6 +449,7 @@ function startMethod(context, methodId) {
   }
 }
 
+// this function is for checking if the current browser width is allowed
 function isDesktopSurveyDevice(context) {
   const currentDevice = getDeviceType();
 
@@ -438,16 +460,19 @@ function isDesktopSurveyDevice(context) {
   return currentDevice === "desktop";
 }
 
+// this function is for checking the device answer saved in the profile
 function hasAllowedDeclaredDevice(context) {
   const progress = getProgress();
   const declaredDevice = context?.session?.profile?.device_used || progress.profile?.device_used || "";
   return isAllowedDeclaredDevice(declaredDevice);
 }
 
+// this function is for allowing only computer/laptop answers
 function isAllowedDeclaredDevice(device) {
   return device === "computer_laptop";
 }
 
+// this function is for showing the desktop only message from the welcome screen
 function renderDesktopOnlyNotice(context) {
   const language = getContextLanguage(context);
 
@@ -457,6 +482,7 @@ function renderDesktopOnlyNotice(context) {
   });
 }
 
+// this function is for showing the device warning inside the profile form
 function renderDeclaredDeviceOnlyNotice(context) {
   const language = getContextLanguage(context);
 
@@ -467,6 +493,7 @@ function renderDeclaredDeviceOnlyNotice(context) {
   });
 }
 
+// this function is for showing the final thank you page
 function renderFinalThanks() {
   const language = getContextLanguage({ session });
   setCurrentViewRenderer(renderFinalThanks);
@@ -483,6 +510,7 @@ function renderFinalThanks() {
 init();
 initDeviceGateResizeWatcher();
 
+// this function is for preparing the dark/light mode button
 function initThemeToggle() {
   const button = byId("theme-toggle");
   const savedTheme = localStorage.getItem(CONFIG.themeStorageKey);
@@ -496,6 +524,7 @@ function initThemeToggle() {
   });
 }
 
+// this function is for applying and saving the theme
 function setTheme(theme, button) {
   const language = session.language;
   document.documentElement.dataset.theme = theme;
@@ -504,6 +533,7 @@ function setTheme(theme, button) {
   button.setAttribute("aria-pressed", String(theme === "dark"));
 }
 
+// this function is for applying the current language to the fixed header
 function applyLanguage(language) {
   document.documentElement.lang = language;
   byId("app-eyebrow").textContent = t(language, "appEyebrow");
@@ -511,6 +541,7 @@ function applyLanguage(language) {
   setTheme(document.documentElement.dataset.theme || "dark", byId("theme-toggle"));
 }
 
+// this function is for changing language and redrawing the current page
 function changeLanguage(context, language) {
   const previousLanguage = getContextLanguage(context);
   updateSessionLanguage(context.session, language);
@@ -522,10 +553,12 @@ function changeLanguage(context, language) {
   }
 }
 
+// this function is for remembering how to redraw the active screen
 function setCurrentViewRenderer(callback) {
   rerenderCurrentView = callback;
 }
 
+// this function is for blocking the survey again if the window becomes too small
 function initDeviceGateResizeWatcher() {
   window.addEventListener("resize", () => {
     if (document.fullscreenElement) {
@@ -553,6 +586,7 @@ function initDeviceGateResizeWatcher() {
   });
 }
 
+// this function is for rendering the EN/FR buttons in the header
 function renderHeaderLanguageSelector() {
   const language = getContextLanguage({ session });
   const container = byId("header-language");
@@ -577,6 +611,7 @@ function renderHeaderLanguageSelector() {
   });
 }
 
+// this function is for keeping the profile draft when the language changes
 function readProfileDraft() {
   const form = app.querySelector(".profile-form");
 

@@ -2,6 +2,7 @@ import { CONFIG } from "./config.js";
 import { localize, normalizeLanguage } from "./i18n.js";
 import { generateId, getDeviceType } from "./utils.js";
 
+// this function is for creating or reading the participant session
 export function getOrCreateSession() {
   const existingParticipantId = localStorage.getItem(CONFIG.participantStorageKey);
   const participantId = existingParticipantId || generateId("p");
@@ -25,6 +26,7 @@ export function getOrCreateSession() {
   return session;
 }
 
+// this function is for reading the saved language or guessing it from the browser
 export function getStoredLanguage() {
   const savedLanguage = localStorage.getItem(CONFIG.languageStorageKey);
 
@@ -35,6 +37,7 @@ export function getStoredLanguage() {
   return navigator.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
 }
 
+// this function is for saving the language in the session and progress
 export function updateSessionLanguage(session, language) {
   const nextLanguage = normalizeLanguage(language);
   session.language = nextLanguage;
@@ -47,6 +50,7 @@ export function updateSessionLanguage(session, language) {
   saveProgress(progress);
 }
 
+// this function is for saving when the survey started
 export function markSurveyStarted(session, options = {}) {
   const progress = getProgress();
 
@@ -61,6 +65,7 @@ export function markSurveyStarted(session, options = {}) {
   return progress.survey_started_at;
 }
 
+// this function is for saving the profile answers
 export function updateSessionProfile(session, profile) {
   session.profile = profile;
   sessionStorage.setItem(CONFIG.sessionStorageKey, JSON.stringify(session));
@@ -72,29 +77,35 @@ export function updateSessionProfile(session, profile) {
   saveProgress(progress);
 }
 
+// this function is for reading all answers saved in the browser
 export function getLocalResponses() {
   return JSON.parse(localStorage.getItem(CONFIG.localStorageKey) || "[]");
 }
 
+// this function is for adding one answer to the browser backup
 export function saveLocalBackup(response) {
   const existing = getLocalResponses();
   existing.push(response);
   localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(existing));
 }
 
+// this function is for replacing all saved answers in the browser
 export function saveLocalResponses(responses) {
   localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(responses));
 }
 
+// this function is for deleting answers from one survey method
 export function removeLocalResponsesForMethod(method) {
   const remaining = getLocalResponses().filter((response) => response.method !== method);
   localStorage.setItem(CONFIG.localStorageKey, JSON.stringify(remaining));
 }
 
+// this function is for clearing all saved answers
 export function clearLocalResponses() {
   localStorage.removeItem(CONFIG.localStorageKey);
 }
 
+// this function is for clearing the survey state for a fresh participant
 export function resetSurveyState() {
   localStorage.removeItem(CONFIG.localStorageKey);
   localStorage.removeItem(CONFIG.progressStorageKey);
@@ -102,6 +113,7 @@ export function resetSurveyState() {
   sessionStorage.removeItem(CONFIG.sessionStorageKey);
 }
 
+// this function is for reading progress from local storage
 export function getProgress() {
   const defaults = {
     profile_completed: false,
@@ -119,10 +131,12 @@ export function getProgress() {
   }
 }
 
+// this function is for saving progress in local storage
 export function saveProgress(progress) {
   localStorage.setItem(CONFIG.progressStorageKey, JSON.stringify(progress));
 }
 
+// this function is for putting saved progress back into the active session
 export function hydrateSessionFromProgress(session) {
   const progress = getProgress();
   session.profile = progress.profile || {};
@@ -132,10 +146,12 @@ export function hydrateSessionFromProgress(session) {
   return progress;
 }
 
+// this function is for checking if one method is already completed
 export function isMethodCompleted(method) {
   return Boolean(getProgress().completed_methods?.[method]);
 }
 
+// this function is for marking a method as completed
 export function markMethodCompleted(method, completedAt = new Date().toISOString()) {
   const progress = getProgress();
   progress.completed_methods = progress.completed_methods || {};
@@ -143,6 +159,7 @@ export function markMethodCompleted(method, completedAt = new Date().toISOString
   saveProgress(progress);
 }
 
+// this function is for undoing the completion of one method
 export function clearMethodCompletion(method) {
   const progress = getProgress();
 
@@ -153,6 +170,7 @@ export function clearMethodCompletion(method) {
   saveProgress(progress);
 }
 
+// this function is for sending the final responses to google apps script
 export async function submitResponses(responses, options = {}) {
   if (!CONFIG.googleAppsScriptUrl) {
     return {
@@ -163,6 +181,7 @@ export async function submitResponses(responses, options = {}) {
   }
 
   try {
+    // we use no-cors because google apps script does not return normal cors headers
     await fetch(CONFIG.googleAppsScriptUrl, {
       method: "POST",
       mode: "no-cors",
@@ -192,6 +211,7 @@ export async function submitResponses(responses, options = {}) {
   }
 }
 
+// this function is for adding final timing info to every response
 export function finalizeSurveyTiming(completedAt = new Date().toISOString()) {
   const responses = getLocalResponses();
   const progress = getProgress();
@@ -209,6 +229,7 @@ export function finalizeSurveyTiming(completedAt = new Date().toISOString()) {
   return finalized;
 }
 
+// this function is for making the common response row used by all questions
 export function buildBaseResponse(session, method, question, displayOrder, startedAt) {
   return {
     participant_id: session.participant_id,

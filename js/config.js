@@ -1,3 +1,4 @@
+// this object contains the main settings used by the survey website
 export const CONFIG = {
   protocolLabel: "Protocol v4 - static 360 panorama",
   googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbztOko8hIfqh-oAJp9Q9aRLPWiTDOKx6TLMJoMJPsObjnM293KlErOyUvdXYJkAzvG2/exec",

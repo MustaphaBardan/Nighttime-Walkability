@@ -4,12 +4,16 @@ import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
+// this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
+
+  // we create one random pair for each pairwise question
   const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, questions.length);
   const questionOffset = questions.length ? hashString(`${context.session.participant_id}:pairwise-questions`) % questions.length : 0;
   const trials = pairs.map((pair, pairIndex) => {
+    // we also randomize which image is shown as scene A or scene B
     const shouldFlipSides = hashString(`${context.session.participant_id}:${pair[0].image_id}:${pair[1].image_id}:pair-side`) % 2 === 0;
     const [first, second] = shouldFlipSides ? [pair[1], pair[0]] : pair;
     const questionIndex = (pairIndex + questionOffset) % questions.length;
@@ -118,11 +122,13 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
   document.addEventListener("fullscreenchange", updateActiveScene);
   onRerenderReady(() => {
+    // we remove the listener before re-rendering to avoid duplicate fullscreen handlers
     document.removeEventListener("fullscreenchange", updateActiveScene);
     renderPairwiseComparison(root, context, onComplete, onRerenderReady);
   });
   updateTrial();
 
+  // this function is for drawing the current pairwise trial
   function updateTrial() {
     const language = getContextLanguage(context);
 
@@ -141,6 +147,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     activeScene = "A";
     syncedViewState = {};
 
+    // we update the text, progress, images, and answer buttons
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
     exitFullscreenButton.textContent = t(language, "exitFullScreen");
@@ -160,6 +167,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     updateActiveScene();
   }
 
+  // this function is for creating the three answer buttons
   function renderAnswerButtons(language) {
     return [
       renderAnswerButton("A", "A", language),
@@ -168,6 +176,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     ];
   }
 
+  // this function is for creating one answer button and saving the answer
   function renderAnswerButton(label, value, language) {
     const button = createElement("button", {
       className: "choice-button",
@@ -177,6 +186,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
     button.addEventListener("click", () => {
       const trial = trials[currentIndex];
+      // we build the answer row that will be saved in local storage and google sheets
       const response = buildBaseResponse(
         context.session,
         methodId,
@@ -201,6 +211,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     return button;
   }
 
+  // this function is for entering fullscreen on the comparison viewer
   async function enterComparisonFullscreen(sceneLabel, fallbackFrame) {
     activeScene = sceneLabel;
     updateActiveScene();
@@ -217,6 +228,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     }
   }
 
+  // this function is for marking which scene is active in fullscreen
   function updateActiveScene() {
     shell.dataset.activeScene = activeScene;
     sceneAButton.classList.toggle("selected", activeScene === "A");
@@ -228,6 +240,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     });
   }
 
+  // this function is for blocking double clicks while the next trial is rendering
   function setButtonsDisabled(disabled) {
     root.querySelectorAll(".choice-button").forEach((button) => {
       button.disabled = disabled;
@@ -235,6 +248,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   }
 }
 
+// this function is for showing the intro screen before pairwise comparison
 function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {
   const language = getContextLanguage(context);
   onRerenderReady(() => renderProtocolIntro(root, context, onComplete, onRerenderReady));
@@ -258,6 +272,7 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
   root.append(panel);
 }
 
+// this function is for rendering one scene in the pairwise comparison
 function renderScene(label, image, language, onFullscreenRequest, viewState) {
   const wrapper = createElement("article", {
     className: "scene-option",

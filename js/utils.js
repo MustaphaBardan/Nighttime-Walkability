@@ -1,9 +1,11 @@
+// this function is for making a new id with a date and random part
 export function generateId(prefix) {
   const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const random = crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 6);
   return `${prefix}_${date}_${random}`;
 }
 
+// this function is for knowing if the screen is mobile, tablet, or desktop
 export function getDeviceType() {
   const width = window.innerWidth;
 
@@ -18,6 +20,7 @@ export function getDeviceType() {
   return "desktop";
 }
 
+// this function is for shuffling items in a normal random way
 export function shuffle(items) {
   const copy = [...items];
 
@@ -29,6 +32,7 @@ export function shuffle(items) {
   return copy;
 }
 
+// this function is for shuffling items in a repeatable way using a seed
 export function seededShuffle(items, seedValue) {
   const copy = [...items];
   const random = createSeededRandom(seedValue);
@@ -41,6 +45,7 @@ export function seededShuffle(items, seedValue) {
   return copy;
 }
 
+// this function is for converting text into a number used as a seed
 export function hashString(value = "") {
   let hash = 2166136261;
   const text = String(value);
@@ -53,23 +58,28 @@ export function hashString(value = "") {
   return hash >>> 0;
 }
 
+// this function is for keeping only the scenario images
 export function getScenarioImages(images = []) {
   return images.filter((image) => image.role === "scenario");
 }
 
+// this function is for finding the training image
 export function getTrainingImage(images = []) {
   return images.find((image) => image.role === "training") || images.find((image) => image.view_type === "panorama_360") || images[0];
 }
 
+// this function is for creating one scenario pair per group
 export function makeScenarioBatchPairs(images, participantId) {
   return makeScenarioQuestionPairs(images, participantId, Object.keys(groupScenarioImages(getScenarioImages(images))).length);
 }
 
+// this function is for creating random scenario pairs inside each scenario group
 export function makeScenarioQuestionPairs(images, participantId, count) {
   if (!count || count <= 0) {
     return [];
   }
 
+  // we group images by scenario group then create variant pairs like 1-2, 1-3, 2-3
   const scenarioImages = getScenarioImages(images);
   const groups = groupScenarioImages(scenarioImages);
   const batchPairs = [[1, 2], [1, 3], [2, 3]];
@@ -88,6 +98,7 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
   return seededShuffle(pairs, `${participantId}:scenario-pairs`).slice(0, count);
 }
 
+// this function is for taking a repeatable subset for one participant
 export function takeDeterministicSubset(items, count, seedValue) {
   if (!count || count >= items.length) {
     return seededShuffle(items, seedValue);
@@ -96,6 +107,7 @@ export function takeDeterministicSubset(items, count, seedValue) {
   return seededShuffle(items, seedValue).slice(0, count);
 }
 
+// this function is for making all possible pairs then selecting some randomly
 export function makePairs(images, count) {
   const pairs = [];
 
@@ -108,6 +120,7 @@ export function makePairs(images, count) {
   return shuffle(pairs).slice(0, Math.min(count, pairs.length));
 }
 
+// this function is for taking a normal random subset
 export function takeRandomSubset(items, count) {
   if (!count || count >= items.length) {
     return shuffle(items);
@@ -116,6 +129,7 @@ export function takeRandomSubset(items, count) {
   return shuffle(items).slice(0, count);
 }
 
+// this function is for creating the repeatable random number generator
 function createSeededRandom(seedValue) {
   let seed = hashString(seedValue) || 1;
 
@@ -128,6 +142,7 @@ function createSeededRandom(seedValue) {
   };
 }
 
+// this function is for grouping scenario images by their group and variant number
 function groupScenarioImages(images) {
   return images.reduce((groups, image) => {
     const groupKey = image.scenario_group;
@@ -146,10 +161,12 @@ function groupScenarioImages(images) {
   }, {});
 }
 
+// this function is for getting an element by id
 export function byId(id) {
   return document.getElementById(id);
 }
 
+// this function is for creating html elements with text, classes, or attributes
 export function createElement(tag, options = {}) {
   const element = document.createElement(tag);
 
