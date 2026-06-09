@@ -115,6 +115,14 @@ export function takeDeterministicSubset(items, count, seedValue) {
 
 // this function is for independently assigning seeded items to seeded questions
 export function makeSeededQuestionAssignments(items, questions, participantId, assignmentKey, count = questions.length) {
+  if (!Array.isArray(items)) {
+    throw new TypeError("makeSeededQuestionAssignments expects items to be an array");
+  }
+
+  if (!Array.isArray(questions)) {
+    throw new TypeError("makeSeededQuestionAssignments expects questions to be an array");
+  }
+
   if (!count || count <= 0 || !items.length || !questions.length) {
     return [];
   }
