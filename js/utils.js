@@ -84,11 +84,13 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
   const groups = groupScenarioImages(scenarioImages);
   const batchPairs = [[1, 2], [1, 3], [2, 3]];
   const pairs = Object.keys(groups).sort().flatMap((groupKey) => (
-    batchPairs.map(([firstVariant, secondVariant]) => {
-      const first = groups[groupKey].get(firstVariant);
-      const second = groups[groupKey].get(secondVariant);
-      return first && second ? [first, second] : null;
-    })
+    hasCompleteVariantSet(groups[groupKey])
+      ? batchPairs.map(([firstVariant, secondVariant]) => {
+        const first = groups[groupKey].get(firstVariant);
+        const second = groups[groupKey].get(secondVariant);
+        return [first, second];
+      })
+      : []
   )).filter(Boolean);
 
   if (count >= pairs.length) {
@@ -100,11 +102,32 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
 
 // this function is for taking a repeatable subset for one participant
 export function takeDeterministicSubset(items, count, seedValue) {
-  if (!count || count >= items.length) {
+  if (!count || count <= 0) {
+    return [];
+  }
+
+  if (count >= items.length) {
     return seededShuffle(items, seedValue);
   }
 
   return seededShuffle(items, seedValue).slice(0, count);
+}
+
+// this function is for independently assigning seeded items to seeded questions
+export function makeSeededQuestionAssignments(items, questions, participantId, assignmentKey, count = questions.length) {
+  if (!count || count <= 0 || !items.length || !questions.length) {
+    return [];
+  }
+
+  const safeCount = Math.min(count, items.length);
+  const selectedItems = takeDeterministicSubset(items, safeCount, `${participantId}:${assignmentKey}:items`);
+  const questionOrder = seededShuffle(questions, `${participantId}:${assignmentKey}:questions`);
+
+  return selectedItems.map((item, index) => ({
+    item,
+    question: questionOrder[index % questionOrder.length],
+    displayOrder: index + 1,
+  }));
 }
 
 // this function is for making all possible pairs then selecting some randomly
@@ -159,6 +182,11 @@ function groupScenarioImages(images) {
     groups[groupKey].set(variant, image);
     return groups;
   }, {});
+}
+
+// this function is for requiring the same 1-2, 1-3, 2-3 pair pool in every scenario group
+function hasCompleteVariantSet(group) {
+  return [1, 2, 3].every((variant) => group.has(variant));
 }
 
 // this function is for getting an element by id

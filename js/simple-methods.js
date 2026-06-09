@@ -1,7 +1,7 @@
 import { getContextLanguage, localize, optionLabel, optionPreview, questionText, t } from "./i18n.js";
 import { markMethodCompleted, saveLocalBackup } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, makeResponse, renderSurveyProgress } from "./survey-methods.js";
-import { createElement, getScenarioImages, getTrainingImage, takeDeterministicSubset } from "./utils.js";
+import { createElement, getScenarioImages, getTrainingImage, makeSeededQuestionAssignments } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
 const FINAL_COMMENT_CHARACTER_LIMIT = 300;
@@ -192,11 +192,13 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
 
-  // we select a repeatable subset of scenario images for this participant
-  const images = takeDeterministicSubset(
+  // we seed both scenario selection and which question each selected scenario receives
+  const assignments = makeSeededQuestionAssignments(
     getScenarioImages(context.images),
+    questions,
+    context.session.participant_id,
+    "detailed-rating-question-assignment",
     questions.length,
-    `${context.session.participant_id}:detailed-rating`,
   );
   const responses = [];
   let questionIndex = 0;
@@ -254,7 +256,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
 
-    if (questionIndex >= questions.length) {
+    if (questionIndex >= assignments.length) {
       completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
         responses.pop();
         displayOrder -= 1;
@@ -267,8 +269,9 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       return;
     }
 
-    const image = images[questionIndex];
-    const question = questions[questionIndex];
+    const assignment = assignments[questionIndex];
+    const image = assignment.item;
+    const question = assignment.question;
     startedAt = Date.now();
     selectedRating = null;
     responseComment = "";
@@ -289,12 +292,12 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
         renderCurrent();
       },
       displayOrder === 1,
-      renderSurveyProgress(displayOrder, questions.length, language),
+      renderSurveyProgress(displayOrder, assignments.length, language),
       language,
     );
     toolbarSlot.replaceChildren(toolbar);
     questionTextElement.textContent = questionText(question, language);
-    overlayProgress.textContent = `${t(language, "progress")} ${displayOrder} / ${questions.length}`;
+    overlayProgress.textContent = `${t(language, "progress")} ${displayOrder} / ${assignments.length}`;
     overlayQuestion.textContent = questionText(question, language);
     mediaSlot.replaceChildren(renderSingleImage(image, language, {
       onFullscreenRequest: () => shell.requestFullscreen?.(),
@@ -316,8 +319,9 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       return;
     }
 
-    const image = images[questionIndex];
-    const question = questions[questionIndex];
+    const assignment = assignments[questionIndex];
+    const image = assignment.item;
+    const question = assignment.question;
     responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
       image_id: image.image_id,
       answer: String(selectedRating),

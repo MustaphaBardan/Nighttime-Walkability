@@ -1,7 +1,7 @@
 import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
-import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
+import { createElement, hashString, makeScenarioQuestionPairs, makeSeededQuestionAssignments } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
 const RESPONSE_COMMENT_CHARACTER_LIMIT = 300;
@@ -11,20 +11,25 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
 
-  // we create one random pair for each pairwise question
-  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, questions.length);
-  const questionOffset = questions.length ? hashString(`${context.session.participant_id}:pairwise-questions`) % questions.length : 0;
-  const trials = pairs.map((pair, pairIndex) => {
+  // we seed both pair selection and which question each selected pair receives
+  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, Number.MAX_SAFE_INTEGER);
+  const trials = makeSeededQuestionAssignments(
+    pairs,
+    questions,
+    context.session.participant_id,
+    "pairwise-question-assignment",
+    questions.length,
+  ).map((assignment) => {
+    const pair = assignment.item;
     // we also randomize which image is shown as scene A or scene B
     const shouldFlipSides = hashString(`${context.session.participant_id}:${pair[0].image_id}:${pair[1].image_id}:pair-side`) % 2 === 0;
     const [first, second] = shouldFlipSides ? [pair[1], pair[0]] : pair;
-    const questionIndex = (pairIndex + questionOffset) % questions.length;
 
     return {
       imageA: first,
       imageB: second,
-      question: questions[questionIndex],
-      displayOrder: pairIndex + 1,
+      question: assignment.question,
+      displayOrder: assignment.displayOrder,
     };
   });
 
