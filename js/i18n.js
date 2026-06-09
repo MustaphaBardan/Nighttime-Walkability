@@ -44,6 +44,8 @@ const UI_TEXT = {
     pairwiseIntroBody:
       "Please evaluate the following two environments. Visualize yourself having to traverse one of these locations during the night.",
     scene: "Scene",
+    left: "Left",
+    right: "Right",
     noClearDifference: "No discernible difference",
     progress: "Progress",
     trainingTitle: "Training 360 degree scene",
@@ -63,6 +65,11 @@ const UI_TEXT = {
       "These last questions help interpret whether the simulated scenes and lighting were plausible enough for perception analysis.",
     finishSurvey: "Finish survey",
     optionalComment: "Optional comment",
+    responseCommentPrompt: "Why this choice?",
+    initialImpression:
+      "Before seeing the scenes, what comes to mind when you think about walking outside at night?",
+    showParameters: "Show parameters",
+    hideParameters: "Hide parameters",
     characterLimit: "{current} / {limit} characters",
     stronglyDisagree: "Strongly disagree",
     stronglyAgree: "Strongly agree",
@@ -154,6 +161,8 @@ const UI_TEXT = {
     pairwiseIntroBody:
       "Veuillez évaluer les deux environnements suivants. Imaginez que vous devez traverser l'un de ces lieux pendant la nuit.",
     scene: "Scène",
+    left: "Gauche",
+    right: "Droite",
     noClearDifference: "Pas de différence discernable",
     progress: "Progression",
     trainingTitle: "Scène d'entraînement à 360 degrés",
@@ -173,6 +182,11 @@ const UI_TEXT = {
       "Ces dernières questions aident à savoir si les scènes simulées et l'éclairage étaient suffisamment plausibles pour l'analyse des perceptions.",
     finishSurvey: "Terminer le questionnaire",
     optionalComment: "Commentaire facultatif",
+    responseCommentPrompt: "Pourquoi ce choix ?",
+    initialImpression:
+      "Avant de voir les scènes, qu'est-ce qui vous vient à l'esprit quand vous pensez à marcher dehors la nuit ?",
+    showParameters: "Afficher les paramètres",
+    hideParameters: "Masquer les paramètres",
     characterLimit: "{current} / {limit} caractères",
     stronglyDisagree: "Pas du tout d'accord",
     stronglyAgree: "Tout à fait d'accord",

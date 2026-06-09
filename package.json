@@ -8,7 +8,8 @@
     "assets:panoramas": "node scripts/generate-panorama-assets.js",
     "dev": "node scripts/dev-server.js",
     "start": "npm run dev",
-    "check": "node scripts/check.js"
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/check.js && npm run test"
   },
   "keywords": [
     "walkability",

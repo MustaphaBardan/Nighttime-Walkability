@@ -26,6 +26,8 @@ import { byId, createElement, getDeviceType } from "./utils.js";
 import { renderPairwiseComparison } from "./pairwise-comparison.js";
 import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.js";
 
+const TEXT_INPUT_CHARACTER_LIMIT = 300;
+
 const app = byId("app");
 const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
@@ -321,6 +323,7 @@ function renderProfile(context, draft = null) {
       ["smartphone", t(language, "smartphone")],
       ["other", t(language, "other")],
     ], true, values.device_used),
+    renderLimitedTextArea("initial_impression", t(language, "initialImpression"), language, values.initial_impression || ""),
   );
 
   const declaredDeviceNotice = renderDeclaredDeviceOnlyNotice(context);
@@ -368,6 +371,7 @@ function renderProfile(context, draft = null) {
       place_familiarity: formData.get("place_familiarity"),
       screen_brightness: formData.get("screen_brightness"),
       device_used: declaredDevice,
+      initial_impression: limitCharacters(String(formData.get("initial_impression") || "").trim(), TEXT_INPUT_CHARACTER_LIMIT),
     });
 
     routeToNextProtocolStep(context);
@@ -414,6 +418,42 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
   });
 
   field.append(createElement("span", { text: label }), select);
+  return field;
+}
+
+// this function is for optional profile text answers with the shared character limit
+function renderLimitedTextArea(name, label, language, value = "") {
+  const field = createElement("label", { className: "form-field" });
+  const textarea = createElement("textarea", {
+    attrs: {
+      name,
+      rows: "4",
+      placeholder: t(language, "optionalComment"),
+    },
+  });
+  const counter = createElement("small", {
+    className: "field-helper character-counter",
+  });
+
+  textarea.value = limitCharacters(value, TEXT_INPUT_CHARACTER_LIMIT);
+  field.append(createElement("span", { text: label }), textarea, counter);
+
+  function updateCounter() {
+    const limitedValue = limitCharacters(textarea.value, TEXT_INPUT_CHARACTER_LIMIT);
+
+    if (textarea.value !== limitedValue) {
+      textarea.value = limitedValue;
+    }
+
+    counter.textContent = t(language, "characterLimit", {
+      current: countCharacters(textarea.value),
+      limit: TEXT_INPUT_CHARACTER_LIMIT,
+    });
+  }
+
+  textarea.addEventListener("input", updateCounter);
+  updateCounter();
+
   return field;
 }
 
@@ -628,5 +668,16 @@ function readProfileDraft() {
     place_familiarity: formData.get("place_familiarity") || "",
     screen_brightness: formData.get("screen_brightness") || "",
     device_used: formData.get("device_used") || "",
+    initial_impression: formData.get("initial_impression") || "",
   };
+}
+
+// this function is for counting characters correctly
+function countCharacters(value) {
+  return Array.from(String(value)).length;
+}
+
+// this function is for cutting text at the character limit
+function limitCharacters(value, limit) {
+  return Array.from(String(value)).slice(0, limit).join("");
 }

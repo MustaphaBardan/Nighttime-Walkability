@@ -55,6 +55,8 @@ The participant no longer chooses a method. This version follows one fixed path:
 - ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
 - realism and final viewing-quality checks at the end.
 
+The anonymous information screen includes an optional opening impression about walking outside at night before participants see the scenes. Pairwise and detailed-rating answers also allow an optional short comment explaining the selected choice or rating.
+
 The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
 
 The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and asks participants to use a computer or laptop with a desktop-sized browser window before starting or continuing. The anonymous profile also blocks continuation if the participant declares a device other than computer/laptop.
@@ -112,6 +114,11 @@ Anonymous profile fields are repeated on each answer row:
 - `profile_night_walking_comfort`
 - `profile_screen_brightness`
 - `profile_device_used`
+- `profile_initial_impression`
+
+Pairwise and detailed-rating rows may include:
+
+- `response_comment`
 
 Pairwise rows additionally include left/right placement fields:
 

@@ -106,7 +106,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     actions.append(continueButton);
     panel.append(
       createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
-      createElement("p", { className: "question-text", text: questionText(question, language) }),
       renderSingleImage(image, language, {
         fullViewport: true,
         onYawCoverageChange: updateYawCoverage,
@@ -114,6 +113,7 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
         overlayElement: fullscreenCoverageValue,
       }),
       coverageMeter,
+      createElement("p", { className: "question-text training-question-text", text: questionText(question, language) }),
       answerRow,
       actions,
     );
@@ -202,6 +202,8 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   let questionIndex = 0;
   let displayOrder = 1;
   let startedAt = Date.now();
+  let selectedRating = null;
+  let responseComment = "";
   root.innerHTML = "";
 
   const toolbarSlot = createElement("div");
@@ -258,6 +260,8 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
         displayOrder -= 1;
         questionIndex -= 1;
 
+        root.innerHTML = "";
+        root.append(toolbarSlot, panel);
         renderCurrent();
       });
       return;
@@ -266,6 +270,8 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     const image = images[questionIndex];
     const question = questions[questionIndex];
     startedAt = Date.now();
+    selectedRating = null;
+    responseComment = "";
 
     const toolbar = renderQuestionToolbar(
       t(language, "detailedTitle"),
@@ -293,24 +299,84 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     mediaSlot.replaceChildren(renderSingleImage(image, language, {
       onFullscreenRequest: () => shell.requestFullscreen?.(),
     }));
-    normalAnswers.replaceChildren(renderLikertRow(question, language, submitAnswer));
-    overlayAnswers.replaceChildren(renderLikertRow(question, language, submitAnswer));
+    normalAnswers.replaceChildren(renderDetailedAnswerControls(question, language));
+    overlayAnswers.replaceChildren(renderDetailedAnswerControls(question, language));
+    updateDetailedAnswerState();
+  }
+
+  // this function is for selecting a detailed rating without immediately advancing
+  function selectAnswer(value) {
+    selectedRating = value;
+    updateDetailedAnswerState();
   }
 
   // this function is for saving one detailed rating answer
-  function submitAnswer(value) {
+  function submitAnswer() {
+    if (!selectedRating) {
+      return;
+    }
+
     const image = images[questionIndex];
     const question = questions[questionIndex];
     responses.push(makeResponse(context, methodId, question, displayOrder, startedAt, {
       image_id: image.image_id,
-      answer: String(value),
-      answer_value: value,
+      answer: String(selectedRating),
+      answer_value: selectedRating,
+      response_comment: limitCharacters(responseComment.trim(), FINAL_COMMENT_CHARACTER_LIMIT),
     }));
 
     displayOrder += 1;
     questionIndex += 1;
 
     renderCurrent();
+  }
+
+  // this function is for rendering the answer, comment, and continue controls
+  function renderDetailedAnswerControls(question, language) {
+    const wrapper = createElement("div", { className: "response-controls" });
+    const continueButton = createElement("button", {
+      className: "primary-button response-continue-button",
+      text: t(language, "continue"),
+      attrs: { type: "button", disabled: "disabled" },
+    });
+
+    continueButton.addEventListener("click", submitAnswer);
+    wrapper.append(
+      renderLikertRow(question, language, selectAnswer, selectedRating),
+      renderOptionalCommentControl(language, responseComment, updateResponseComment),
+      createElement("div", { className: "completion-actions" }),
+    );
+    wrapper.querySelector(".completion-actions").append(continueButton);
+    return wrapper;
+  }
+
+  // this function is for keeping normal and fullscreen detailed controls in sync
+  function updateDetailedAnswerState() {
+    root.querySelectorAll(".likert-button").forEach((button) => {
+      const isSelected = Number(button.dataset.value) === selectedRating;
+      button.classList.toggle("selected", isSelected);
+      button.setAttribute("aria-pressed", String(isSelected));
+    });
+    root.querySelectorAll(".response-continue-button").forEach((button) => {
+      button.disabled = !selectedRating;
+    });
+    syncCommentTextareas();
+  }
+
+  // this function is for updating the shared detailed comment value
+  function updateResponseComment(value) {
+    responseComment = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
+    syncCommentTextareas();
+  }
+
+  // this function is for keeping duplicate comment fields identical
+  function syncCommentTextareas() {
+    root.querySelectorAll(".response-comment-textarea").forEach((textarea) => {
+      if (textarea.value !== responseComment) {
+        textarea.value = responseComment;
+      }
+      textarea.dispatchEvent(new CustomEvent("comment-sync"));
+    });
   }
 
   renderCurrent();
@@ -334,6 +400,7 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
   const mediaSlot = createElement("div", { className: "ideal-builder-media" });
   const controls = createElement("section", { className: "ideal-builder-controls" });
   const overlay = createElement("section", { className: "ideal-builder-fullscreen-overlay" });
+  const overlayActions = createElement("div", { className: "ideal-builder-overlay-actions" });
   const overlayControls = createElement("div", { className: "ideal-builder-overlay-controls" });
   const exitFullscreenButton = createElement("button", {
     className: "fullscreen-exit-button",
@@ -342,22 +409,28 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
   });
   const parametersToggle = createElement("button", {
     className: "parameters-toggle-button",
-    text: "Parameters",
-    attrs: { type: "button", "aria-expanded": "true" },
+    text: "<",
+    attrs: { type: "button", "aria-expanded": "true", "aria-label": t(getContextLanguage(context), "hideParameters") },
   });
   const continueButton = createElement("button", {
     className: "primary-button",
     text: t(getContextLanguage(context), "validateContinue"),
     attrs: { type: "button", disabled: "disabled" },
   });
+  const fullscreenContinueButton = createElement("button", {
+    className: "primary-button",
+    text: t(getContextLanguage(context), "validateContinue"),
+    attrs: { type: "button", disabled: "disabled" },
+  });
 
-  preview.append(mediaSlot, exitFullscreenButton, parametersToggle, overlay);
-  overlay.append(overlayControls);
+  overlayActions.append(exitFullscreenButton, fullscreenContinueButton);
+  preview.append(mediaSlot, parametersToggle, overlay);
+  overlay.append(overlayActions, overlayControls);
   panel.append(preview, controls, createElement("div", { className: "completion-actions", html: "" }));
   panel.querySelector(".completion-actions").append(continueButton);
   root.append(toolbarSlot, panel);
 
-  continueButton.addEventListener("click", () => {
+  function submitBuilder() {
     // we only continue after all builder parameters are answered
     if (!allBuilderQuestionsAnswered()) {
       return;
@@ -375,7 +448,10 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
     });
 
     completeMethod(root, context, methodId, responses, onComplete, onRerenderReady);
-  });
+  }
+
+  continueButton.addEventListener("click", submitBuilder);
+  fullscreenContinueButton.addEventListener("click", submitBuilder);
   exitFullscreenButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -403,7 +479,10 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
     );
     toolbarSlot.replaceChildren(toolbar);
     continueButton.textContent = t(language, "validateContinue");
+    fullscreenContinueButton.textContent = t(language, "validateContinue");
     continueButton.disabled = !allBuilderQuestionsAnswered();
+    fullscreenContinueButton.disabled = !allBuilderQuestionsAnswered();
+    exitFullscreenButton.textContent = t(language, "exitFullScreen");
     mediaSlot.replaceChildren(
       renderSingleImage(currentPreview, language, {
         fullViewport: true,
@@ -439,6 +518,8 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
   function updateParametersCollapsedState() {
     preview.classList.toggle("parameters-collapsed", parametersCollapsed);
     parametersToggle.setAttribute("aria-expanded", String(!parametersCollapsed));
+    parametersToggle.setAttribute("aria-label", t(getContextLanguage(context), parametersCollapsed ? "showParameters" : "hideParameters"));
+    parametersToggle.textContent = parametersCollapsed ? ">" : "<";
   }
 
   renderCurrent();
@@ -664,30 +745,68 @@ function renderChoiceRow(options, language, onSelect, questionId = null) {
 }
 
 // this function is for rendering the 1 to 5 rating buttons
-function renderLikertRow(question, language, onSelect) {
+function renderLikertRow(question, language, onSelect, selectedValue = null) {
   const scale = question.scale || 5;
   const wrapper = createElement("div", { className: "scale-block" });
+  const scaleLine = createElement("div", { className: "scale-line" });
   const row = createElement("div", { className: "answer-row likert-row" });
 
   for (let value = 1; value <= scale; value += 1) {
+    const isSelected = Number(selectedValue) === value;
     const button = createElement("button", {
-      className: "choice-button likert-button",
+      className: isSelected ? "choice-button likert-button selected" : "choice-button likert-button",
       text: String(value),
-      attrs: { type: "button" },
+      attrs: { type: "button", "data-value": String(value), "aria-pressed": String(isSelected) },
     });
     button.addEventListener("click", () => onSelect(value));
     row.append(button);
   }
 
-  wrapper.append(
-    row,
-    createElement("div", {
-      className: "scale-anchors",
-      html: renderScaleAnchors(question, language),
-    }),
-  );
+  scaleLine.innerHTML = renderScaleAnchors(question, language, row);
+  scaleLine.querySelector(".scale-anchor-min").after(row);
+  wrapper.append(scaleLine);
 
   return wrapper;
+}
+
+// this function is for rendering an optional comment field for a response
+function renderOptionalCommentControl(language, value, onInput) {
+  const label = createElement("label", { className: "form-field response-comment-field" });
+  const textarea = createElement("textarea", {
+    className: "response-comment-textarea",
+    attrs: {
+      rows: "3",
+      placeholder: t(language, "optionalComment"),
+    },
+  });
+  const counter = createElement("small", {
+    className: "field-helper character-counter",
+  });
+
+  textarea.value = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
+  label.append(createElement("span", { text: t(language, "responseCommentPrompt") }), textarea, counter);
+
+  function updateCounter() {
+    const limitedValue = limitCharacters(textarea.value, FINAL_COMMENT_CHARACTER_LIMIT);
+
+    if (textarea.value !== limitedValue) {
+      textarea.value = limitedValue;
+    }
+
+    counter.textContent = t(language, "characterLimit", {
+      current: countCharacters(textarea.value),
+      limit: FINAL_COMMENT_CHARACTER_LIMIT,
+    });
+  }
+
+  textarea.addEventListener("input", () => {
+    updateCounter();
+    onInput(textarea.value);
+  });
+  textarea.addEventListener("comment-sync", updateCounter);
+  updateCounter();
+
+  return label;
 }
 
 // this function is for rendering a radio scale field in the final form
@@ -821,7 +940,7 @@ function renderScaleAnchors(question, language) {
   const min = localize(question.scale_labels?.min, language) || t(language, "stronglyDisagree");
   const max = localize(question.scale_labels?.max, language) || t(language, "stronglyAgree");
 
-  return `<span>${min}</span><span>${max}</span>`;
+  return `<span class="scale-anchor-min">${min}</span><span class="scale-anchor-max">${max}</span>`;
 }
 
 // this function is for converting a choice answer into a number

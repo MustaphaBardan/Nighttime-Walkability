@@ -246,6 +246,7 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     image_right: null,
     answer: null,
     answer_value: null,
+    response_comment: "",
     display_order: displayOrder,
     reaction_time_ms: Date.now() - startedAt,
     profile_age_range: session.profile?.age_range || "",
@@ -255,5 +256,6 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     profile_night_walking_comfort: session.profile?.night_walking_comfort || "",
     profile_screen_brightness: session.profile?.screen_brightness || "",
     profile_device_used: session.profile?.device_used || "",
+    profile_initial_impression: session.profile?.initial_impression || "",
   };
 }

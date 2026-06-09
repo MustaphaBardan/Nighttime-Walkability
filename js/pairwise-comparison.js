@@ -4,6 +4,8 @@ import { getContextLanguage, questionText, t } from "./i18n.js";
 import { createElement, hashString, makeScenarioQuestionPairs } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
+const RESPONSE_COMMENT_CHARACTER_LIMIT = 300;
+
 // this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
@@ -30,6 +32,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   let trialStartedAt = Date.now();
   let activeScene = "A";
   let syncedViewState = {};
+  let selectedAnswer = "";
+  let responseComment = "";
   const sessionResponses = [];
 
   root.innerHTML = "";
@@ -49,14 +53,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     attrs: { "data-active-scene": activeScene },
   });
   const pairGrid = createElement("div", { className: "pair-grid pairwise-fullscreen-grid" });
-  const sceneAButton = createElement("button", {
-    className: "pairwise-scene-button",
-    attrs: { type: "button" },
-  });
-  const sceneBButton = createElement("button", {
-    className: "pairwise-scene-button",
-    attrs: { type: "button" },
-  });
   const exitFullscreenButton = createElement("button", {
     className: "fullscreen-exit-button",
     text: t(getContextLanguage(context), "exitFullScreen"),
@@ -72,11 +68,11 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   const overlayControls = createElement("div", { className: "pairwise-fullscreen-controls" });
   const overlayProgress = createElement("p", { className: "step-label" });
   const overlayQuestion = createElement("p", { className: "pairwise-overlay-question" });
-  const overlayAnswers = createElement("div", { className: "answer-row pairwise-overlay-answers" });
-  const normalAnswers = createElement("div", { className: "answer-row" });
+  const overlayAnswers = createElement("div", { className: "pairwise-response-controls pairwise-overlay-answers" });
+  const normalAnswers = createElement("div", { className: "pairwise-response-controls" });
 
   shell.append(pairGrid, overlay);
-  overlayControls.append(exitFullscreenButton, sceneAButton, sceneBButton);
+  overlayControls.append(exitFullscreenButton);
   overlayContent.append(overlayControls, overlayProgress, overlayQuestion, overlayAnswers);
   overlay.append(overlayToggleButton, overlayContent);
   toolbar.append(toolbarTitle, back, progressSlot);
@@ -94,18 +90,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     updateTrial();
   });
 
-  sceneAButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    activeScene = "A";
-    updateActiveScene();
-  });
-  sceneBButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    activeScene = "B";
-    updateActiveScene();
-  });
   overlayToggleButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -137,7 +121,10 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       completeMethod(root, context, methodId, sessionResponses, onComplete, onRerenderReady, () => {
         currentIndex -= 1;
         sessionResponses.pop();
-        renderPairwiseComparison(root, context, onComplete, onRerenderReady);
+        root.innerHTML = "";
+        root.append(toolbar, panel);
+        document.addEventListener("fullscreenchange", updateActiveScene);
+        updateTrial();
       });
       return;
     }
@@ -146,13 +133,13 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     trialStartedAt = Date.now();
     activeScene = "A";
     syncedViewState = {};
+    selectedAnswer = "";
+    responseComment = "";
 
     // we update the text, progress, images, and answer buttons
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
     exitFullscreenButton.textContent = t(language, "exitFullScreen");
-    sceneAButton.textContent = `${t(language, "scene")} A`;
-    sceneBButton.textContent = `${t(language, "scene")} B`;
     progressSlot.replaceChildren(renderSurveyProgress(currentIndex + 1, trials.length, language));
     normalQuestion.textContent = questionText(trial.question, language);
     overlayProgress.textContent = `${t(language, "progress")} ${currentIndex + 1} / ${trials.length}`;
@@ -162,53 +149,84 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       renderScene("A", trial.imageA, language, enterComparisonFullscreen, syncedViewState),
       renderScene("B", trial.imageB, language, enterComparisonFullscreen, syncedViewState),
     );
-    normalAnswers.replaceChildren(...renderAnswerButtons(language));
-    overlayAnswers.replaceChildren(...renderAnswerButtons(language));
+    normalAnswers.replaceChildren(renderResponseControls(language));
+    overlayAnswers.replaceChildren(renderResponseControls(language));
     updateActiveScene();
+    updateResponseState();
   }
 
-  // this function is for creating the three answer buttons
-  function renderAnswerButtons(language) {
-    return [
-      renderAnswerButton("A", "A", language),
-      renderAnswerButton("B", "B", language),
-      renderAnswerButton(t(language, "noClearDifference"), "no_clear_difference", language),
-    ];
+  // this function is for creating the answer, comment, and continue controls
+  function renderResponseControls(language) {
+    const wrapper = createElement("div", { className: "response-controls" });
+    const answerRow = createElement("div", { className: "answer-row" });
+    const actions = createElement("div", { className: "completion-actions" });
+    const continueButton = createElement("button", {
+      className: "primary-button response-continue-button",
+      text: t(language, "continue"),
+      attrs: { type: "button", disabled: "disabled" },
+    });
+
+    [
+      [t(language, "left"), "A"],
+      [t(language, "right"), "B"],
+      [t(language, "noClearDifference"), "no_clear_difference"],
+    ].forEach(([label, value]) => {
+      answerRow.append(renderAnswerButton(label, value, language));
+    });
+    continueButton.addEventListener("click", submitAnswer);
+    actions.append(continueButton);
+    wrapper.append(
+      answerRow,
+      renderOptionalCommentControl(language, responseComment, updateResponseComment),
+      actions,
+    );
+    return wrapper;
   }
 
-  // this function is for creating one answer button and saving the answer
+  // this function is for creating one answer button
   function renderAnswerButton(label, value, language) {
+    const isSelected = selectedAnswer === value;
     const button = createElement("button", {
-      className: "choice-button",
-      text: label === "A" || label === "B" ? `${t(language, "scene")} ${label}` : label,
-      attrs: { type: "button" },
+      className: isSelected ? "choice-button selected" : "choice-button",
+      text: label,
+      attrs: { type: "button", "data-value": value, "aria-pressed": String(isSelected) },
     });
 
     button.addEventListener("click", () => {
-      const trial = trials[currentIndex];
-      // we build the answer row that will be saved in local storage and google sheets
-      const response = buildBaseResponse(
-        context.session,
-        methodId,
-        trial.question,
-        trial.displayOrder,
-        trialStartedAt,
-      );
-
-      response.image_A = trial.imageA.image_id;
-      response.image_B = trial.imageB.image_id;
-      response.image_left = trial.imageA.image_id;
-      response.image_right = trial.imageB.image_id;
-      response.answer = value;
-      response.answer_value = value === "A" ? 1 : value === "B" ? 2 : 0;
-
-      setButtonsDisabled(true);
-      sessionResponses.push(response);
-      currentIndex += 1;
-      updateTrial();
+      selectedAnswer = value;
+      updateResponseState();
     });
 
     return button;
+  }
+
+  // this function is for saving the selected pairwise answer
+  function submitAnswer() {
+    if (!selectedAnswer) {
+      return;
+    }
+
+    const trial = trials[currentIndex];
+    // we build the answer row that will be saved in local storage and google sheets
+    const response = buildBaseResponse(
+      context.session,
+      methodId,
+      trial.question,
+      trial.displayOrder,
+      trialStartedAt,
+    );
+
+    response.image_A = trial.imageA.image_id;
+    response.image_B = trial.imageB.image_id;
+    response.image_left = trial.imageA.image_id;
+    response.image_right = trial.imageB.image_id;
+    response.answer = selectedAnswer;
+    response.answer_value = selectedAnswer === "A" ? 1 : selectedAnswer === "B" ? 2 : 0;
+    response.response_comment = limitCharacters(responseComment.trim(), RESPONSE_COMMENT_CHARACTER_LIMIT);
+
+    sessionResponses.push(response);
+    currentIndex += 1;
+    updateTrial();
   }
 
   // this function is for entering fullscreen on the comparison viewer
@@ -231,19 +249,37 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   // this function is for marking which scene is active in fullscreen
   function updateActiveScene() {
     shell.dataset.activeScene = activeScene;
-    sceneAButton.classList.toggle("selected", activeScene === "A");
-    sceneBButton.classList.toggle("selected", activeScene === "B");
-    sceneAButton.setAttribute("aria-pressed", String(activeScene === "A"));
-    sceneBButton.setAttribute("aria-pressed", String(activeScene === "B"));
     pairGrid.querySelectorAll(".scene-option").forEach((scene) => {
       scene.classList.toggle("active", scene.dataset.sceneLabel === activeScene);
     });
   }
 
-  // this function is for blocking double clicks while the next trial is rendering
-  function setButtonsDisabled(disabled) {
+  // this function is for keeping normal and fullscreen answer controls in sync
+  function updateResponseState() {
     root.querySelectorAll(".choice-button").forEach((button) => {
-      button.disabled = disabled;
+      const isSelected = button.dataset.value === selectedAnswer;
+      button.classList.toggle("selected", isSelected);
+      button.setAttribute("aria-pressed", String(isSelected));
+    });
+    root.querySelectorAll(".response-continue-button").forEach((button) => {
+      button.disabled = !selectedAnswer;
+    });
+    syncCommentTextareas();
+  }
+
+  // this function is for updating the shared optional pairwise comment
+  function updateResponseComment(value) {
+    responseComment = limitCharacters(value, RESPONSE_COMMENT_CHARACTER_LIMIT);
+    syncCommentTextareas();
+  }
+
+  // this function is for keeping duplicate comment fields identical
+  function syncCommentTextareas() {
+    root.querySelectorAll(".response-comment-textarea").forEach((textarea) => {
+      if (textarea.value !== responseComment) {
+        textarea.value = responseComment;
+      }
+      textarea.dispatchEvent(new CustomEvent("comment-sync"));
     });
   }
 }
@@ -274,12 +310,13 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
 
 // this function is for rendering one scene in the pairwise comparison
 function renderScene(label, image, language, onFullscreenRequest, viewState) {
+  const displayLabel = label === "A" ? t(language, "left") : t(language, "right");
   const wrapper = createElement("article", {
     className: "scene-option",
     attrs: { "data-scene-label": label },
   });
   const frame = renderSceneMedia(image, {
-    alt: `${t(language, "surveyScene")} ${label}`,
+    alt: `${t(language, "surveyScene")} ${displayLabel}`,
     compact: true,
     viewState,
     fullscreenLabel: t(language, "fullScreen"),
@@ -287,8 +324,58 @@ function renderScene(label, image, language, onFullscreenRequest, viewState) {
   });
 
   const footer = createElement("div", { className: "scene-footer" });
-  footer.append(createElement("span", { className: "scene-label", text: `${t(language, "scene")} ${label}` }));
+  footer.append(createElement("span", { className: "scene-label", text: displayLabel }));
 
   wrapper.append(frame, footer);
   return wrapper;
+}
+
+// this function is for rendering an optional comment field for one response
+function renderOptionalCommentControl(language, value, onInput) {
+  const label = createElement("label", { className: "form-field response-comment-field" });
+  const textarea = createElement("textarea", {
+    className: "response-comment-textarea",
+    attrs: {
+      rows: "3",
+      placeholder: t(language, "optionalComment"),
+    },
+  });
+  const counter = createElement("small", {
+    className: "field-helper character-counter",
+  });
+
+  textarea.value = limitCharacters(value, RESPONSE_COMMENT_CHARACTER_LIMIT);
+  label.append(createElement("span", { text: t(language, "responseCommentPrompt") }), textarea, counter);
+
+  function updateCounter() {
+    const limitedValue = limitCharacters(textarea.value, RESPONSE_COMMENT_CHARACTER_LIMIT);
+
+    if (textarea.value !== limitedValue) {
+      textarea.value = limitedValue;
+    }
+
+    counter.textContent = t(language, "characterLimit", {
+      current: countCharacters(textarea.value),
+      limit: RESPONSE_COMMENT_CHARACTER_LIMIT,
+    });
+  }
+
+  textarea.addEventListener("input", () => {
+    updateCounter();
+    onInput(textarea.value);
+  });
+  textarea.addEventListener("comment-sync", updateCounter);
+  updateCounter();
+
+  return label;
+}
+
+// this function is for counting characters correctly
+function countCharacters(value) {
+  return Array.from(String(value)).length;
+}
+
+// this function is for cutting text at the character limit
+function limitCharacters(value, limit) {
+  return Array.from(String(value)).slice(0, limit).join("");
 }

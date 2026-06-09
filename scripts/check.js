@@ -23,6 +23,10 @@ const jsFiles = [
   "scripts/dev-server.js",
   "scripts/generate-panorama-assets.js",
   "scripts/check.js",
+  "tests/i18n.test.js",
+  "tests/protocol-data.test.js",
+  "tests/storage.test.js",
+  "tests/utils.test.js",
 ];
 
 // we check that every json file can be parsed
