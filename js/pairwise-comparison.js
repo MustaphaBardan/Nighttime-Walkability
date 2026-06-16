@@ -221,8 +221,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       trialStartedAt,
     );
 
-    response.image_A = trial.imageA.image_id;
-    response.image_B = trial.imageB.image_id;
     response.image_left = trial.imageA.image_id;
     response.image_right = trial.imageB.image_id;
     response.answer = selectedAnswer;

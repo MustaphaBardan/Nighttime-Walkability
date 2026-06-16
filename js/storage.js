@@ -240,8 +240,6 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     question_id: question.question_id,
     question_text: localize(question.text, "en"),
     image_id: null,
-    image_A: null,
-    image_B: null,
     image_left: null,
     image_right: null,
     answer: null,
