@@ -119,6 +119,7 @@ export function getProgress() {
     profile_completed: false,
     profile: {},
     completed_methods: {},
+    viewed_instructions: {},
   };
 
   try {
@@ -165,6 +166,30 @@ export function clearMethodCompletion(method) {
 
   if (progress.completed_methods) {
     delete progress.completed_methods[method];
+  }
+
+  saveProgress(progress);
+}
+
+// this function is for checking whether a non-response instruction screen was viewed
+export function isInstructionViewed(instructionId) {
+  return Boolean(getProgress().viewed_instructions?.[instructionId]);
+}
+
+// this function is for remembering a non-response instruction screen
+export function markInstructionViewed(instructionId, viewedAt = new Date().toISOString()) {
+  const progress = getProgress();
+  progress.viewed_instructions = progress.viewed_instructions || {};
+  progress.viewed_instructions[instructionId] = viewedAt;
+  saveProgress(progress);
+}
+
+// this function is for showing an instruction again when a participant redoes the protocol
+export function clearInstructionViewed(instructionId) {
+  const progress = getProgress();
+
+  if (progress.viewed_instructions) {
+    delete progress.viewed_instructions[instructionId];
   }
 
   saveProgress(progress);
@@ -245,15 +270,48 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     answer: null,
     answer_value: null,
     response_comment: "",
+    preview_variant_id: "",
+    yaw_coverage_degrees: "",
+    panorama_interactive_available: "",
+    viewing_trace_json: "",
+    rotation_count: "",
+    fullscreen_used: "",
+    fullscreen_at_answer: "",
+    scene_time_ms: "",
+    block_time_ms: "",
+    screen_resolution: getScreenResolution(),
+    viewport_resolution: getViewportResolution(),
     display_order: displayOrder,
     reaction_time_ms: Date.now() - startedAt,
     profile_age_range: session.profile?.age_range || "",
     profile_gender: session.profile?.gender || "",
     profile_night_walk_frequency: session.profile?.night_walk_frequency || "",
-    profile_place_familiarity: session.profile?.place_familiarity || "",
     profile_night_walking_comfort: session.profile?.night_walking_comfort || "",
-    profile_screen_brightness: session.profile?.screen_brightness || "",
-    profile_device_used: session.profile?.device_used || "",
-    profile_initial_impression: session.profile?.initial_impression || "",
+    profile_activity_expertise: session.profile?.activity_expertise || "",
+    profile_lighting_knowledge: session.profile?.lighting_knowledge || "",
   };
+}
+
+// this function is for reading the browser-reported display resolution safely
+export function getScreenResolution() {
+  const width = Number(globalThis.screen?.width);
+  const height = Number(globalThis.screen?.height);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return "";
+  }
+
+  return `${Math.round(width)}x${Math.round(height)}`;
+}
+
+// this function records the usable browser area in CSS pixels
+export function getViewportResolution() {
+  const width = Number(globalThis.window?.innerWidth);
+  const height = Number(globalThis.window?.innerHeight);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return "";
+  }
+
+  return `${Math.round(width)}x${Math.round(height)}`;
 }

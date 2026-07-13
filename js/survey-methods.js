@@ -110,7 +110,7 @@ export async function completeMethod(root, context, methodId, responses, onConti
     const actions = createElement("div", { className: "completion-actions" });
     continueButton = createElement("button", {
       className: "primary-button",
-      text: isFinalSection ? t(language, "finishSurvey") : t(language, "continue"),
+      text: isFinalSection ? t(language, "viewSummary") : t(language, "continue"),
       attrs: continueDisabled ? { type: "button", disabled: "disabled" } : { type: "button" },
     });
 

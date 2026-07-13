@@ -1,6 +1,7 @@
 import { CONFIG } from "./config.js";
 import {
   getOrCreateSession,
+  getLocalResponses,
   getProgress,
   hydrateSessionFromProgress,
   isMethodCompleted,
@@ -22,11 +23,10 @@ import {
   renderTrainingScene,
 } from "./simple-methods.js";
 import { getContextLanguage, t } from "./i18n.js";
-import { byId, createElement, getDeviceType } from "./utils.js";
+import { byId, createElement, isSurveyViewportAllowed } from "./utils.js";
 import { renderPairwiseComparison } from "./pairwise-comparison.js";
 import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.js";
-
-const TEXT_INPUT_CHARACTER_LIMIT = 300;
+import { buildResponseSummaryModel } from "./summary.js";
 
 const app = byId("app");
 const session = getOrCreateSession();
@@ -45,10 +45,11 @@ renderHeaderLanguageSelector();
 async function init() {
   try {
     // we call the json files needed by the website
-    const [images, questions, idealSceneVariants] = await Promise.all([
+    const [images, questions, idealSceneVariants, credits] = await Promise.all([
       fetchJson("data/images.json"),
       fetchJson("data/questions.json"),
       fetchJson("data/ideal_scene_variants.json"),
+      fetchJson("data/credits.json"),
     ]);
 
     // we keep the survey data in one context object used by all sections
@@ -57,6 +58,7 @@ async function init() {
       images,
       questions,
       idealSceneVariants,
+      credits,
     };
 
     // we start loading images early so the survey feels faster
@@ -94,7 +96,7 @@ function renderWelcome(context) {
   const language = getContextLanguage(context);
   const progress = getProgress();
   const hasPartialProgress = hasSavedPartialProgress(progress);
-  const allowedDevice = isDesktopSurveyDevice(context);
+  const allowedDevice = isAllowedSurveyViewport(context);
   setCurrentViewRenderer(() => renderWelcome(context));
   app.innerHTML = "";
 
@@ -105,6 +107,7 @@ function renderWelcome(context) {
     createElement("p", { text: t(language, "welcomeIntro") }),
     createElement("p", { text: t(language, "welcomePath") }),
     createElement("p", { text: t(language, "welcomePrivacy") }),
+    renderProjectIdentity(context),
   );
 
   if (!allowedDevice) {
@@ -133,7 +136,7 @@ function renderWelcome(context) {
 
 // this function is for deciding where the user goes after the welcome screen
 function routeAfterWelcome(context) {
-  if (!isDesktopSurveyDevice(context)) {
+  if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
     return;
   }
@@ -141,11 +144,6 @@ function routeAfterWelcome(context) {
   const progress = getProgress();
 
   if (!progress.profile_completed) {
-    renderProfile(context);
-    return;
-  }
-
-  if (!hasAllowedDeclaredDevice(context)) {
     renderProfile(context);
     return;
   }
@@ -187,9 +185,9 @@ function renderCompletedPrompt(context) {
     attrs: { type: "button" },
   });
 
-  back.addEventListener("click", () => renderFinalThanks());
+  back.addEventListener("click", () => renderSurveySummary(context));
   redo.addEventListener("click", () => {
-    if (!isDesktopSurveyDevice(context)) {
+    if (!isAllowedSurveyViewport(context)) {
       renderWelcome(context);
       return;
     }
@@ -211,7 +209,7 @@ function renderCompletedPrompt(context) {
 
 // this function is for routing to the next unfinished survey section
 function routeToNextProtocolStep(context) {
-  if (!isDesktopSurveyDevice(context)) {
+  if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
     return;
   }
@@ -223,15 +221,10 @@ function routeToNextProtocolStep(context) {
     return;
   }
 
-  if (!hasAllowedDeclaredDevice(context)) {
-    renderProfile(context);
-    return;
-  }
-
   const nextMethod = METHOD_DEFINITIONS.find((method) => !isMethodCompleted(method.id));
 
   if (!nextMethod) {
-    renderFinalThanks();
+    renderSurveySummary(context);
     return;
   }
 
@@ -252,7 +245,7 @@ function warmUpSurveyMedia(context) {
 // this function is for showing the anonymous profile questions
 function renderProfile(context, draft = null) {
   const language = getContextLanguage(context);
-  if (!isDesktopSurveyDevice(context)) {
+  if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
     return;
   }
@@ -303,30 +296,27 @@ function renderProfile(context, draft = null) {
       ["comfortable", t(language, "comfortable")],
       ["very_comfortable", t(language, "veryComfortable")],
     ], true, values.night_walking_comfort),
-    renderSelect("place_familiarity", t(language, "placeFamiliarity"), [
+    renderSelect("activity_expertise", t(language, "activityExpertise"), [
       ["", t(language, "selectOption")],
-      ["yes_very_familiar_nantes", t(language, "yesVeryFamiliarNantes")],
-      ["somewhat_familiar_nantes", t(language, "somewhatFamiliarNantes")],
-      ["similar_urban_environment", t(language, "similarUrbanEnvironment")],
-      ["not_familiar_environment", t(language, "notFamiliarEnvironment")],
-    ], true, values.place_familiarity),
-    renderSelect("screen_brightness", t(language, "screenBrightness"), [
+      ["urban_design", t(language, "expertiseUrbanDesign")],
+      ["lighting", t(language, "expertiseLighting")],
+      ["research", t(language, "expertiseResearch")],
+      ["student", t(language, "expertiseStudent")],
+      ["public_authority", t(language, "expertisePublicAuthority")],
+      ["light_manufacturer", t(language, "expertiseManufacturer")],
+      ["no_specific_expertise", t(language, "noSpecificExpertise")],
+      ["prefer_not_to_say", t(language, "preferNotToSay")],
+    ], true, values.activity_expertise),
+    renderSelect("lighting_knowledge", t(language, "lightingKnowledge"), [
       ["", t(language, "selectOption")],
-      ["yes", t(language, "yes")],
-      ["no", t(language, "no")],
-      ["not_sure", t(language, "notSure")],
-    ], true, values.screen_brightness),
-    renderSelect("device_used", t(language, "deviceUsed"), [
-      ["", t(language, "selectOption")],
-      ["computer_laptop", t(language, "computerLaptop")],
-      ["tablet", t(language, "tablet")],
-      ["smartphone", t(language, "smartphone")],
-      ["other", t(language, "other")],
-    ], true, values.device_used),
-    renderLimitedTextArea("initial_impression", t(language, "initialImpression"), language, values.initial_impression || ""),
+      ["none", t(language, "lightingKnowledgeNone")],
+      ["basic", t(language, "lightingKnowledgeBasic")],
+      ["familiar", t(language, "lightingKnowledgeFamiliar")],
+      ["professional_expert", t(language, "lightingKnowledgeExpert")],
+      ["prefer_not_to_say", t(language, "preferNotToSay")],
+    ], true, values.lighting_knowledge),
   );
 
-  const declaredDeviceNotice = renderDeclaredDeviceOnlyNotice(context);
   const actions = createElement("div", { className: "completion-actions" });
   const back = createElement("button", {
     className: "secondary-button",
@@ -338,51 +328,27 @@ function renderProfile(context, draft = null) {
     text: t(language, "continue"),
     attrs: { type: "submit" },
   });
-  const deviceSelect = form.querySelector('[name="device_used"]');
-
-  // this function is for blocking the survey if the declared device is not a computer
-  function updateDeclaredDeviceGate() {
-    const deviceAllowed = isAllowedDeclaredDevice(deviceSelect.value);
-    const deviceSelected = Boolean(deviceSelect.value);
-    declaredDeviceNotice.hidden = !deviceSelected || deviceAllowed;
-    next.disabled = deviceSelected && !deviceAllowed;
-  }
-
   back.addEventListener("click", () => renderWelcome(context));
-  deviceSelect.addEventListener("change", updateDeclaredDeviceGate);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(form);
-    const declaredDevice = formData.get("device_used");
-
-    // we do not continue if the user says they are not using a computer
-    if (!isAllowedDeclaredDevice(declaredDevice)) {
-      declaredDeviceNotice.hidden = false;
-      next.disabled = true;
-      deviceSelect.focus();
-      return;
-    }
 
     updateSessionProfile(context.session, {
       age_range: formData.get("age_range"),
       gender: formData.get("gender"),
       night_walk_frequency: formData.get("night_walk_frequency"),
       night_walking_comfort: formData.get("night_walking_comfort"),
-      place_familiarity: formData.get("place_familiarity"),
-      screen_brightness: formData.get("screen_brightness"),
-      device_used: declaredDevice,
-      initial_impression: limitCharacters(String(formData.get("initial_impression") || "").trim(), TEXT_INPUT_CHARACTER_LIMIT),
+      activity_expertise: formData.get("activity_expertise"),
+      lighting_knowledge: formData.get("lighting_knowledge"),
     });
 
     routeToNextProtocolStep(context);
   });
 
   actions.append(back, next);
-  form.append(declaredDeviceNotice);
   form.append(actions);
   panel.append(form);
   app.append(panel);
-  updateDeclaredDeviceGate();
 }
 
 // this function is for making a select input with translated options
@@ -421,45 +387,9 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
   return field;
 }
 
-// this function is for optional profile text answers with the shared character limit
-function renderLimitedTextArea(name, label, language, value = "") {
-  const field = createElement("label", { className: "form-field" });
-  const textarea = createElement("textarea", {
-    attrs: {
-      name,
-      rows: "4",
-      placeholder: t(language, "optionalComment"),
-    },
-  });
-  const counter = createElement("small", {
-    className: "field-helper character-counter",
-  });
-
-  textarea.value = limitCharacters(value, TEXT_INPUT_CHARACTER_LIMIT);
-  field.append(createElement("span", { text: label }), textarea, counter);
-
-  function updateCounter() {
-    const limitedValue = limitCharacters(textarea.value, TEXT_INPUT_CHARACTER_LIMIT);
-
-    if (textarea.value !== limitedValue) {
-      textarea.value = limitedValue;
-    }
-
-    counter.textContent = t(language, "characterLimit", {
-      current: countCharacters(textarea.value),
-      limit: TEXT_INPUT_CHARACTER_LIMIT,
-    });
-  }
-
-  textarea.addEventListener("input", updateCounter);
-  updateCounter();
-
-  return field;
-}
-
 // this function is for calling the renderer of each survey method
 function startMethod(context, methodId) {
-  if (!isDesktopSurveyDevice(context)) {
+  if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
     return;
   }
@@ -489,27 +419,13 @@ function startMethod(context, methodId) {
   }
 }
 
-// this function is for checking if the current browser width is allowed
-function isDesktopSurveyDevice(context) {
-  const currentDevice = getDeviceType();
-
+// this function is for checking if the usable browser area is large enough
+function isAllowedSurveyViewport(context) {
+  const allowed = isSurveyViewportAllowed();
   if (context?.session) {
-    context.session.device = currentDevice;
+    context.session.viewport_allowed = allowed;
   }
-
-  return currentDevice === "desktop";
-}
-
-// this function is for checking the device answer saved in the profile
-function hasAllowedDeclaredDevice(context) {
-  const progress = getProgress();
-  const declaredDevice = context?.session?.profile?.device_used || progress.profile?.device_used || "";
-  return isAllowedDeclaredDevice(declaredDevice);
-}
-
-// this function is for allowing only computer/laptop answers
-function isAllowedDeclaredDevice(device) {
-  return device === "computer_laptop";
+  return allowed;
 }
 
 // this function is for showing the desktop only message from the welcome screen
@@ -519,17 +435,6 @@ function renderDesktopOnlyNotice(context) {
   return createElement("div", {
     className: "device-block-notice",
     html: `<strong>${t(language, "desktopOnlyTitle")}</strong><p>${t(language, "desktopOnlyBody")}</p>`,
-  });
-}
-
-// this function is for showing the device warning inside the profile form
-function renderDeclaredDeviceOnlyNotice(context) {
-  const language = getContextLanguage(context);
-
-  return createElement("div", {
-    className: "device-block-notice",
-    attrs: { hidden: "hidden" },
-    html: `<strong>${t(language, "declaredDeviceOnlyTitle")}</strong><p>${t(language, "declaredDeviceOnlyBody")}</p>`,
   });
 }
 
@@ -547,8 +452,120 @@ function renderFinalThanks() {
   app.append(panel);
 }
 
+// this function is for showing the indicative response summary before the final thank-you page
+function renderSurveySummary(context) {
+  const language = getContextLanguage(context);
+  setCurrentViewRenderer(() => renderSurveySummary(context));
+  app.innerHTML = "";
+  const panel = createElement("section", { className: "panel completion-panel summary-panel" });
+  const summary = buildResponseSummaryModel(getLocalResponses(), language);
+  const hero = createElement("header", { className: "summary-hero" });
+  const completedMark = createElement("span", {
+    className: "summary-completed-mark",
+    text: "✓",
+    attrs: { "aria-hidden": "true" },
+  });
+  const heading = createElement("div", { className: "summary-heading" });
+  heading.append(
+    createElement("p", { className: "summary-eyebrow", text: t(language, "summaryCompleted") }),
+    createElement("h2", { text: t(language, "responseSummary") }),
+    createElement("p", { className: "summary-intro", text: t(language, "summaryIntro") }),
+  );
+  hero.append(completedMark, heading);
+
+  const insightGrid = createElement("div", { className: "summary-insight-grid" });
+  summary.insights.forEach((insight) => {
+    const card = createElement("article", { className: `summary-insight-card summary-insight-${insight.type}` });
+    const icon = createElement("span", {
+      className: "summary-insight-icon",
+      text: insight.type === "preferences" ? "◇" : "◎",
+      attrs: { "aria-hidden": "true" },
+    });
+    const copy = createElement("div");
+    copy.append(
+      createElement("h3", {
+        text: t(language, insight.type === "preferences" ? "summaryPreferences" : "summaryTendencies"),
+      }),
+      createElement("p", { text: insight.text }),
+    );
+    card.append(icon, copy);
+    insightGrid.append(card);
+  });
+
+  const disclaimer = createElement("aside", { className: "summary-disclaimer" });
+  disclaimer.append(
+    createElement("span", { className: "summary-disclaimer-icon", text: "i", attrs: { "aria-hidden": "true" } }),
+    createElement("div", {
+      html: `<strong>${t(language, "summaryNote")}</strong><p>${summary.disclaimer}</p>`,
+    }),
+  );
+  const actions = createElement("div", { className: "completion-actions" });
+  const finish = createElement("button", {
+    className: "primary-button",
+    text: t(language, "finishSurvey"),
+    attrs: { type: "button" },
+  });
+  finish.addEventListener("click", renderFinalThanks);
+  actions.append(finish);
+  panel.append(hero, insightGrid, disclaimer, actions);
+  app.append(panel);
+}
+
+// this function is for rendering the logos and project links on the introduction screen
+function renderProjectIdentity(context) {
+  const language = getContextLanguage(context);
+  const wrapper = createElement("section", { className: "project-identity" });
+  const logos = createElement("div", { className: "project-logo-strip" });
+  const links = createElement("div", { className: "project-links" });
+  (context.credits?.logos || []).forEach((logo) => {
+    logos.append(createElement("img", { attrs: { src: logo.path, alt: logo.alt } }));
+  });
+  (context.credits?.project_links || []).forEach((link) => {
+    links.append(makeExternalLink(link.label?.[language] || link.label?.en || link.url, link.url));
+  });
+  wrapper.append(logos, links);
+  return wrapper;
+}
+
+// this function is for filling the footer credits dialog from the tracked credit data
+function renderCreditsDialog(context) {
+  const language = getContextLanguage(context);
+  const content = byId("credits-content");
+  content.replaceChildren(createElement("h2", { text: t(language, "creditsTitle") }));
+  (context.credits?.asset_credits || []).forEach((credit) => {
+    const item = createElement("p");
+    item.append(
+      makeExternalLink(`“${credit.title}”`, credit.source_url),
+      document.createTextNode(language === "fr" ? ` par ${credit.author} — ` : ` by ${credit.author} — `),
+      makeExternalLink(credit.license_name, credit.license_url),
+    );
+    content.append(item);
+  });
+  const software = createElement("p");
+  software.append(makeExternalLink(t(language, "softwareLicense"), "LICENSE"));
+  content.append(software);
+  byId("credits-close").textContent = t(language, "close");
+}
+
+function makeExternalLink(label, url) {
+  return createElement("a", {
+    text: label,
+    attrs: { href: url, target: "_blank", rel: "noopener noreferrer" },
+  });
+}
+
 init();
 initDeviceGateResizeWatcher();
+initCreditsDialog();
+
+function initCreditsDialog() {
+  byId("credits-button").addEventListener("click", () => {
+    if (!window.surveyContext) return;
+    renderCreditsDialog(window.surveyContext);
+    byId("credits-dialog").showModal();
+  });
+  byId("credits-close").addEventListener("click", () => byId("credits-dialog").close());
+}
 
 // this function is for preparing the dark/light mode button
 function initThemeToggle() {
@@ -605,7 +622,7 @@ function initDeviceGateResizeWatcher() {
       return;
     }
 
-    const allowedDevice = getDeviceType() === "desktop";
+    const allowedDevice = isSurveyViewportAllowed();
 
     if (allowedDevice === lastAllowedDeviceState) {
       return;
@@ -665,19 +682,7 @@ function readProfileDraft() {
     gender: formData.get("gender") || "",
     night_walk_frequency: formData.get("night_walk_frequency") || "",
     night_walking_comfort: formData.get("night_walking_comfort") || "",
-    place_familiarity: formData.get("place_familiarity") || "",
-    screen_brightness: formData.get("screen_brightness") || "",
-    device_used: formData.get("device_used") || "",
-    initial_impression: formData.get("initial_impression") || "",
+    activity_expertise: formData.get("activity_expertise") || "",
+    lighting_knowledge: formData.get("lighting_knowledge") || "",
   };
-}
-
-// this function is for counting characters correctly
-function countCharacters(value) {
-  return Array.from(String(value)).length;
-}
-
-// this function is for cutting text at the character limit
-function limitCharacters(value, limit) {
-  return Array.from(String(value)).slice(0, limit).join("");
 }

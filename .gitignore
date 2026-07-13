@@ -26,3 +26,5 @@ pnpm-debug.log*
 .idea/
 visuals/
 tests/
+logo/
+documentation/

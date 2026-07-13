@@ -2,7 +2,7 @@ import { createElement } from "./utils.js";
 
 const DRAG_SENSITIVITY = 0.0045;
 const KEY_STEP = Math.PI / 36;
-const MAX_PITCH = Math.PI * 0.47;
+export const MAX_PITCH = 50 * Math.PI / 180;
 const MIN_FOV = 42;
 const MAX_FOV = 94;
 const imageCache = new Map();
@@ -243,6 +243,8 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     return;
   }
 
+  options.onInteractiveAvailabilityChange?.(true);
+
   const locations = {
     position: gl.getAttribLocation(program, "a_position"),
     rotation: gl.getUniformLocation(program, "u_rotation"),
@@ -348,7 +350,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     const previousYaw = state.yaw;
     state.yaw = nextYaw;
     state.pitch = clamp(nextPitch, -MAX_PITCH, MAX_PITCH);
-    yawCoverage.record(previousYaw, state.yaw);
+    yawCoverage.record(previousYaw, state.yaw, state.pitch);
     notifySharedViewState(sharedView, viewerId, state);
     requestRender();
   }
@@ -356,6 +358,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   frame.addEventListener("pointerdown", (event) => {
     // we start dragging when the participant presses on the panorama
     state.dragging = true;
+    yawCoverage.startRotation();
     state.lastX = event.clientX;
     state.lastY = event.clientY;
     frame.classList.add("dragging");
@@ -378,13 +381,6 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
   frame.addEventListener("pointerup", () => endDrag(frame, state));
   frame.addEventListener("pointercancel", () => endDrag(frame, state));
   frame.addEventListener("lostpointercapture", () => endDrag(frame, state));
-  frame.addEventListener("wheel", (event) => {
-    // we zoom in or out with the mouse wheel
-    event.preventDefault();
-    state.fov = clamp(state.fov + Math.sign(event.deltaY) * 4, MIN_FOV, MAX_FOV);
-    notifySharedViewState(sharedView, viewerId, state);
-    requestRender();
-  }, { passive: false });
   frame.addEventListener("keydown", (event) => {
     // we allow arrow keys to rotate the panorama
     const handlers = {
@@ -399,6 +395,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
     }
 
     event.preventDefault();
+    yawCoverage.startRotation();
     handlers[event.key]();
   });
 
@@ -416,6 +413,7 @@ function createSphericalViewer(frame, canvas, imagePath, options) {
 
 // this function is for showing a normal image if webgl fails
 function renderImageFallback(frame, imagePath, options) {
+  options.onInteractiveAvailabilityChange?.(false);
   frame.innerHTML = "";
   frame.classList.add("panorama-fallback");
   frame.append(renderFlatImage({ path: imagePath }, options).firstElementChild);
@@ -497,7 +495,7 @@ function radiansToDegrees(value) {
 }
 
 // this function is for tracking how much of the 360 view was visited
-function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
+export function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
   const visitedBins = coverageState.visitedBins instanceof Set ? coverageState.visitedBins : new Set();
 
   if (!visitedBins.size) {
@@ -506,25 +504,45 @@ function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
 
   coverageState.visitedBins = visitedBins;
   coverageState.hasMoved = Boolean(coverageState.hasMoved);
+  coverageState.rotationCount = Number(coverageState.rotationCount) || 0;
+  coverageState.startedAt = Number(coverageState.startedAt) || Date.now();
+  coverageState.lastSampleAt = Number(coverageState.lastSampleAt) || 0;
+  coverageState.viewingTrace = Array.isArray(coverageState.viewingTrace) ? coverageState.viewingTrace : [];
 
-  function emit(yaw) {
+  function emit(yaw, pitch = 0, forceSample = false) {
     // we send the coverage value back to the training screen
     if (typeof onChange !== "function") {
       return;
     }
 
+    const now = Date.now();
+    if (forceSample || now - coverageState.lastSampleAt >= 250) {
+      coverageState.viewingTrace.push([
+        now - coverageState.startedAt,
+        Math.round(normalizeDegrees(radiansToDegrees(yaw))),
+        Math.round(radiansToDegrees(pitch)),
+      ]);
+      coverageState.lastSampleAt = now;
+    }
     onChange({
       yawCoverageDegrees: coverageState.hasMoved ? Math.min(360, visitedBins.size) : 0,
       yawDegrees: normalizeDegrees(radiansToDegrees(yaw)),
+      pitchDegrees: radiansToDegrees(pitch),
+      rotationCount: coverageState.rotationCount,
+      viewingTrace: coverageState.viewingTrace,
     });
   }
 
   return {
     notify() {
-      emit(initialYaw);
+      emit(initialYaw, 0, true);
     },
 
-    record(previousYaw, nextYaw) {
+    startRotation() {
+      coverageState.rotationCount += 1;
+    },
+
+    record(previousYaw, nextYaw, pitch = 0) {
       const deltaDegrees = radiansToDegrees(nextYaw - previousYaw);
 
       if (!Number.isFinite(deltaDegrees) || Math.abs(deltaDegrees) < 0.001) {
@@ -539,7 +557,7 @@ function createYawCoverageTracker(initialYaw, onChange, coverageState = {}) {
         visitedBins.add(yawToDegreeBin(previousYaw + (nextYaw - previousYaw) * ratio));
       }
 
-      emit(nextYaw);
+      emit(nextYaw, pitch);
     },
   };
 }

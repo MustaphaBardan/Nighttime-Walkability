@@ -20,6 +20,11 @@ export function getDeviceType() {
   return "desktop";
 }
 
+// this function is for checking whether the usable browser area is large enough for the survey
+export function isSurveyViewportAllowed(width = window.innerWidth, height = window.innerHeight) {
+  return Number(width) >= 900 && Number(height) >= 600;
+}
+
 // this function is for shuffling items in a normal random way
 export function shuffle(items) {
   const copy = [...items];
@@ -134,6 +139,30 @@ export function makeSeededQuestionAssignments(items, questions, participantId, a
   return selectedItems.map((item, index) => ({
     item,
     question: questionOrder[index % questionOrder.length],
+    displayOrder: index + 1,
+  }));
+}
+
+// this function is for selecting repeatable items while preserving question order
+export function makeFixedQuestionAssignments(items, questions, participantId, assignmentKey, count = questions.length) {
+  if (!Array.isArray(items)) {
+    throw new TypeError("makeFixedQuestionAssignments expects items to be an array");
+  }
+
+  if (!Array.isArray(questions)) {
+    throw new TypeError("makeFixedQuestionAssignments expects questions to be an array");
+  }
+
+  if (!count || count <= 0 || !items.length || !questions.length) {
+    return [];
+  }
+
+  const safeCount = Math.min(count, items.length);
+  const selectedItems = takeDeterministicSubset(items, safeCount, `${participantId}:${assignmentKey}:items`);
+
+  return selectedItems.map((item, index) => ({
+    item,
+    question: questions[index % questions.length],
     displayOrder: index + 1,
   }));
 }

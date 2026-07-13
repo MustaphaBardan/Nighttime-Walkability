@@ -1,154 +1,56 @@
 # Night Walkability Survey Platform
 
-Static research survey platform for the proposed night walkability methodology.
+Dependency-free bilingual static survey for the LUNNE night-walkability study.
 
-Current version: `v4_static_360_panorama`.
+Current version: `Protocol v6 - finalized static 360 panorama questionnaire`.
 
-## Run Locally
-
-With Node.js installed through `nvm`, use:
+## Run and validate
 
 ```bash
 npm run dev
-```
-
-Then open `http://127.0.0.1:8000`.
-
-To use another port:
-
-```bash
-PORT=8080 npm run dev
-```
-
-You can also run the static checks:
-
-```bash
 npm run check
 ```
 
-The check command validates JSON files and runs JavaScript syntax checks with Node.
+The local server uses `http://127.0.0.1:8000`. Set `PORT=8080` to use another port.
 
-If Node is not available, Python still works as a fallback:
+## Participant flow
 
-```bash
-python3 -m http.server 8000
-```
+1. LUNNE introduction, project identities, and 900×600 viewport check
+2. Six anonymous profile questions
+3. Combined D1/D3 panorama-control and route-continuation tutorial
+4. Six seeded pairwise comparisons in fixed Q1–Q6 order
+5. Six seeded detailed scenes in fixed Q1–Q6 order
+6. Optional ideal-scene builder
+7. Realism, lighting plausibility, and viewing-quality questions
+8. Save, indicative personal summary, and finish
 
-Then open `http://127.0.0.1:8000`.
+Each participant receives deterministic scene assignments based on their participant ID. Reloading preserves the same assignments; different participants generally receive different assignments. The six detailed scenes are unique when enough scenario images are available.
 
-The survey flow is:
+The panorama viewer permits pointer and keyboard rotation, limits pitch to ±50°, disables zoom, and never blocks an answer based on yaw coverage. It records a compact yaw/pitch trace, rotation count, fullscreen state, coverage, and timing for analysis.
 
-1. Welcome page
-2. Anonymous general information
-3. Training 360-degree scene
-4. Pairwise comparison block
-5. Detailed scene rating block
-6. Ideal scene builder
-7. Final realism check and optional comment
-8. Thank-you page
+## Data and privacy
 
-The participant no longer chooses a method. This version follows one fixed path:
+Responses are backed up in versioned browser storage. Protocol v6 uses new keys and does not read, modify, or delete v5 data. The long-format response schema includes:
 
-- one 360-degree training scene so participants can learn the viewer controls;
-- pairwise comparison for controlled scene preferences;
-- detailed 1-5 scene ratings for safety, comfort/atmosphere, practical visibility, orientation, dark/hidden areas, and willingness to walk;
-- ideal scene builder for preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions;
-- realism and final viewing-quality checks at the end.
+- participant, language, question, image, answer, display-order, and timing fields;
+- age, gender, night-walking frequency and comfort, activity/expertise, and lighting knowledge;
+- screen and viewport resolution;
+- yaw coverage, interaction availability, compact viewing trace, rotation count, fullscreen usage, scene time, and block time.
 
-The anonymous information screen includes an optional opening impression about walking outside at night before participants see the scenes. Pairwise and detailed-rating answers also allow an optional short comment explaining the selected choice or rating.
+The ideal builder exports a participation row and, when completed, seven parameter rows. Final submissions replace prior rows for the same participant ID.
 
-The interface supports English and French. Participants choose the language on the welcome page, and the selected language is stored with each response row.
+## Google Sheets deployment
 
-The survey is desktop-only. The browser blocks mobile/tablet-sized viewports and asks participants to use a computer or laptop with a desktop-sized browser window before starting or continuing. The anonymous profile also blocks continuation if the participant declares a device other than computer/laptop.
+The frontend submits the final response bundle to the Apps Script `/exec` URL configured in `js/config.js`. The matching local schema is in `google_apps_script/Code.gs`.
 
-Batch classification remains in the code as a prototype helper, but it is not part of the proposed participant flow.
+After changing the local script:
 
-The active scenario dataset uses five 360-degree scenario groups, A-E, with three variants per group. Pairwise comparison uses a deterministic participant-based batch: each participant receives up to six within-group pairs, and each pair is evaluated with the six pairwise questions. Pair selection and Scene A/B placement are seeded by participant ID, so the assignment is reproducible while rotating scenario coverage across participants. For group D, `scenario_D_overview.png` is currently used as D1.
+1. Copy it into the Google Sheet’s Apps Script editor.
+2. Choose **Deploy → Manage deployments → Edit → New version → Deploy**.
+3. Keep **Execute as: Me** and public access enabled.
 
-Detailed rating assigns one deterministic participant-based scenario panorama per detailed-rating question, without duplicates when enough scenario images are available.
+The website cannot deploy that external Apps Script automatically.
 
-## Configure Remote Saving
+## Credits
 
-Responses are always backed up in `localStorage`.
-
-To also submit each response to Google Sheets automatically:
-
-1. Create a Google Sheet.
-2. Open `Extensions` -> `Apps Script`.
-3. Paste the survey Apps Script code into the editor.
-4. Click `Deploy` -> `New deployment`.
-5. Select type `Web app`.
-6. Set `Execute as` to `Me`.
-7. Set access to `Anyone`.
-8. Deploy and copy the Web App URL.
-9. Paste that URL into:
-
-```js
-// js/config.js
-googleAppsScriptUrl: "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"
-```
-
-After that, answers are saved locally as each section is completed and sent to Google Sheets once, after the final realism section. There is no separate submit button.
-
-The browser stores anonymous progress in versioned `localStorage` keys. If the same browser profile returns after completing the survey, the platform shows a completion warning before allowing the participant to redo the survey and replace the saved answers for the same participant ID.
-
-The response shape follows the shared long-format schema in the project notes. The Google Sheet will use one row per answer.
-
-Study/admin fields are included on each answer row:
-
-- `participant_id`
-- `language`
-- `survey_completed_at`
-- `survey_duration_ms`
-
-For analysis consistency, `question_text` is always stored in English. The `language` column records whether the participant saw the interface in English or French.
-
-Timing is stored at two levels: `reaction_time_ms` measures the time spent on each individual question/trial, while `survey_duration_ms` measures the full survey from the moment the participant starts the survey to final submission.
-
-Anonymous profile fields are repeated on each answer row:
-
-- `profile_age_range`
-- `profile_gender`
-- `profile_night_walk_frequency`
-- `profile_place_familiarity`
-- `profile_night_walking_comfort`
-- `profile_screen_brightness`
-- `profile_device_used`
-- `profile_initial_impression`
-
-Pairwise and detailed-rating rows may include:
-
-- `response_comment`
-
-Pairwise rows additionally include left/right placement fields:
-
-- `image_left`
-- `image_right`
-
-Ideal-scene-builder rows include `preview_variant_id`.
-
-The training-scene row includes `yaw_coverage_degrees`, which stores how much of the 360-degree panorama the participant covered before continuing.
-
-The indicator table in `data/indicators.csv` is keyed by `image_id` and should match the IDs in `data/images.json`. Current indicator values are placeholders.
-
-Final submissions replace previous rows for the same `participant_id`.
-
-## Test Google Sheets Saving
-
-Open your Web App URL directly in a browser. It should show JSON like:
-
-```json
-{"ok":true,"service":"night-walkability-survey"}
-```
-
-If Google shows `Access denied` or asks for permission, the deployment access is not public enough for survey participants.
-
-Check these settings:
-
-- Use `Deploy` -> `Manage deployments` -> edit the active Web App deployment.
-- `Execute as`: `Me`.
-- `Who has access`: `Anyone`.
-- Use the `/exec` URL, not the `/dev` URL.
-- After changing Apps Script code, click `Deploy` -> `Manage deployments` -> edit -> `New version` -> `Deploy`.
-
-If your Google Workspace account blocks public web apps, deploy the script from a regular Google account or ask the Workspace admin to allow external access.
+Project identities and asset attributions are loaded from `data/credits.json`. Public logo files live under `assets/logos/`. The website software is distributed under the root MIT `LICENSE`; credited 3D assets retain their respective CC BY 4.0 licences.

@@ -1,23 +1,39 @@
 import { getContextLanguage, localize, optionLabel, optionPreview, questionText, t } from "./i18n.js";
 import { markMethodCompleted, saveLocalBackup } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, makeResponse, renderSurveyProgress } from "./survey-methods.js";
-import { createElement, getScenarioImages, getTrainingImage, makeSeededQuestionAssignments } from "./utils.js";
+import {
+  createElement,
+  getScenarioImages,
+  makeFixedQuestionAssignments,
+} from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
 
 const FINAL_COMMENT_CHARACTER_LIMIT = 300;
+const IDEAL_SCENE_BUILDER_PARTICIPATION_QUESTION = {
+  question_id: "ideal_scene_builder_participation",
+  text: {
+    en: "Did the participant complete the optional ideal scene builder?",
+    fr: "La personne participante a-t-elle réalisé la construction facultative de la scène idéale ?",
+  },
+};
 
-// this function is for showing the training 360 scene before the real questions
+// this function is for teaching both 360 navigation and route continuation
 export function renderTrainingScene(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "training_scene";
   const question = context.questions.training_scene?.[0] || {
     question_id: "training_360_scene_viewed",
     text: { en: "Rotate the 360 degree scene before continuing.", fr: "Faites pivoter la scène à 360 degrés avant de continuer." },
   };
-  const image = getTrainingImage(context.images);
+  const clearImage = context.images.find((image) => image.image_id === "scenario_D1_overview");
+  const unclearImage = context.images.find((image) => image.image_id === "scenario_D3_hidden_exit");
   let startedAt = Date.now();
   let yawCoverageDegrees = 0;
+  let viewingTrace = [];
+  let rotationCount = 0;
+  let fullscreenUsed = false;
   let selectedAnswer = "";
   const yawCoverageState = {};
+  const sharedViewState = {};
 
   // this function is for redrawing the training screen
   function renderCurrent() {
@@ -36,12 +52,16 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
       language,
     );
     const panel = createElement("section", { className: "panel question-panel training-panel" });
+    const shell = createElement("section", { className: "route-examples-shell" });
+    const grid = createElement("div", { className: "pair-grid route-examples-grid" });
+    const exitFullscreenButton = createElement("button", {
+      className: "fullscreen-exit-button",
+      text: t(language, "exitFullScreen"),
+      attrs: { type: "button" },
+    });
     const actions = createElement("div", { className: "completion-actions" });
     const coverageValue = createElement("strong", { text: t(language, "yawCoverageValue", { current: yawCoverageDegrees }) });
-    const fullscreenCoverageValue = createElement("div", {
-      className: "training-yaw-fullscreen",
-      text: t(language, "yawCoverageValue", { current: yawCoverageDegrees }),
-    });
+    const fullscreenCoverageValues = [];
     const coverageRange = createElement("input", {
       className: "training-yaw-range",
       attrs: {
@@ -71,12 +91,28 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     }, question.question_id);
 
     // this function is for updating how many degrees the user has seen
-    function updateYawCoverage({ yawCoverageDegrees: nextCoverage }) {
+    function updateYawCoverage(metrics) {
+      const nextCoverage = metrics.yawCoverageDegrees;
       yawCoverageDegrees = Math.max(0, Math.min(360, Math.round(nextCoverage || 0)));
+      viewingTrace = metrics.viewingTrace || [];
+      rotationCount = Number(metrics.rotationCount) || 0;
       coverageRange.value = String(yawCoverageDegrees);
       coverageValue.textContent = t(language, "yawCoverageValue", { current: yawCoverageDegrees });
-      fullscreenCoverageValue.textContent = t(language, "yawCoverageValue", { current: yawCoverageDegrees });
+      fullscreenCoverageValues.forEach((value) => {
+        value.textContent = t(language, "yawCoverageValue", { current: yawCoverageDegrees });
+      });
     }
+
+    const requestTutorialFullscreen = () => {
+      fullscreenUsed = true;
+      shell.requestFullscreen?.();
+    };
+    grid.append(
+      renderTutorialScene(clearImage, t(language, "clearRouteTitle"), t(language, "clearRouteDescription")),
+      renderTutorialScene(unclearImage, t(language, "unclearRouteTitle"), t(language, "unclearRouteDescription")),
+    );
+    shell.append(grid, exitFullscreenButton);
+    exitFullscreenButton.addEventListener("click", () => document.exitFullscreen?.());
 
     continueButton.addEventListener("click", () => {
       if (!selectedAnswer) {
@@ -86,10 +122,17 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
       // we save the training answer and the 360 rotation coverage
       const answerValue = (question.options || []).indexOf(selectedAnswer) + 1;
       saveLocalBackup(makeResponse(context, methodId, question, 1, startedAt, {
-        image_id: image.image_id,
+        image_left: clearImage?.image_id || "",
+        image_right: unclearImage?.image_id || "",
         answer: selectedAnswer,
         answer_value: answerValue || null,
         yaw_coverage_degrees: yawCoverageDegrees,
+        viewing_trace_json: JSON.stringify(viewingTrace),
+        rotation_count: rotationCount,
+        fullscreen_used: fullscreenUsed || Boolean(document.fullscreenElement),
+        fullscreen_at_answer: Boolean(document.fullscreenElement),
+        scene_time_ms: Date.now() - startedAt,
+        block_time_ms: Date.now() - startedAt,
       }));
       markMethodCompleted(methodId);
       onComplete(context);
@@ -106,82 +149,39 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     actions.append(continueButton);
     panel.append(
       createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 3, total: TOTAL_SURVEY_STEPS }) }),
-      renderSingleImage(image, language, {
-        fullViewport: true,
-        onYawCoverageChange: updateYawCoverage,
-        yawCoverageState,
-        overlayElement: fullscreenCoverageValue,
-      }),
+      shell,
       coverageMeter,
       createElement("p", { className: "question-text training-question-text", text: questionText(question, language) }),
       answerRow,
       actions,
     );
     root.append(toolbar, panel);
-  }
 
-  renderCurrent();
-}
-
-// this function is for the old batch classification section
-export function renderBatchClassification(root, context, onComplete, onRerenderReady = () => {}) {
-  const methodId = "batch_classification";
-  const question = context.questions.batch_classification[0];
-  const responses = [];
-  let currentIndex = 0;
-  let startedAt = Date.now();
-
-  // this function is for showing one image at a time in batch classification
-  function renderCurrent() {
-    const language = getContextLanguage(context);
-    onRerenderReady(renderCurrent);
-
-    if (currentIndex >= context.images.length) {
-      completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
-        currentIndex -= 1;
-        responses.pop();
-        renderCurrent();
+    function renderTutorialScene(image, title, description) {
+      const fullscreenCoverageValue = createElement("div", {
+        className: "training-yaw-fullscreen",
+        text: t(language, "yawCoverageValue", { current: yawCoverageDegrees }),
       });
-      return;
+      fullscreenCoverageValues.push(fullscreenCoverageValue);
+      const card = createElement("article", {
+        className: "scene-option route-example-card",
+        attrs: { "data-image-id": image?.image_id || "" },
+      });
+      const media = renderSceneMedia(image, {
+        alt: title,
+        compact: true,
+        viewState: sharedViewState,
+        yawCoverageState,
+        onYawCoverageChange: updateYawCoverage,
+        fullscreenLabel: t(language, "fullScreen"),
+        onFullscreenRequest: requestTutorialFullscreen,
+        overlayElement: fullscreenCoverageValue,
+      });
+      const copy = createElement("div", { className: "route-example-copy" });
+      copy.append(createElement("h3", { text: title }), createElement("p", { text: description }));
+      card.append(media, copy);
+      return card;
     }
-
-    const image = context.images[currentIndex];
-    startedAt = Date.now();
-    root.innerHTML = "";
-
-    const toolbar = renderQuestionToolbar(
-      "Batch classification",
-      null,
-      () => {
-        if (currentIndex === 0) {
-          onComplete(context);
-          return;
-        }
-
-        currentIndex -= 1;
-        responses.pop();
-        renderCurrent();
-      },
-      currentIndex === 0,
-      renderSurveyProgress(currentIndex + 1, context.images.length, language),
-      language,
-    );
-    const panel = createElement("section", { className: "panel question-panel" });
-    panel.append(
-      createElement("p", { className: "question-text", text: questionText(question, language) }),
-      renderSingleImage(image, language),
-      renderChoiceRow(question.answers, language, (answer, index) => {
-        responses.push(makeResponse(context, methodId, question, currentIndex + 1, startedAt, {
-          image_id: image.image_id,
-          answer,
-          answer_value: index + 1,
-        }));
-        currentIndex += 1;
-        renderCurrent();
-      }),
-    );
-
-    root.append(toolbar, panel);
   }
 
   renderCurrent();
@@ -191,9 +191,10 @@ export function renderBatchClassification(root, context, onComplete, onRerenderR
 export function renderDetailedRating(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
+  const methodStartedAt = Date.now();
 
-  // we seed both scenario selection and which question each selected scenario receives
-  const assignments = makeSeededQuestionAssignments(
+  // scenario selection is seeded, while questions always follow the protocol order
+  const assignments = makeFixedQuestionAssignments(
     getScenarioImages(context.images),
     questions,
     context.session.participant_id,
@@ -205,12 +206,17 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   let displayOrder = 1;
   let startedAt = Date.now();
   let selectedRating = null;
-  let responseComment = "";
+  let yawCoverageDegrees = 0;
+  let viewingTrace = [];
+  let rotationCount = 0;
+  let fullscreenUsed = false;
+  let panoramaInteractiveAvailable = true;
+  let yawCoverageState = {};
   root.innerHTML = "";
 
   const toolbarSlot = createElement("div");
   const panel = createElement("section", { className: "panel question-panel detailed-rating-panel" });
-  const questionTextElement = createElement("p", { className: "question-text" });
+  const questionTextElement = createElement("div", { className: "question-prompt" });
   const shell = createElement("section", { className: "detailed-rating-shell" });
   const mediaSlot = createElement("div", { className: "detailed-rating-media" });
   const exitFullscreenButton = createElement("button", {
@@ -227,7 +233,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   const overlayContent = createElement("div", { className: "detailed-fullscreen-content" });
   const overlayControls = createElement("div", { className: "detailed-fullscreen-controls" });
   const overlayProgress = createElement("p", { className: "step-label" });
-  const overlayQuestion = createElement("p", { className: "detailed-overlay-question" });
+  const overlayQuestion = createElement("div", { className: "detailed-overlay-question question-prompt" });
   const overlayAnswers = createElement("div", { className: "detailed-overlay-answers" });
   const normalAnswers = createElement("div", { className: "detailed-normal-answers" });
 
@@ -250,6 +256,10 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     event.stopPropagation();
     document.exitFullscreen?.();
   });
+  const markFullscreenUsed = () => {
+    fullscreenUsed = fullscreenUsed || document.fullscreenElement === shell || shell.contains(document.fullscreenElement);
+  };
+  document.addEventListener("fullscreenchange", markFullscreenUsed);
 
   // this function is for rendering the current detailed rating question
   function renderCurrent() {
@@ -257,7 +267,11 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     onRerenderReady(renderCurrent);
 
     if (questionIndex >= assignments.length) {
+      document.removeEventListener("fullscreenchange", markFullscreenUsed);
+      const blockTime = Date.now() - methodStartedAt;
+      responses.forEach((response) => { response.block_time_ms = blockTime; });
       completeMethod(root, context, methodId, responses, onComplete, onRerenderReady, () => {
+        document.addEventListener("fullscreenchange", markFullscreenUsed);
         responses.pop();
         displayOrder -= 1;
         questionIndex -= 1;
@@ -274,7 +288,12 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     const question = assignment.question;
     startedAt = Date.now();
     selectedRating = null;
-    responseComment = "";
+    yawCoverageDegrees = 0;
+    viewingTrace = [];
+    rotationCount = 0;
+    fullscreenUsed = false;
+    panoramaInteractiveAvailable = true;
+    yawCoverageState = {};
 
     const toolbar = renderQuestionToolbar(
       t(language, "detailedTitle"),
@@ -296,11 +315,14 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       language,
     );
     toolbarSlot.replaceChildren(toolbar);
-    questionTextElement.textContent = questionText(question, language);
+    questionTextElement.replaceChildren(...renderQuestionPrompt(question, language));
     overlayProgress.textContent = `${t(language, "progress")} ${displayOrder} / ${assignments.length}`;
-    overlayQuestion.textContent = questionText(question, language);
+    overlayQuestion.replaceChildren(...renderQuestionPrompt(question, language));
     mediaSlot.replaceChildren(renderSingleImage(image, language, {
       onFullscreenRequest: () => shell.requestFullscreen?.(),
+      yawCoverageState,
+      onYawCoverageChange: updateYawCoverage,
+      onInteractiveAvailabilityChange: updateInteractiveAvailability,
     }));
     normalAnswers.replaceChildren(renderDetailedAnswerControls(question, language));
     overlayAnswers.replaceChildren(renderDetailedAnswerControls(question, language));
@@ -315,7 +337,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
 
   // this function is for saving one detailed rating answer
   function submitAnswer() {
-    if (!selectedRating) {
+    if (!canContinueDetailed()) {
       return;
     }
 
@@ -326,7 +348,13 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       image_id: image.image_id,
       answer: String(selectedRating),
       answer_value: selectedRating,
-      response_comment: limitCharacters(responseComment.trim(), FINAL_COMMENT_CHARACTER_LIMIT),
+      yaw_coverage_degrees: Math.round(yawCoverageDegrees),
+      panorama_interactive_available: panoramaInteractiveAvailable,
+      viewing_trace_json: JSON.stringify(viewingTrace),
+      rotation_count: rotationCount,
+      fullscreen_used: fullscreenUsed,
+      fullscreen_at_answer: Boolean(document.fullscreenElement),
+      scene_time_ms: Date.now() - startedAt,
     }));
 
     displayOrder += 1;
@@ -347,7 +375,6 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
     continueButton.addEventListener("click", submitAnswer);
     wrapper.append(
       renderLikertRow(question, language, selectAnswer, selectedRating),
-      renderOptionalCommentControl(language, responseComment, updateResponseComment),
       createElement("div", { className: "completion-actions" }),
     );
     wrapper.querySelector(".completion-actions").append(continueButton);
@@ -362,34 +389,48 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       button.setAttribute("aria-pressed", String(isSelected));
     });
     root.querySelectorAll(".response-continue-button").forEach((button) => {
-      button.disabled = !selectedRating;
+      button.disabled = !canContinueDetailed();
     });
-    syncCommentTextareas();
   }
 
-  // this function is for updating the shared detailed comment value
-  function updateResponseComment(value) {
-    responseComment = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
-    syncCommentTextareas();
+  function updateYawCoverage(metrics) {
+    yawCoverageDegrees = Number(metrics.yawCoverageDegrees) || 0;
+    viewingTrace = metrics.viewingTrace || [];
+    rotationCount = Number(metrics.rotationCount) || 0;
+    updateDetailedAnswerState();
   }
 
-  // this function is for keeping duplicate comment fields identical
-  function syncCommentTextareas() {
-    root.querySelectorAll(".response-comment-textarea").forEach((textarea) => {
-      if (textarea.value !== responseComment) {
-        textarea.value = responseComment;
-      }
-      textarea.dispatchEvent(new CustomEvent("comment-sync"));
-    });
+  function updateInteractiveAvailability(available) {
+    if (available === false) {
+      panoramaInteractiveAvailable = false;
+      updateDetailedAnswerState();
+    }
+  }
+
+  function canContinueDetailed() {
+    return Boolean(selectedRating);
   }
 
   renderCurrent();
 }
 
 // this function is for the ideal scene builder section
-export function renderIdealSceneBuilder(root, context, onComplete, onRerenderReady = () => {}) {
+export function renderIdealSceneBuilder(
+  root,
+  context,
+  onComplete,
+  onRerenderReady = () => {},
+  activityStarted = false,
+  entryStartedAt = Date.now(),
+) {
   const methodId = "ideal_scene_builder";
   const questions = context.questions.ideal_scene_builder;
+
+  if (!activityStarted) {
+    renderIdealSceneBuilderEntry();
+    return;
+  }
+
   let startedAt = Date.now();
   const selections = {};
   const variantConfig = context.idealSceneVariants || {};
@@ -441,14 +482,14 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
     }
 
     // we save one response row per builder question
-    const responses = questions.map((question, index) => {
-      const answer = selections[question.question_id];
-      return makeResponse(context, methodId, question, index + 1, startedAt, {
-        answer,
-        answer_value: question.options.indexOf(answer) + 1,
-        image_id: currentPreview.image_id,
-        preview_variant_id: currentPreview.variant_id || "",
-      });
+    const responses = buildIdealSceneBuilderResponses({
+      context,
+      questions,
+      selections,
+      preview: currentPreview,
+      participation: "completed",
+      entryStartedAt,
+      builderStartedAt: startedAt,
     });
 
     completeMethod(root, context, methodId, responses, onComplete, onRerenderReady);
@@ -527,6 +568,100 @@ export function renderIdealSceneBuilder(root, context, onComplete, onRerenderRea
   }
 
   renderCurrent();
+
+  function renderIdealSceneBuilderEntry() {
+    const language = getContextLanguage(context);
+    onRerenderReady(() => renderIdealSceneBuilder(
+      root,
+      context,
+      onComplete,
+      onRerenderReady,
+      false,
+      entryStartedAt,
+    ));
+    root.innerHTML = "";
+
+    const panel = createElement("section", { className: "panel completion-panel builder-entry-panel" });
+    const actions = createElement("div", { className: "completion-actions" });
+    const skipButton = createElement("button", {
+      className: "secondary-button",
+      text: t(language, "skipSceneBuilder"),
+      attrs: { type: "button" },
+    });
+    const buildButton = createElement("button", {
+      className: "primary-button",
+      text: t(language, "buildScene"),
+      attrs: { type: "button" },
+    });
+
+    skipButton.addEventListener("click", () => {
+      const responses = buildIdealSceneBuilderResponses({
+        context,
+        questions,
+        participation: "skipped",
+        entryStartedAt,
+      });
+      completeMethod(root, context, methodId, responses, onComplete, onRerenderReady);
+    });
+    buildButton.addEventListener("click", () => {
+      renderIdealSceneBuilder(root, context, onComplete, onRerenderReady, true, entryStartedAt);
+    });
+
+    actions.append(skipButton, buildButton);
+    panel.append(
+      createElement("p", {
+        className: "step-label",
+        text: t(language, "stepOf", { current: 6, total: TOTAL_SURVEY_STEPS }),
+      }),
+      createElement("h2", { text: t(language, "builderOptionalTitle") }),
+      createElement("p", { text: t(language, "builderOptionalIntro") }),
+      actions,
+    );
+    root.append(panel);
+  }
+}
+
+// this function is for building completed or skipped ideal-builder response rows
+export function buildIdealSceneBuilderResponses({
+  context,
+  questions = [],
+  selections = {},
+  preview = {},
+  participation,
+  entryStartedAt,
+  builderStartedAt = entryStartedAt,
+}) {
+  const methodId = "ideal_scene_builder";
+  const participationResponse = makeResponse(
+    context,
+    methodId,
+    IDEAL_SCENE_BUILDER_PARTICIPATION_QUESTION,
+    1,
+    entryStartedAt,
+    {
+      answer: participation,
+      answer_value: participation === "completed" ? 1 : 0,
+      block_time_ms: Date.now() - entryStartedAt,
+    },
+  );
+
+  if (participation !== "completed") {
+    return [participationResponse];
+  }
+
+  return [
+    participationResponse,
+    ...questions.map((question, index) => {
+      const answer = selections[question.question_id];
+      return makeResponse(context, methodId, question, index + 2, builderStartedAt, {
+        answer,
+        answer_value: question.options.indexOf(answer) + 1,
+        image_id: preview.image_id,
+        preview_variant_id: preview.variant_id || "",
+        block_time_ms: Date.now() - entryStartedAt,
+      });
+    }),
+  ];
 }
 
 // this function is for the final realism and viewing quality questions
@@ -554,7 +689,13 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
 
   questions.forEach((question, index) => {
     if (question.type === "textarea") {
-      form.append(renderTextArea(question, language, draft?.[question.question_id] || ""));
+      const field = renderTextArea(question, language, draft?.[question.question_id] || "");
+      if (question.conditional_on) {
+        field.classList.add("conditional-field");
+        field.hidden = true;
+        field.dataset.conditionalOn = question.conditional_on;
+      }
+      form.append(field);
       return;
     }
 
@@ -569,12 +710,25 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
   const actions = createElement("div", { className: "completion-actions" });
   const submit = createElement("button", {
     className: "primary-button",
-    text: t(language, "finishSurvey"),
+    text: t(language, "saveSurvey"),
     attrs: { type: "submit" },
   });
 
   actions.append(submit);
   form.append(actions);
+  const difficultyInputs = form.querySelectorAll('[name="post_viewing_difficulty"]');
+  const difficultyReasonField = form.querySelector('[data-conditional-on="post_viewing_difficulty"]');
+  const updateDifficultyReason = () => {
+    const selected = form.querySelector('[name="post_viewing_difficulty"]:checked')?.value || "";
+    const shouldShow = Boolean(selected && selected !== "no");
+    if (!difficultyReasonField) return;
+    difficultyReasonField.hidden = !shouldShow;
+    const textarea = difficultyReasonField.querySelector("textarea");
+    textarea.required = shouldShow;
+    if (!shouldShow) textarea.value = "";
+  };
+  difficultyInputs.forEach((input) => input.addEventListener("change", updateDifficultyReason));
+  updateDifficultyReason();
   form.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -588,6 +742,7 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
       return makeResponse(context, methodId, question, index + 1, startedAt, {
         answer: value,
         answer_value: question.type === "scale" ? Number(value) : getChoiceAnswerValue(question, value),
+        block_time_ms: Date.now() - startedAt,
       });
     });
 
@@ -766,51 +921,18 @@ function renderLikertRow(question, language, onSelect, selectedValue = null) {
     row.append(button);
   }
 
-  scaleLine.innerHTML = renderScaleAnchors(question, language, row);
+  scaleLine.innerHTML = renderScaleAnchors(question, language);
   scaleLine.querySelector(".scale-anchor-min").after(row);
   wrapper.append(scaleLine);
 
   return wrapper;
 }
 
-// this function is for rendering an optional comment field for a response
-function renderOptionalCommentControl(language, value, onInput) {
-  const label = createElement("label", { className: "form-field response-comment-field" });
-  const textarea = createElement("textarea", {
-    className: "response-comment-textarea",
-    attrs: {
-      rows: "3",
-      placeholder: t(language, "optionalComment"),
-    },
-  });
-  const counter = createElement("small", {
-    className: "field-helper character-counter",
-  });
-
-  textarea.value = limitCharacters(value, FINAL_COMMENT_CHARACTER_LIMIT);
-  label.append(createElement("span", { text: t(language, "responseCommentPrompt") }), textarea, counter);
-
-  function updateCounter() {
-    const limitedValue = limitCharacters(textarea.value, FINAL_COMMENT_CHARACTER_LIMIT);
-
-    if (textarea.value !== limitedValue) {
-      textarea.value = limitedValue;
-    }
-
-    counter.textContent = t(language, "characterLimit", {
-      current: countCharacters(textarea.value),
-      limit: FINAL_COMMENT_CHARACTER_LIMIT,
-    });
-  }
-
-  textarea.addEventListener("input", () => {
-    updateCounter();
-    onInput(textarea.value);
-  });
-  textarea.addEventListener("comment-sync", updateCounter);
-  updateCounter();
-
-  return label;
+// this function is for rendering a short question without helper text
+function renderQuestionPrompt(question, language) {
+  return [
+    createElement("p", { className: "question-text", text: questionText(question, language) }),
+  ];
 }
 
 // this function is for rendering a radio scale field in the final form
@@ -897,7 +1019,7 @@ function renderTextArea(question, language, value = "") {
     },
   });
 
-  if (!question.optional) {
+  if (!question.optional && !question.conditional_on) {
     textarea.required = true;
   }
 
@@ -906,11 +1028,6 @@ function renderTextArea(question, language, value = "") {
     ? `${questionText(question, language)}`
     : questionText(question, language);
   label.append(createElement("span", { text: labelText }));
-
-  const helper = localize(question.helper, language);
-  if (helper) {
-    label.append(createElement("small", { className: "field-helper", text: helper }));
-  }
 
   label.append(textarea);
 

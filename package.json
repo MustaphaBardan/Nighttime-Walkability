@@ -1,6 +1,6 @@
 {
   "name": "night-walkability-survey",
-  "version": "3.0.0",
+  "version": "6.0.0",
   "description": "Static research survey platform for the proposed night walkability methodology.",
   "private": true,
   "type": "module",

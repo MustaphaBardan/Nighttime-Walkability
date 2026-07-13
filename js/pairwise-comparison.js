@@ -1,19 +1,23 @@
 import { buildBaseResponse } from "./storage.js";
 import { TOTAL_SURVEY_STEPS, completeMethod, renderSurveyProgress } from "./survey-methods.js";
 import { getContextLanguage, questionText, t } from "./i18n.js";
-import { createElement, hashString, makeScenarioQuestionPairs, makeSeededQuestionAssignments } from "./utils.js";
+import {
+  createElement,
+  hashString,
+  makeFixedQuestionAssignments,
+  makeScenarioQuestionPairs,
+} from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
-
-const RESPONSE_COMMENT_CHARACTER_LIMIT = 300;
 
 // this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
+  const methodStartedAt = Date.now();
 
-  // we seed both pair selection and which question each selected pair receives
+  // pair selection is seeded, while questions always follow the protocol order
   const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, Number.MAX_SAFE_INTEGER);
-  const trials = makeSeededQuestionAssignments(
+  const trials = makeFixedQuestionAssignments(
     pairs,
     questions,
     context.session.participant_id,
@@ -38,7 +42,12 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   let activeScene = "A";
   let syncedViewState = {};
   let selectedAnswer = "";
-  let responseComment = "";
+  let yawCoverageDegrees = 0;
+  let viewingTrace = [];
+  let rotationCount = 0;
+  let fullscreenUsed = false;
+  let panoramaInteractiveAvailable = true;
+  let yawCoverageState = {};
   const sessionResponses = [];
 
   root.innerHTML = "";
@@ -52,7 +61,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   });
   const progressSlot = createElement("div");
   const panel = createElement("section", { className: "panel question-panel pairwise-panel" });
-  const normalQuestion = createElement("div", { className: "question-text" });
+  const normalQuestion = createElement("div", { className: "question-prompt" });
   const shell = createElement("section", {
     className: "pairwise-viewer-shell",
     attrs: { "data-active-scene": activeScene },
@@ -72,7 +81,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   const overlayContent = createElement("div", { className: "pairwise-fullscreen-content" });
   const overlayControls = createElement("div", { className: "pairwise-fullscreen-controls" });
   const overlayProgress = createElement("p", { className: "step-label" });
-  const overlayQuestion = createElement("p", { className: "pairwise-overlay-question" });
+  const overlayQuestion = createElement("div", { className: "pairwise-overlay-question question-prompt" });
   const overlayAnswers = createElement("div", { className: "pairwise-response-controls pairwise-overlay-answers" });
   const normalAnswers = createElement("div", { className: "pairwise-response-controls" });
 
@@ -123,6 +132,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
     if (currentIndex >= trials.length) {
       document.removeEventListener("fullscreenchange", updateActiveScene);
+      const blockTime = Date.now() - methodStartedAt;
+      sessionResponses.forEach((response) => { response.block_time_ms = blockTime; });
       completeMethod(root, context, methodId, sessionResponses, onComplete, onRerenderReady, () => {
         currentIndex -= 1;
         sessionResponses.pop();
@@ -139,20 +150,33 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     activeScene = "A";
     syncedViewState = {};
     selectedAnswer = "";
-    responseComment = "";
+    yawCoverageDegrees = 0;
+    viewingTrace = [];
+    rotationCount = 0;
+    fullscreenUsed = false;
+    panoramaInteractiveAvailable = true;
+    yawCoverageState = {};
 
     // we update the text, progress, images, and answer buttons
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
     exitFullscreenButton.textContent = t(language, "exitFullScreen");
     progressSlot.replaceChildren(renderSurveyProgress(currentIndex + 1, trials.length, language));
-    normalQuestion.textContent = questionText(trial.question, language);
+    normalQuestion.replaceChildren(...renderQuestionPrompt(trial.question, language));
     overlayProgress.textContent = `${t(language, "progress")} ${currentIndex + 1} / ${trials.length}`;
-    overlayQuestion.textContent = questionText(trial.question, language);
+    overlayQuestion.replaceChildren(...renderQuestionPrompt(trial.question, language));
 
     pairGrid.replaceChildren(
-      renderScene("A", trial.imageA, language, enterComparisonFullscreen, syncedViewState),
-      renderScene("B", trial.imageB, language, enterComparisonFullscreen, syncedViewState),
+      renderScene("A", trial.imageA, language, enterComparisonFullscreen, syncedViewState, {
+        yawCoverageState,
+        onYawCoverageChange: updateYawCoverage,
+        onInteractiveAvailabilityChange: updateInteractiveAvailability,
+      }),
+      renderScene("B", trial.imageB, language, enterComparisonFullscreen, syncedViewState, {
+        yawCoverageState,
+        onYawCoverageChange: updateYawCoverage,
+        onInteractiveAvailabilityChange: updateInteractiveAvailability,
+      }),
     );
     normalAnswers.replaceChildren(renderResponseControls(language));
     overlayAnswers.replaceChildren(renderResponseControls(language));
@@ -172,8 +196,8 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     });
 
     [
-      [t(language, "left"), "A"],
-      [t(language, "right"), "B"],
+      [t(language, "sceneA"), "A"],
+      [t(language, "sceneB"), "B"],
       [t(language, "noClearDifference"), "no_clear_difference"],
     ].forEach(([label, value]) => {
       answerRow.append(renderAnswerButton(label, value, language));
@@ -182,7 +206,6 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     actions.append(continueButton);
     wrapper.append(
       answerRow,
-      renderOptionalCommentControl(language, responseComment, updateResponseComment),
       actions,
     );
     return wrapper;
@@ -207,7 +230,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
   // this function is for saving the selected pairwise answer
   function submitAnswer() {
-    if (!selectedAnswer) {
+    if (!canContinue()) {
       return;
     }
 
@@ -225,7 +248,13 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     response.image_right = trial.imageB.image_id;
     response.answer = selectedAnswer;
     response.answer_value = selectedAnswer === "A" ? 1 : selectedAnswer === "B" ? 2 : 0;
-    response.response_comment = limitCharacters(responseComment.trim(), RESPONSE_COMMENT_CHARACTER_LIMIT);
+    response.yaw_coverage_degrees = Math.round(yawCoverageDegrees);
+    response.panorama_interactive_available = panoramaInteractiveAvailable;
+    response.viewing_trace_json = JSON.stringify(viewingTrace);
+    response.rotation_count = rotationCount;
+    response.fullscreen_used = fullscreenUsed;
+    response.fullscreen_at_answer = Boolean(document.fullscreenElement);
+    response.scene_time_ms = response.reaction_time_ms;
 
     sessionResponses.push(response);
     currentIndex += 1;
@@ -251,6 +280,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
 
   // this function is for marking which scene is active in fullscreen
   function updateActiveScene() {
+    fullscreenUsed = fullscreenUsed || document.fullscreenElement === shell || shell.contains(document.fullscreenElement);
     shell.dataset.activeScene = activeScene;
     pairGrid.querySelectorAll(".scene-option").forEach((scene) => {
       scene.classList.toggle("active", scene.dataset.sceneLabel === activeScene);
@@ -265,25 +295,26 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
       button.setAttribute("aria-pressed", String(isSelected));
     });
     root.querySelectorAll(".response-continue-button").forEach((button) => {
-      button.disabled = !selectedAnswer;
+      button.disabled = !canContinue();
     });
-    syncCommentTextareas();
   }
 
-  // this function is for updating the shared optional pairwise comment
-  function updateResponseComment(value) {
-    responseComment = limitCharacters(value, RESPONSE_COMMENT_CHARACTER_LIMIT);
-    syncCommentTextareas();
+  function updateYawCoverage(metrics) {
+    yawCoverageDegrees = Number(metrics.yawCoverageDegrees) || 0;
+    viewingTrace = metrics.viewingTrace || [];
+    rotationCount = Number(metrics.rotationCount) || 0;
+    updateResponseState();
   }
 
-  // this function is for keeping duplicate comment fields identical
-  function syncCommentTextareas() {
-    root.querySelectorAll(".response-comment-textarea").forEach((textarea) => {
-      if (textarea.value !== responseComment) {
-        textarea.value = responseComment;
-      }
-      textarea.dispatchEvent(new CustomEvent("comment-sync"));
-    });
+  function updateInteractiveAvailability(available) {
+    if (available === false) {
+      panoramaInteractiveAvailable = false;
+      updateResponseState();
+    }
+  }
+
+  function canContinue() {
+    return Boolean(selectedAnswer);
   }
 }
 
@@ -312,8 +343,8 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
 }
 
 // this function is for rendering one scene in the pairwise comparison
-function renderScene(label, image, language, onFullscreenRequest, viewState) {
-  const displayLabel = label === "A" ? t(language, "left") : t(language, "right");
+function renderScene(label, image, language, onFullscreenRequest, viewState, trackingOptions = {}) {
+  const displayLabel = label === "A" ? t(language, "sceneA") : t(language, "sceneB");
   const wrapper = createElement("article", {
     className: "scene-option",
     attrs: { "data-scene-label": label },
@@ -322,6 +353,9 @@ function renderScene(label, image, language, onFullscreenRequest, viewState) {
     alt: `${t(language, "surveyScene")} ${displayLabel}`,
     compact: true,
     viewState,
+    yawCoverageState: trackingOptions.yawCoverageState,
+    onYawCoverageChange: trackingOptions.onYawCoverageChange,
+    onInteractiveAvailabilityChange: trackingOptions.onInteractiveAvailabilityChange,
     fullscreenLabel: t(language, "fullScreen"),
     onFullscreenRequest: (frame) => onFullscreenRequest(label, frame),
   });
@@ -333,52 +367,9 @@ function renderScene(label, image, language, onFullscreenRequest, viewState) {
   return wrapper;
 }
 
-// this function is for rendering an optional comment field for one response
-function renderOptionalCommentControl(language, value, onInput) {
-  const label = createElement("label", { className: "form-field response-comment-field" });
-  const textarea = createElement("textarea", {
-    className: "response-comment-textarea",
-    attrs: {
-      rows: "3",
-      placeholder: t(language, "optionalComment"),
-    },
-  });
-  const counter = createElement("small", {
-    className: "field-helper character-counter",
-  });
-
-  textarea.value = limitCharacters(value, RESPONSE_COMMENT_CHARACTER_LIMIT);
-  label.append(createElement("span", { text: t(language, "responseCommentPrompt") }), textarea, counter);
-
-  function updateCounter() {
-    const limitedValue = limitCharacters(textarea.value, RESPONSE_COMMENT_CHARACTER_LIMIT);
-
-    if (textarea.value !== limitedValue) {
-      textarea.value = limitedValue;
-    }
-
-    counter.textContent = t(language, "characterLimit", {
-      current: countCharacters(textarea.value),
-      limit: RESPONSE_COMMENT_CHARACTER_LIMIT,
-    });
-  }
-
-  textarea.addEventListener("input", () => {
-    updateCounter();
-    onInput(textarea.value);
-  });
-  textarea.addEventListener("comment-sync", updateCounter);
-  updateCounter();
-
-  return label;
-}
-
-// this function is for counting characters correctly
-function countCharacters(value) {
-  return Array.from(String(value)).length;
-}
-
-// this function is for cutting text at the character limit
-function limitCharacters(value, limit) {
-  return Array.from(String(value)).slice(0, limit).join("");
+// this function is for rendering a short question without helper text
+function renderQuestionPrompt(question, language) {
+  return [
+    createElement("p", { className: "question-text", text: questionText(question, language) }),
+  ];
 }

@@ -1,0 +1,40 @@
+{
+  "project_links": [
+    {
+      "label": { "en": "LUNNE project", "fr": "Projet LUNNE" },
+      "url": "https://lunne.univ-gustave-eiffel.fr/"
+    },
+    {
+      "label": { "en": "ANR project 22-CE22-0004", "fr": "Projet ANR-22-CE22-0004" },
+      "url": "https://anr.fr/Projet-ANR-22-CE22-0004"
+    }
+  ],
+  "logos": [
+    { "id": "observatoire", "path": "assets/logos/observatoire.png", "alt": "Observatoire de la Nuit" },
+    { "id": "aau", "path": "assets/logos/aau.png", "alt": "AAU - Ambiances Architectures Urbanités" },
+    { "id": "anr", "path": "assets/logos/anr.webp", "alt": "Agence nationale de la recherche" }
+  ],
+  "asset_credits": [
+    {
+      "title": "Audi R8 3D model",
+      "author": "IPfuentes",
+      "source_url": "https://skfb.ly/6yuI9",
+      "license_name": "Creative Commons Attribution 4.0",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "title": "Toyota Yaris Sedan 2007",
+      "author": "airplane lover",
+      "source_url": "https://skfb.ly/pGPAV",
+      "license_name": "Creative Commons Attribution 4.0",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "title": "Low Poly Forest Tree Pack",
+      "author": "99.Miles",
+      "source_url": "https://skfb.ly/pJXrH",
+      "license_name": "Creative Commons Attribution 4.0",
+      "license_url": "http://creativecommons.org/licenses/by/4.0/"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ const jsonFiles = [
   "data/images.json",
   "data/ideal_scene_variants.json",
   "data/questions.json",
+  "data/credits.json",
   "package.json",
 ];
 
@@ -18,6 +19,7 @@ const jsFiles = [
   "js/panorama-viewer.js",
   "js/simple-methods.js",
   "js/storage.js",
+  "js/summary.js",
   "js/survey-methods.js",
   "js/utils.js",
   "scripts/dev-server.js",
@@ -26,9 +28,11 @@ const jsFiles = [
   "tests/browser-smoke.test.js",
   "tests/deployment-data.test.js",
   "tests/i18n.test.js",
+  "tests/panorama-tracking.test.js",
   "tests/protocol-data.test.js",
   "tests/response-schema.test.js",
   "tests/storage.test.js",
+  "tests/summary.test.js",
   "tests/utils.test.js",
 ];
 
