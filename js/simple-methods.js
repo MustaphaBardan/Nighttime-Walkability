@@ -434,12 +434,6 @@ export function renderIdealSceneBuilder(
   const variantConfig = context.idealSceneVariants || {};
   let currentPreview = buildIdealPreviewImage(variantConfig.default, "ideal_scene_default");
   let parametersCollapsed = false;
-  let yawCoverageDegrees = 0;
-  let viewingTrace = [];
-  let rotationInteractionCount = 0;
-  let fullscreenUsed = false;
-  let panoramaInteractiveAvailable = true;
-  const yawCoverageState = {};
 
   root.innerHTML = "";
 
@@ -479,18 +473,11 @@ export function renderIdealSceneBuilder(
   panel.querySelector(".completion-actions").append(continueButton);
   root.append(toolbarSlot, panel);
 
-  const markFullscreenUsed = () => {
-    fullscreenUsed = fullscreenUsed || document.fullscreenElement === preview || preview.contains(document.fullscreenElement);
-  };
-  document.addEventListener("fullscreenchange", markFullscreenUsed);
-
   function submitBuilder() {
     // we only continue after all builder parameters are answered
     if (!allBuilderQuestionsAnswered()) {
       return;
     }
-
-    document.removeEventListener("fullscreenchange", markFullscreenUsed);
 
     // we save one response row per builder question
     const responses = buildIdealSceneBuilderResponses({
@@ -501,7 +488,6 @@ export function renderIdealSceneBuilder(
       participation: "completed",
       entryStartedAt,
       builderStartedAt: startedAt,
-      viewingMetrics: getViewingMetrics(),
     });
 
     completeMethod(root, context, methodId, responses, onComplete, onRerenderReady);
@@ -544,9 +530,6 @@ export function renderIdealSceneBuilder(
       renderSingleImage(currentPreview, language, {
         fullViewport: true,
         onFullscreenRequest: () => preview.requestFullscreen?.(),
-        yawCoverageState,
-        onYawCoverageChange: updateYawCoverage,
-        onInteractiveAvailabilityChange: updateInteractiveAvailability,
       }),
     );
     controls.replaceChildren();
@@ -580,29 +563,6 @@ export function renderIdealSceneBuilder(
     parametersToggle.setAttribute("aria-expanded", String(!parametersCollapsed));
     parametersToggle.setAttribute("aria-label", t(getContextLanguage(context), parametersCollapsed ? "showParameters" : "hideParameters"));
     parametersToggle.textContent = parametersCollapsed ? ">" : "<";
-  }
-
-  function updateYawCoverage(metrics) {
-    yawCoverageDegrees = Number(metrics.yawCoverageDegrees) || 0;
-    viewingTrace = metrics.viewingTrace || [];
-    rotationInteractionCount = Number(metrics.rotationCount) || 0;
-  }
-
-  function updateInteractiveAvailability(available) {
-    if (available === false) {
-      panoramaInteractiveAvailable = false;
-    }
-  }
-
-  function getViewingMetrics() {
-    return {
-      yaw_coverage_degrees: Math.round(yawCoverageDegrees),
-      panorama_interactive_available: panoramaInteractiveAvailable,
-      viewing_trace_json: JSON.stringify(viewingTrace),
-      rotation_interaction_count: rotationInteractionCount,
-      fullscreen_used: fullscreenUsed,
-      fullscreen_at_answer: Boolean(document.fullscreenElement),
-    };
   }
 
   renderCurrent();
@@ -668,7 +628,6 @@ export function buildIdealSceneBuilderResponses({
   participation,
   entryStartedAt,
   builderStartedAt = entryStartedAt,
-  viewingMetrics = {},
 }) {
   const methodId = "ideal_scene_builder";
   const participationResponse = makeResponse(
@@ -681,7 +640,6 @@ export function buildIdealSceneBuilderResponses({
       answer: participation,
       answer_value: participation === "completed" ? 1 : 0,
       block_time_ms: Date.now() - entryStartedAt,
-      ...(participation === "completed" ? viewingMetrics : {}),
     },
   );
 
