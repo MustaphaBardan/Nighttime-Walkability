@@ -26,7 +26,7 @@ The local server uses `http://127.0.0.1:8000`. Set `PORT=8080` to use another po
 
 Each participant receives deterministic scene assignments based on their participant ID. Reloading preserves the same assignments; different participants generally receive different assignments. The six detailed scenes are unique when enough scenario images are available.
 
-The panorama viewer permits pointer and keyboard rotation, limits pitch to ±50°, disables zoom, and never blocks an answer based on yaw coverage. It records a compact yaw/pitch trace, rotation count, fullscreen state, coverage, and timing for analysis.
+The panorama viewer permits pointer and keyboard rotation, limits pitch to ±50°, disables zoom, and never blocks an answer based on yaw coverage. It records a compact yaw/pitch trace, rotation-interaction count, fullscreen state, coverage, and timing for analysis. The optional ideal-scene builder records these viewing measures on its participation row when completed.
 
 ## Data and privacy
 
@@ -34,8 +34,8 @@ Responses are backed up in versioned browser storage. Protocol v6 uses new keys 
 
 - participant, language, question, image, answer, display-order, and timing fields;
 - age, gender, night-walking frequency and comfort, activity/expertise, and lighting knowledge;
-- screen and viewport resolution;
-- yaw coverage, interaction availability, compact viewing trace, rotation count, fullscreen usage, scene time, and block time.
+- viewport resolution;
+- yaw coverage, interaction availability, compact viewing trace, rotation-interaction count, fullscreen usage, and block time.
 
 The ideal builder exports a participation row and, when completed, seven parameter rows. Final submissions replace prior rows for the same participant ID.
 

@@ -251,11 +251,9 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
     response.yaw_coverage_degrees = Math.round(yawCoverageDegrees);
     response.panorama_interactive_available = panoramaInteractiveAvailable;
     response.viewing_trace_json = JSON.stringify(viewingTrace);
-    response.rotation_count = rotationCount;
+    response.rotation_interaction_count = rotationCount;
     response.fullscreen_used = fullscreenUsed;
     response.fullscreen_at_answer = Boolean(document.fullscreenElement);
-    response.scene_time_ms = response.reaction_time_ms;
-
     sessionResponses.push(response);
     currentIndex += 1;
     updateTrial();

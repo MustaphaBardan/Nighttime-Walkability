@@ -270,16 +270,13 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     answer: null,
     answer_value: null,
     response_comment: "",
-    preview_variant_id: "",
     yaw_coverage_degrees: "",
     panorama_interactive_available: "",
     viewing_trace_json: "",
-    rotation_count: "",
+    rotation_interaction_count: "",
     fullscreen_used: "",
     fullscreen_at_answer: "",
-    scene_time_ms: "",
     block_time_ms: "",
-    screen_resolution: getScreenResolution(),
     viewport_resolution: getViewportResolution(),
     display_order: displayOrder,
     reaction_time_ms: Date.now() - startedAt,
@@ -290,18 +287,6 @@ export function buildBaseResponse(session, method, question, displayOrder, start
     profile_activity_expertise: session.profile?.activity_expertise || "",
     profile_lighting_knowledge: session.profile?.lighting_knowledge || "",
   };
-}
-
-// this function is for reading the browser-reported display resolution safely
-export function getScreenResolution() {
-  const width = Number(globalThis.screen?.width);
-  const height = Number(globalThis.screen?.height);
-
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return "";
-  }
-
-  return `${Math.round(width)}x${Math.round(height)}`;
 }
 
 // this function records the usable browser area in CSS pixels
