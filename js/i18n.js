@@ -11,9 +11,9 @@ const UI_TEXT = {
     welcome: "Welcome",
     stepOf: "Step {current} of {total}",
     welcomeIntro:
-      "This survey is part of the LUNNE project, which studies night-time urban ambiances and night walkability. Walkability refers to how easy and pleasant it is to move on foot in an urban environment. At night, it depends in particular on visibility, spatial legibility, comfort, perceived safety, and lighting conditions.",
+      "This survey is part of the LUNNE project, which studies night-time urban ambiances and night walkability. Walkability refers to how easily a space can be travelled on foot. At night, it depends in particular on visibility, spatial legibility, comfort, perceived safety, and lighting conditions.",
     welcomePath:
-      "For each 360 degree night-time urban scene, rotate the view and look carefully around you before answering. Imagine that you are standing at that exact location at night. You can look around, but you cannot move through the scene. Fullscreen mode is recommended.",
+      "For each 360 degree night-time urban scene, explore the scene using the panoramic view and look carefully around you before answering. Imagine that you are standing at that exact location at night. You can look around, but you cannot move through the scene. Fullscreen mode is recommended.",
     welcomePrivacy:
       "There are no right or wrong answers. We are interested in your first impression. The collected data are anonymous and used only for research analysis.",
     desktopOnlyTitle: "Larger display required",
@@ -53,16 +53,16 @@ const UI_TEXT = {
     progress: "Progress",
     trainingTitle: "360 degree and route-continuation tutorial",
     trainingIntro:
-      "Use these two practice scenes to learn how to explore a 360 degree panorama and how to assess route continuation. Use fullscreen if possible, then rotate either scene to inspect the surroundings; both views move together. In the first scene, the walking route continues clearly, while in the second its continuation is hidden or ambiguous. You can look around from the fixed viewpoint, but you cannot move through the scene.",
+      "Use these two practice scenes to learn how to explore a 360 degree panorama and how to assess route continuation. Use fullscreen if possible, then rotate either scene to inspect the surroundings. The two views are coupled and synchronized: when you rotate one, the other follows the same movement. In the first scene, the route is readable, while in the second it is unreadable because its continuation is hidden or ambiguous. You can look around from the fixed viewpoint, but you cannot move through the scene.",
     routeExamplesTitle: "Understanding route-continuation examples",
     routeExamplesIntro:
       "These examples show the difference between a route that is easy to follow and one whose continuation is hidden or ambiguous.",
-    clearRouteTitle: "Clear route continuation",
+    clearRouteTitle: "Readable route continuity",
     clearRouteDescription:
-      "The walking path clearly continues forward. You can easily understand where you could go next.",
-    unclearRouteTitle: "Unclear route continuation",
+      "The walking path remains readable as it continues forward. You can easily understand where you could go next.",
+    unclearRouteTitle: "Unreadable route continuity",
     unclearRouteDescription:
-      "The walking path is ambiguous, interrupted, hidden, or visually confusing. It is difficult to understand where the route continues.",
+      "The walking path is unreadable because it is interrupted, hidden, ambiguous, or visually confusing. It is difficult to understand where the route continues.",
     fullScreen: "Full screen",
     exitFullScreen: "Exit full screen",
     yawCoverageLabel: "360 degree coverage",
@@ -95,6 +95,7 @@ const UI_TEXT = {
     summaryPreferences: "Your ideal scene",
     summaryNote: "How to read this",
     creditsTitle: "Legal notice and asset credits",
+    acknowledgementsTitle: "Acknowledgements",
     softwareLicense: "Website software — MIT License",
     close: "Close",
     optionalComment: "Optional comment",
@@ -179,9 +180,9 @@ const UI_TEXT = {
     welcome: "Bienvenue",
     stepOf: "Étape {current} sur {total}",
     welcomeIntro:
-      "Cette enquête s'inscrit dans le cadre du projet LUNNE, consacré à l'étude des ambiances nocturnes et de la marchabilité la nuit. La marchabilité désigne la facilité et l'agrément de se déplacer à pied dans un environnement urbain. La nuit, elle dépend notamment de la visibilité, de la lisibilité de l'espace, du confort, du sentiment de sécurité et des conditions lumineuses.",
+      "Cette enquête s'inscrit dans le cadre du projet LUNNE, consacré à l'étude des ambiances nocturnes et de la marchabilité la nuit. La marchabilité désigne la facilité avec laquelle un espace peut être parcouru à pied. La nuit, elle dépend notamment de la visibilité, de la lisibilité de l'espace, du confort, du sentiment de sécurité et des conditions lumineuses.",
     welcomePath:
-      "Pour chaque scène urbaine nocturne à 360 degrés, faites pivoter la vue et regardez attentivement autour de vous avant de répondre. Imaginez que vous vous trouvez exactement à cet endroit la nuit. Vous pouvez regarder autour de vous, mais vous ne pouvez pas vous déplacer. Le plein écran est recommandé.",
+      "Pour chaque scène urbaine nocturne à 360 degrés, explorez la scène de façon panoramique et regardez attentivement autour de vous avant de répondre. Imaginez que vous vous trouvez exactement à cet endroit la nuit. Vous pouvez regarder autour de vous, mais vous ne pouvez pas vous déplacer. Le plein écran est recommandé.",
     welcomePrivacy:
       "Il n'y a pas de bonne ou de mauvaise réponse. Nous nous intéressons à votre première impression. Les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
     desktopOnlyTitle: "Écran plus grand requis",
@@ -221,16 +222,16 @@ const UI_TEXT = {
     progress: "Progression",
     trainingTitle: "Tutoriel à 360 degrés et continuité de l'itinéraire",
     trainingIntro:
-      "Utilisez ces deux scènes d'entraînement pour apprendre à explorer un panorama à 360 degrés et à évaluer la continuité de l'itinéraire. Utilisez le plein écran si possible, puis faites pivoter l'une des scènes pour inspecter les environs ; les deux vues se déplacent ensemble. Dans la première scène, le cheminement se poursuit clairement, tandis que dans la seconde sa continuité est cachée ou ambiguë. Vous pouvez regarder autour de vous depuis le point de vue fixe, mais vous ne pouvez pas vous déplacer dans la scène.",
+      "Utilisez ces deux scènes d'entraînement pour apprendre à explorer un panorama à 360 degrés et à évaluer la continuité de l'itinéraire. Utilisez le plein écran si possible, puis faites pivoter l'une des scènes pour inspecter les environs. Les deux vues sont couplées et synchronisées : lorsque vous faites pivoter l'une, l'autre suit le même mouvement. Dans la première scène, la continuité est lisible, tandis que dans la seconde elle est illisible, car elle est cachée ou ambiguë. Vous pouvez regarder autour de vous depuis le point de vue fixe, mais vous ne pouvez pas vous déplacer dans la scène.",
     routeExamplesTitle: "Comprendre les exemples de continuité du parcours",
     routeExamplesIntro:
       "Ces exemples montrent la différence entre un parcours facile à suivre et un parcours dont la continuité est cachée ou ambiguë.",
-    clearRouteTitle: "Continuité du parcours claire",
+    clearRouteTitle: "Continuité lisible",
     clearRouteDescription:
-      "Le cheminement se poursuit clairement vers l'avant. Vous pouvez facilement comprendre où aller ensuite.",
-    unclearRouteTitle: "Continuité du parcours peu claire",
+      "Le cheminement reste lisible lorsqu'il se poursuit vers l'avant. Vous pouvez facilement comprendre où aller ensuite.",
+    unclearRouteTitle: "Continuité illisible",
     unclearRouteDescription:
-      "Le cheminement est ambigu, interrompu, caché ou visuellement confus. Il est difficile de comprendre où le parcours se poursuit.",
+      "Le cheminement est illisible, car il est interrompu, caché, ambigu ou visuellement confus. Il est difficile de comprendre où le parcours se poursuit.",
     fullScreen: "Plein écran",
     exitFullScreen: "Quitter le plein écran",
     yawCoverageLabel: "Couverture à 360 degrés",
@@ -263,6 +264,7 @@ const UI_TEXT = {
     summaryPreferences: "Votre scène idéale",
     summaryNote: "Comment lire ce bilan",
     creditsTitle: "Mentions légales et crédits des ressources",
+    acknowledgementsTitle: "Remerciements",
     softwareLicense: "Logiciel du site — licence MIT",
     close: "Fermer",
     optionalComment: "Commentaire facultatif",
@@ -387,6 +389,25 @@ const QUESTION_OPTION_LABELS = {
     low: { en: "Little or no vegetation", fr: "Peu ou pas de végétation" },
     medium: { en: "Moderate vegetation", fr: "Végétation modérée" },
     high: { en: "A large amount of vegetation", fr: "Végétation importante" },
+    none: { en: "No vegetation", fr: "Sans végétation" },
+    half: { en: "Half-density vegetation", fr: "Végétation à densité moyenne" },
+    full: { en: "Full-density vegetation", fr: "Végétation dense" },
+    dont_know: { en: "I do not know", fr: "Je ne sais pas" },
+  },
+  preferred_vegetation_lighting: {
+    dark: { en: "Dark vegetation edge", fr: "Lisière végétale sombre" },
+    lit: { en: "Lit vegetation edge", fr: "Lisière végétale éclairée" },
+    dont_know: { en: "I do not know", fr: "Je ne sais pas" },
+  },
+  preferred_path_lighting: {
+    dark: { en: "Dark path", fr: "Cheminement sombre" },
+    lit: { en: "Lit path", fr: "Cheminement éclairé" },
+    dont_know: { en: "I do not know", fr: "Je ne sais pas" },
+  },
+  preferred_obstacle_condition: {
+    clear: { en: "Clear path", fr: "Cheminement dégagé" },
+    present: { en: "Obstacles present", fr: "Obstacles présents" },
+    dont_know: { en: "I do not know", fr: "Je ne sais pas" },
   },
   preferred_spatial_openness: {
     open: { en: "Open, with long views", fr: "Ouvert, avec des vues longues" },

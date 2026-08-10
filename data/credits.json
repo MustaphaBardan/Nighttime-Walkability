@@ -14,6 +14,14 @@
     { "id": "aau", "path": "assets/logos/aau.png", "alt": "AAU - Ambiances Architectures Urbanités" },
     { "id": "anr", "path": "assets/logos/anr.webp", "alt": "Agence nationale de la recherche" }
   ],
+  "acknowledgements": [
+    {
+      "text": {
+        "en": "Some assets used to create the scenes were provided by L’Observatoire de la Nuit. The panorama simulations were produced using its Obscura software.",
+        "fr": "Certaines ressources utilisées pour créer les scènes ont été fournies par L’Observatoire de la Nuit. Les simulations panoramiques ont été produites avec son logiciel Obscura."
+      }
+    }
+  ],
   "asset_credits": [
     {
       "title": "Audi R8 3D model",

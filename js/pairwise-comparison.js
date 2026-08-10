@@ -4,10 +4,12 @@ import { getContextLanguage, questionText, t } from "./i18n.js";
 import {
   createElement,
   hashString,
+  makeBalancedScenarioPairs,
   makeFixedQuestionAssignments,
   makeScenarioQuestionPairs,
 } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
+import { isScenarioPool } from "./scenario-protocol.js";
 
 // this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
@@ -16,7 +18,9 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   const methodStartedAt = Date.now();
 
   // pair selection is seeded, while questions always follow the protocol order
-  const pairs = makeScenarioQuestionPairs(context.images, context.session.participant_id, Number.MAX_SAFE_INTEGER);
+  const pairs = isScenarioPool(context.images)
+    ? makeBalancedScenarioPairs(context.images, context.session.participant_id, questions.length)
+    : makeScenarioQuestionPairs(context.images, context.session.participant_id, Number.MAX_SAFE_INTEGER);
   const trials = makeFixedQuestionAssignments(
     pairs,
     questions,

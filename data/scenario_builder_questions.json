@@ -1,0 +1,38 @@
+[
+  {
+    "question_id": "preferred_vegetation_density",
+    "text": {
+      "en": "How much vegetation would you prefer near the walking area?",
+      "fr": "Quelle quantité de végétation préférez-vous près de la zone de marche ?"
+    },
+    "type": "choice",
+    "options": ["none", "half", "full", "dont_know"]
+  },
+  {
+    "question_id": "preferred_vegetation_lighting",
+    "text": {
+      "en": "How should the vegetation edge be lit?",
+      "fr": "Comment préférez-vous que la lisière végétale soit éclairée ?"
+    },
+    "type": "choice",
+    "options": ["dark", "lit", "dont_know"]
+  },
+  {
+    "question_id": "preferred_path_lighting",
+    "text": {
+      "en": "How should the walking path be lit?",
+      "fr": "Comment préférez-vous que le cheminement soit éclairé ?"
+    },
+    "type": "choice",
+    "options": ["dark", "lit", "dont_know"]
+  },
+  {
+    "question_id": "preferred_obstacle_condition",
+    "text": {
+      "en": "Which obstacle condition would you prefer?",
+      "fr": "Quelle situation concernant les obstacles préférez-vous ?"
+    },
+    "type": "choice",
+    "options": ["clear", "present", "dont_know"]
+  }
+]

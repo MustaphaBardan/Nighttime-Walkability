@@ -4,9 +4,15 @@ import { TOTAL_SURVEY_STEPS, completeMethod, makeResponse, renderSurveyProgress 
 import {
   createElement,
   getScenarioImages,
+  makeBalancedScenarioImages,
   makeFixedQuestionAssignments,
 } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
+import {
+  chooseScenarioCPreview,
+  getScenarioCOptionAvailability,
+  isScenarioPool,
+} from "./scenario-protocol.js";
 
 const FINAL_COMMENT_CHARACTER_LIMIT = 300;
 const IDEAL_SCENE_BUILDER_PARTICIPATION_QUESTION = {
@@ -24,8 +30,8 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
     question_id: "training_360_scene_viewed",
     text: { en: "Rotate the 360 degree scene before continuing.", fr: "Faites pivoter la scène à 360 degrés avant de continuer." },
   };
-  const clearImage = context.images.find((image) => image.image_id === "scenario_D1_overview");
-  const unclearImage = context.images.find((image) => image.image_id === "scenario_D3_hidden_exit");
+  const clearImage = context.images.find((image) => image.image_id === "tutorial_readable_route");
+  const unclearImage = context.images.find((image) => image.image_id === "tutorial_unreadable_route");
   let startedAt = Date.now();
   let yawCoverageDegrees = 0;
   let viewingTrace = [];
@@ -193,8 +199,11 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   const methodStartedAt = Date.now();
 
   // scenario selection is seeded, while questions always follow the protocol order
+  const detailedImages = isScenarioPool(context.images)
+    ? makeBalancedScenarioImages(context.images, context.session.participant_id, questions.length)
+    : getScenarioImages(context.images);
   const assignments = makeFixedQuestionAssignments(
-    getScenarioImages(context.images),
+    detailedImages,
     questions,
     context.session.participant_id,
     "detailed-rating-question-assignment",
@@ -432,7 +441,11 @@ export function renderIdealSceneBuilder(
   let startedAt = Date.now();
   const selections = {};
   const variantConfig = context.idealSceneVariants || {};
-  let currentPreview = buildIdealPreviewImage(variantConfig.default, "ideal_scene_default");
+  const usesScenarioC = variantConfig.mode === "scenario_c";
+  let currentPreview = buildIdealPreviewImage(
+    usesScenarioC ? chooseScenarioCPreview(variantConfig.variants) : variantConfig.default,
+    "ideal_scene_default",
+  );
   let parametersCollapsed = false;
 
   root.innerHTML = "";
@@ -465,12 +478,15 @@ export function renderIdealSceneBuilder(
     text: t(getContextLanguage(context), "validateContinue"),
     attrs: { type: "button", disabled: "disabled" },
   });
+  const controlsCompletion = createElement("div", { className: "completion-actions builder-completion-actions" });
+  const fullscreenCompletion = createElement("div", { className: "completion-actions builder-completion-actions" });
 
-  overlayActions.append(exitFullscreenButton, fullscreenContinueButton);
+  controlsCompletion.append(continueButton);
+  fullscreenCompletion.append(fullscreenContinueButton);
+  overlayActions.append(exitFullscreenButton);
   preview.append(mediaSlot, parametersToggle, overlay);
   overlay.append(overlayActions, overlayControls);
-  panel.append(preview, controls, createElement("div", { className: "completion-actions", html: "" }));
-  panel.querySelector(".completion-actions").append(continueButton);
+  panel.append(preview, controls);
   root.append(toolbarSlot, panel);
 
   function submitBuilder() {
@@ -538,12 +554,22 @@ export function renderIdealSceneBuilder(
       const onSelect = (answer) => {
         // we save the selected option and update the preview image
         selections[question.question_id] = answer;
-        currentPreview = resolveIdealSceneVariant(variantConfig, selections);
+        currentPreview = buildIdealPreviewImage(
+          usesScenarioC
+            ? chooseScenarioCPreview(variantConfig.variants, selections)
+            : resolveIdealSceneVariant(variantConfig, selections),
+          "ideal_scene_default",
+        );
         renderCurrent();
       };
-      controls.append(renderBuilderParameterControl(question, language, selections[question.question_id], onSelect));
-      overlayControls.append(renderBuilderParameterControl(question, language, selections[question.question_id], onSelect));
+      const optionAvailability = usesScenarioC
+        ? getScenarioCOptionAvailability(variantConfig.variants, selections, question.question_id)
+        : {};
+      controls.append(renderBuilderParameterControl(question, language, selections[question.question_id], onSelect, optionAvailability));
+      overlayControls.append(renderBuilderParameterControl(question, language, selections[question.question_id], onSelect, optionAvailability));
     });
+    controls.append(controlsCompletion);
+    overlayControls.append(fullscreenCompletion);
     updateParametersCollapsedState();
   }
 
@@ -751,27 +777,39 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
 }
 
 // this function is for rendering one control in the ideal scene builder
-function renderBuilderParameterControl(question, language, selectedAnswer, onSelect) {
-  const fieldset = createElement("fieldset", { className: "builder-parameter" });
-  const legend = createElement("legend", { text: questionText(question, language) });
-  const options = createElement("div", { className: "builder-parameter-options" });
+function renderBuilderParameterControl(question, language, selectedAnswer, onSelect, optionAvailability = {}) {
+  const label = createElement("label", { className: "builder-parameter" });
+  const labelText = createElement("span", {
+    className: "builder-parameter-label",
+    text: questionText(question, language),
+  });
+  const select = createElement("select", {
+    className: "builder-parameter-select",
+    attrs: {
+      name: question.question_id,
+      "aria-label": questionText(question, language),
+    },
+  });
+  const placeholder = createElement("option", {
+    text: t(language, "selectOption"),
+    attrs: { value: "", disabled: "disabled" },
+  });
+  placeholder.selected = !selectedAnswer;
+  select.append(placeholder);
 
   question.options.forEach((option) => {
-    const button = createElement("button", {
-      className: option === selectedAnswer ? "builder-option selected" : "builder-option",
+    const optionElement = createElement("option", {
       text: optionLabel(option, language, question.question_id),
-      attrs: {
-        type: "button",
-        "aria-pressed": String(option === selectedAnswer),
-      },
+      attrs: { value: option },
     });
-
-    button.addEventListener("click", () => onSelect(option));
-    options.append(button);
+    optionElement.selected = option === selectedAnswer;
+    optionElement.disabled = optionAvailability[option] === false;
+    select.append(optionElement);
   });
 
-  fieldset.append(legend, options);
-  return fieldset;
+  select.addEventListener("change", () => onSelect(select.value));
+  label.append(labelText, select);
+  return label;
 }
 
 // this function is for finding the preview image that matches the builder selections
@@ -798,9 +836,10 @@ function variantMatchesSelections(variant, selections) {
 
 // this function is for building a panorama image object for the preview
 function buildIdealPreviewImage(variant = {}, fallbackId = "ideal_scene_preview") {
+  const imageId = variant.image_id || variant.variant_id || fallbackId;
   return {
-    image_id: variant.variant_id || fallbackId,
-    variant_id: variant.variant_id || fallbackId,
+    image_id: imageId,
+    variant_id: variant.variant_id || variant.image_id || fallbackId,
     path: variant.path || "assets/images/Test_image_panoramic.png",
     source_path: variant.source_path || variant.path || "assets/images/Test_image_panoramic.png",
     responsive_sources: variant.responsive_sources || {},
@@ -809,6 +848,9 @@ function buildIdealPreviewImage(variant = {}, fallbackId = "ideal_scene_preview"
     format: variant.format || "",
     view_type: variant.view_type || "panorama_360",
     initial_yaw_degrees: variant.initial_yaw_degrees ?? 90,
+    scenario_group: variant.scenario_group || "",
+    variant_key: variant.variant_key || "",
+    parameter_states: variant.parameter_states || {},
     description: localize(variant.description, "en") || "Ideal scene preview.",
   };
 }

@@ -1,94 +1,505 @@
 {
+  "mode": "scenario_c",
   "default": {
-    "variant_id": "ideal_default_test",
-    "path": "assets/images/Test_image_panoramic_4k.png",
-    "source_path": "assets/images/Test_image_panoramic.png",
-    "responsive_sources": {
-      "desktop": {
-        "variant": "desktop_4k",
-        "path": "assets/images/Test_image_panoramic_4k.png",
-        "width": 4096,
-        "height": 2048,
-        "format": "png"
-      }
-    },
+    "image_id": "scenario_C_T2",
+    "role": "scenario",
+    "path": "assets/images/scenarios/scenario_C_T2.webp",
+    "source_path": "assets/images/scenarios/scenario_C_T2.webp",
+    "width": 4096,
+    "height": 2048,
+    "format": "webp",
     "view_type": "panorama_360",
     "initial_yaw_degrees": 90,
-    "description": "Default ideal scene preview using the current test panorama."
+    "scenario_group": "C",
+    "variant_key": "T2",
+    "parameter_states": {
+      "vegetation_lighting": "dark",
+      "path_lighting": "dark",
+      "obstacles": "clear",
+      "vegetation_density": "half"
+    },
+    "description": "Scenario C, variant T2."
   },
   "variants": [
     {
-      "variant_id": "lighting_low_test",
-      "conditions": { "preferred_lighting_intensity": "low" },
-      "path": "assets/images/Test_image_panoramic_4k.png",
-      "source_path": "assets/images/Test_image_panoramic.png",
-      "responsive_sources": {
-        "desktop": {
-          "variant": "desktop_4k",
-          "path": "assets/images/Test_image_panoramic_4k.png",
-          "width": 4096,
-          "height": 2048,
-          "format": "png"
-        }
-      },
+      "image_id": "scenario_C_baseline",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_baseline.webp",
+      "source_path": "assets/images/scenarios/scenario_C_baseline.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
       "view_type": "panorama_360",
-      "initial_yaw_degrees": 90
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "baseline",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant baseline."
     },
     {
-      "variant_id": "lighting_medium_test",
-      "conditions": { "preferred_lighting_intensity": "medium" },
-      "path": "assets/images/Test_image_panoramic_4k.png",
-      "source_path": "assets/images/Test_image_panoramic.png",
-      "responsive_sources": {
-        "desktop": {
-          "variant": "desktop_4k",
-          "path": "assets/images/Test_image_panoramic_4k.png",
-          "width": 4096,
-          "height": 2048,
-          "format": "png"
-        }
-      },
+      "image_id": "scenario_C_Lg",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_Lg.webp",
+      "source_path": "assets/images/scenarios/scenario_C_Lg.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
       "view_type": "panorama_360",
-      "initial_yaw_degrees": 90
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "Lg",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant Lg."
     },
     {
-      "variant_id": "lighting_high_test",
-      "conditions": { "preferred_lighting_intensity": "high" },
-      "path": "assets/images/Test_image_panoramic_4k.png",
-      "source_path": "assets/images/Test_image_panoramic.png",
-      "responsive_sources": {
-        "desktop": {
-          "variant": "desktop_4k",
-          "path": "assets/images/Test_image_panoramic_4k.png",
-          "width": 4096,
-          "height": 2048,
-          "format": "png"
-        }
-      },
+      "image_id": "scenario_C_LgO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_LgO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_LgO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
       "view_type": "panorama_360",
-      "initial_yaw_degrees": 90
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "LgO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant LgO."
     },
     {
-      "variant_id": "example_full_combination_test",
-      "conditions": {
-        "preferred_lighting_intensity": "medium",
-        "preferred_lighting_distribution": "uniform",
-        "preferred_vegetation_density": "medium",
-        "preferred_spatial_openness": "balanced"
-      },
-      "path": "assets/images/Test_image_panoramic_4k.png",
-      "source_path": "assets/images/Test_image_panoramic.png",
-      "responsive_sources": {
-        "desktop": {
-          "variant": "desktop_4k",
-          "path": "assets/images/Test_image_panoramic_4k.png",
-          "width": 4096,
-          "height": 2048,
-          "format": "png"
-        }
-      },
+      "image_id": "scenario_C_LgPl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_LgPl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_LgPl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
       "view_type": "panorama_360",
-      "initial_yaw_degrees": 90
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "LgPl",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant LgPl."
+    },
+    {
+      "image_id": "scenario_C_LgPlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_LgPlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_LgPlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "LgPlO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant LgPlO."
+    },
+    {
+      "image_id": "scenario_C_O",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_O.webp",
+      "source_path": "assets/images/scenarios/scenario_C_O.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "O",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant O."
+    },
+    {
+      "image_id": "scenario_C_Pl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_Pl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_Pl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "Pl",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant Pl."
+    },
+    {
+      "image_id": "scenario_C_PlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_PlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_PlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "PlO",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "none"
+      },
+      "description": "Scenario C, variant PlO."
+    },
+    {
+      "image_id": "scenario_C_T1",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1."
+    },
+    {
+      "image_id": "scenario_C_T1Lg",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1Lg.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1Lg.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1Lg",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1Lg."
+    },
+    {
+      "image_id": "scenario_C_T1LgO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1LgO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1LgO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1LgO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1LgO."
+    },
+    {
+      "image_id": "scenario_C_T1LgPl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1LgPl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1LgPl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1LgPl",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1LgPl."
+    },
+    {
+      "image_id": "scenario_C_T1LgPlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1LgPlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1LgPlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1LgPlO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1LgPlO."
+    },
+    {
+      "image_id": "scenario_C_T1O",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1O.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1O.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1O",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1O."
+    },
+    {
+      "image_id": "scenario_C_T1Pl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1Pl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1Pl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1Pl",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1Pl."
+    },
+    {
+      "image_id": "scenario_C_T1PlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T1PlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T1PlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T1PlO",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "full"
+      },
+      "description": "Scenario C, variant T1PlO."
+    },
+    {
+      "image_id": "scenario_C_T2",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2."
+    },
+    {
+      "image_id": "scenario_C_T2Lg",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2Lg.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2Lg.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2Lg",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "clear",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2Lg."
+    },
+    {
+      "image_id": "scenario_C_T2LgO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2LgO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2LgO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2LgO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2LgO."
+    },
+    {
+      "image_id": "scenario_C_T2LgPl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2LgPl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2LgPl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2LgPl",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2LgPl."
+    },
+    {
+      "image_id": "scenario_C_T2LgPlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2LgPlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2LgPlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2LgPlO",
+      "parameter_states": {
+        "vegetation_lighting": "lit",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2LgPlO."
+    },
+    {
+      "image_id": "scenario_C_T2O",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2O.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2O.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2O",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "dark",
+        "obstacles": "present",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2O."
+    },
+    {
+      "image_id": "scenario_C_T2Pl",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2Pl.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2Pl.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2Pl",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "clear",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2Pl."
+    },
+    {
+      "image_id": "scenario_C_T2PlO",
+      "role": "scenario",
+      "path": "assets/images/scenarios/scenario_C_T2PlO.webp",
+      "source_path": "assets/images/scenarios/scenario_C_T2PlO.webp",
+      "width": 4096,
+      "height": 2048,
+      "format": "webp",
+      "view_type": "panorama_360",
+      "initial_yaw_degrees": 90,
+      "scenario_group": "C",
+      "variant_key": "T2PlO",
+      "parameter_states": {
+        "vegetation_lighting": "dark",
+        "path_lighting": "lit",
+        "obstacles": "present",
+        "vegetation_density": "half"
+      },
+      "description": "Scenario C, variant T2PlO."
     }
   ]
 }

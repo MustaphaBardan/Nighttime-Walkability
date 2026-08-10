@@ -1,11 +1,15 @@
 {
   "name": "night-walkability-survey",
-  "version": "6.0.0",
+  "version": "1.0.0",
   "description": "Static research survey platform for the proposed night walkability methodology.",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
-    "assets:panoramas": "node scripts/generate-panorama-assets.js",
+    "assets:prepare": "node scripts/generate-panorama-assets.js --prepare",
+    "assets:validate": "node scripts/generate-panorama-assets.js --validate",
     "dev": "node scripts/dev-server.js",
     "start": "npm run dev",
     "test": "node --test tests/*.test.js",
@@ -18,5 +22,8 @@
     "night-lighting"
   ],
   "author": "Mustapha Bardan",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "sharp": "^0.35.3"
+  }
 }

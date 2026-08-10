@@ -14,8 +14,8 @@
     {
       "question_id": "pairwise_comfort_atmosphere",
       "text": {
-        "en": "In which scene is it more comfortable to walk at night?",
-        "fr": "Dans quelle scène est-il plus confortable de marcher la nuit ?"
+        "en": "Which scene is more comfortable to walk in at night?",
+        "fr": "Quelle scène est plus confortable pour marcher la nuit ?"
       },
       "answers": ["A", "B", "no_clear_difference"]
     },
@@ -108,50 +108,6 @@
         "fr": "Je choisirais de traverser cet endroit à pied la nuit."
       },
       "scale": 5
-    }
-  ],
-  "ideal_scene_builder": [
-    {
-      "question_id": "preferred_lighting_intensity",
-      "text": { "en": "What lighting intensity would you prefer?", "fr": "Quelle intensité d'éclairage préférez-vous ?" },
-      "type": "choice",
-      "options": ["low", "medium", "high", "dont_know"]
-    },
-    {
-      "question_id": "preferred_lighting_distribution",
-      "text": { "en": "What light distribution would you prefer?", "fr": "Quelle distribution de lumière préférez-vous ?" },
-      "type": "choice",
-      "options": ["uniform", "contrasted", "punctual", "dont_know"]
-    },
-    {
-      "question_id": "preferred_vegetation_density",
-      "text": { "en": "How much vegetation would you prefer near the walking area?", "fr": "Quelle quantité de végétation préférez-vous près de la zone de marche ?" },
-      "type": "choice",
-      "options": ["low", "medium", "high", "dont_know"]
-    },
-    {
-      "question_id": "preferred_spatial_openness",
-      "text": { "en": "What level of openness would you prefer?", "fr": "Quel niveau d'ouverture préférez-vous ?" },
-      "type": "choice",
-      "options": ["open", "balanced", "enclosed", "dont_know"]
-    },
-    {
-      "question_id": "preferred_sidewalk_condition",
-      "text": { "en": "What sidewalk condition would you prefer?", "fr": "Quel état du trottoir préférez-vous ?" },
-      "type": "choice",
-      "options": ["wide_continuous", "ordinary", "narrow_discontinuous", "dont_know"]
-    },
-    {
-      "question_id": "preferred_obstacles",
-      "text": { "en": "How many obstacles or irregular areas would you prefer in the scene?", "fr": "Combien d'obstacles ou d'irrégularités préférez-vous dans la scène ?" },
-      "type": "choice",
-      "options": ["none", "few", "many", "dont_know"]
-    },
-    {
-      "question_id": "preferred_activity_indicators",
-      "text": { "en": "What level of activity would you prefer at night?", "fr": "Quel niveau d'activité préférez-vous la nuit ?" },
-      "type": "choice",
-      "options": ["empty", "some_activity", "active_frontage", "dont_know"]
     }
   ],
   "realism_check": [

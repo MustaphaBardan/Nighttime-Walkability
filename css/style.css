@@ -1221,6 +1221,13 @@ p {
   align-content: start;
   gap: 12px;
   min-width: 0;
+  height: min(68vh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-2);
 }
 
 .builder-parameter {
@@ -1230,39 +1237,35 @@ p {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px;
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
-.builder-parameter legend {
+.builder-parameter-label {
   color: var(--text);
   font-weight: 800;
 }
 
-.builder-parameter-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.builder-option {
-  min-height: 38px;
+.builder-parameter-select {
+  width: 100%;
+  min-height: 42px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 8px 34px 8px 10px;
   background: var(--surface);
   color: var(--text);
-  font-weight: 750;
+  font: inherit;
+  font-weight: 700;
 }
 
-.builder-option:hover,
-.builder-option:focus-visible,
-.builder-option.selected {
+.builder-parameter-select:hover,
+.builder-parameter-select:focus-visible {
   border-color: var(--accent-strong);
   outline: none;
 }
 
-.builder-option.selected {
-  background: var(--surface-3);
+.builder-completion-actions {
+  margin-top: 2px;
+  padding-top: 4px;
 }
 
 .ideal-builder-preview:fullscreen {
@@ -1368,19 +1371,19 @@ p {
   background: rgba(238, 242, 237, 0.08);
 }
 
-.ideal-builder-preview:fullscreen .builder-parameter legend,
-.ideal-builder-preview:fullscreen .builder-option {
+.ideal-builder-preview:fullscreen .builder-parameter-label,
+.ideal-builder-preview:fullscreen .builder-parameter-select {
   color: #eef2ed;
 }
 
-.ideal-builder-preview:fullscreen .builder-option {
+.ideal-builder-preview:fullscreen .builder-parameter-select {
   border-color: rgba(238, 242, 237, 0.24);
-  background: rgba(238, 242, 237, 0.1);
+  background: #202424;
 }
 
-.ideal-builder-preview:fullscreen .builder-option.selected {
-  border-color: var(--accent-strong);
-  background: rgba(56, 189, 248, 0.28);
+.ideal-builder-preview:fullscreen .ideal-builder-overlay-controls {
+  display: grid;
+  gap: 12px;
 }
 
 .preview-option-grid {

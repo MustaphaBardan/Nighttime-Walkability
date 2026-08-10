@@ -44,13 +44,20 @@ renderHeaderLanguageSelector();
 // this function is for starting the survey app and loading the json files
 async function init() {
   try {
-    // we call the json files needed by the website
-    const [images, questions, idealSceneVariants, credits] = await Promise.all([
+    // Load the tutorial panoramas, complete scenario catalog, and survey content.
+    const [tutorialImages, scenarioCatalog, baseQuestions, builderQuestions, idealSceneVariants, credits] = await Promise.all([
       fetchJson("data/images.json"),
+      fetchJson("data/scenario_catalog.json"),
       fetchJson("data/questions.json"),
+      fetchJson("data/scenario_builder_questions.json"),
       fetchJson("data/ideal_scene_variants.json"),
       fetchJson("data/credits.json"),
     ]);
+    const images = [...tutorialImages, ...(scenarioCatalog.images || [])];
+    const questions = {
+      ...baseQuestions,
+      ideal_scene_builder: builderQuestions,
+    };
 
     // we keep the survey data in one context object used by all sections
     window.surveyContext = {
@@ -61,12 +68,8 @@ async function init() {
       credits,
     };
 
-    // we start loading images early so the survey feels faster
-    preloadSurveyImages([
-      ...images,
-      idealSceneVariants.default,
-      ...(idealSceneVariants.variants || []),
-    ]);
+    // Load only the two tutorial panoramas up front; scenario images load on demand.
+    preloadSurveyImages(tutorialImages);
 
     renderWelcome(window.surveyContext);
   } catch (error) {
@@ -532,6 +535,15 @@ function renderCreditsDialog(context) {
   const language = getContextLanguage(context);
   const content = byId("credits-content");
   content.replaceChildren(createElement("h2", { text: t(language, "creditsTitle") }));
+  const acknowledgements = context.credits?.acknowledgements || [];
+  if (acknowledgements.length) {
+    content.append(createElement("h3", { text: t(language, "acknowledgementsTitle") }));
+    acknowledgements.forEach((acknowledgement) => {
+      content.append(createElement("p", {
+        text: acknowledgement.text?.[language] || acknowledgement.text?.en || "",
+      }));
+    });
+  }
   (context.credits?.asset_credits || []).forEach((credit) => {
     const item = createElement("p");
     item.append(

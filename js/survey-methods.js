@@ -31,7 +31,7 @@ export const METHOD_DEFINITIONS = [
   {
     id: "ideal_scene_builder",
     titleKey: "builderTitle",
-    description: "Choose preferred lighting, vegetation, openness, sidewalk, obstacle, and activity conditions.",
+    description: "Choose Scenario C vegetation density, vegetation lighting, path lighting, and obstacle conditions.",
   },
   {
     id: "realism_check",

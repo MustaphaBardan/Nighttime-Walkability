@@ -1,56 +1,66 @@
 # Night Walkability Survey Platform
 
-Dependency-free bilingual static survey for the LUNNE night-walkability study.
+Public V1 of the dependency-free, bilingual static survey used by the LUNNE night-walkability study.
 
-Current version: `Protocol v6 - finalized static 360 panorama questionnaire`.
+The application presents simulated nocturnal urban panoramas and collects pairwise comparisons, detailed ratings, an optional preferred-scene configuration, realism feedback, and anonymous participant-profile information.
 
-## Run and validate
+## Public V1 content
+
+- 56 scenario panoramas: 16 in Scenario A, 8 in Scenario B, 24 in Scenario C, and 8 in Scenario D
+- 2 synchronized route-continuation tutorial panoramas
+- English and French interfaces
+- deterministic, balanced scene assignment
+- interactive WebGL panorama viewing with fullscreen and observation tracking
+- local response backup and optional Google Sheets submission
+
+Public panoramas are 4096×2048 WebP files. The two tutorial panoramas retain their native 2:1 resolution. Original 12288×6144 renders are intentionally excluded from Git.
+
+## Install, run, and validate
+
+Node.js 20.9 or newer is required for the development and image-preparation tools. The deployed website itself remains dependency-free static HTML, CSS, and JavaScript.
 
 ```bash
+npm install
 npm run dev
 npm run check
 ```
 
 The local server uses `http://127.0.0.1:8000`. Set `PORT=8080` to use another port.
 
+To validate local source panoramas and rebuild the public WebP assets:
+
+```bash
+npm run assets:validate
+npm run assets:prepare
+```
+
+Source panoramas belong under `assets/source-panoramas/scenario_A/` through `scenario_D/`. That directory is ignored because it contains the high-resolution originals. Public metadata and optimized images are generated from those sources.
+
 ## Participant flow
 
-1. LUNNE introduction, project identities, and 900×600 viewport check
+1. Introduction, project identities, and viewport check
 2. Six anonymous profile questions
-3. Combined D1/D3 panorama-control and route-continuation tutorial
-4. Six seeded pairwise comparisons in fixed Q1–Q6 order
-5. Six seeded detailed scenes in fixed Q1–Q6 order
-6. Optional ideal-scene builder
+3. Synchronized readable/unreadable route tutorial
+4. Six seeded pairwise comparisons
+5. Six seeded detailed-scene ratings
+6. Optional Scenario C preferred-scene builder
 7. Realism, lighting plausibility, and viewing-quality questions
-8. Save, indicative personal summary, and finish
+8. Local save, optional remote submission, and indicative personal summary
 
-Each participant receives deterministic scene assignments based on their participant ID. Reloading preserves the same assignments; different participants generally receive different assignments. The six detailed scenes are unique when enough scenario images are available.
+Assignments are deterministic for each participant ID. Panorama interaction records a compact yaw/pitch trace, rotation count, fullscreen state, viewing coverage, and timing for analysis.
 
-The panorama viewer permits pointer and keyboard rotation, limits pitch to ±50°, disables zoom, and never blocks an answer based on yaw coverage. It records a compact yaw/pitch trace, rotation-interaction count, fullscreen state, coverage, and timing for analysis.
+## Response storage
 
-## Data and privacy
-
-Responses are backed up in versioned browser storage. Protocol v6 uses new keys and does not read, modify, or delete v5 data. The long-format response schema includes:
-
-- participant, language, question, image, answer, display-order, and timing fields;
-- age, gender, night-walking frequency and comfort, activity/expertise, and lighting knowledge;
-- viewport resolution;
-- yaw coverage, interaction availability, compact viewing trace, rotation-interaction count, fullscreen usage, and block time.
-
-The ideal builder exports a participation row and, when completed, seven parameter rows. Final submissions replace prior rows for the same participant ID.
-
-## Google Sheets deployment
-
-The frontend submits the final response bundle to the Apps Script `/exec` URL configured in `js/config.js`. The matching local schema is in `google_apps_script/Code.gs`.
-
-After changing the local script:
-
-1. Copy it into the Google Sheet’s Apps Script editor.
-2. Choose **Deploy → Manage deployments → Edit → New version → Deploy**.
-3. Keep **Execute as: Me** and public access enabled.
-
-The website cannot deploy that external Apps Script automatically.
+Responses are backed up in versioned browser storage and submitted to the deployed Google Apps Script endpoint configured in `js/config.js`. Local Apps Script source and deployment files are intentionally excluded from the public repository.
 
 ## Credits
 
-Project identities and asset attributions are loaded from `data/credits.json`. Public logo files live under `assets/logos/`. The website software is distributed under the root MIT `LICENSE`; credited 3D assets retain their respective CC BY 4.0 licences.
+Some assets used to create the scenes were provided by L’Observatoire de la Nuit. The panorama simulations were produced using its Obscura software.
+
+Additional third-party asset attributions are maintained in `data/credits.json` and displayed by the website. Credited assets retain their respective licences.
+
+## Author and licence
+
+Copyright © 2026 Mustapha Bardan.
+
+The website software is distributed under the MIT License in `LICENSE`.

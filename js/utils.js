@@ -105,6 +105,52 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
   return seededShuffle(pairs, `${participantId}:scenario-pairs`).slice(0, count);
 }
 
+// this function balances pairwise exposure before drawing a seeded pair inside each scenario
+export function makeBalancedScenarioPairs(images, participantId, count, scenarioOrder = ["A", "B", "C", "D"]) {
+  const groups = groupScenarioImageArrays(getScenarioImages(images), scenarioOrder)
+    .filter((group) => group.images.length >= 2);
+  const sequence = makeCapacityBalancedGroupSequence(
+    groups.map((group) => ({ key: group.key, capacity: group.images.length * (group.images.length - 1) / 2 })),
+    count,
+    `${participantId}:balanced-pairs`,
+  );
+  const pairPools = new Map(groups.map((group) => [
+    group.key,
+    seededShuffle(makeAllPairs(group.images), `${participantId}:balanced-pairs:${group.key}`),
+  ]));
+  const offsets = new Map();
+
+  return sequence.map((groupKey) => {
+    const offset = offsets.get(groupKey) || 0;
+    const pair = pairPools.get(groupKey)?.[offset];
+    offsets.set(groupKey, offset + 1);
+    return pair;
+  }).filter(Boolean);
+}
+
+// this function balances detailed-scene exposure and never repeats an image
+export function makeBalancedScenarioImages(images, participantId, count, scenarioOrder = ["A", "B", "C", "D"]) {
+  const groups = groupScenarioImageArrays(getScenarioImages(images), scenarioOrder)
+    .filter((group) => group.images.length > 0);
+  const sequence = makeCapacityBalancedGroupSequence(
+    groups.map((group) => ({ key: group.key, capacity: group.images.length })),
+    count,
+    `${participantId}:balanced-images`,
+  );
+  const imagePools = new Map(groups.map((group) => [
+    group.key,
+    seededShuffle(group.images, `${participantId}:balanced-images:${group.key}`),
+  ]));
+  const offsets = new Map();
+
+  return sequence.map((groupKey) => {
+    const offset = offsets.get(groupKey) || 0;
+    const image = imagePools.get(groupKey)?.[offset];
+    offsets.set(groupKey, offset + 1);
+    return image;
+  }).filter(Boolean);
+}
+
 // this function is for taking a repeatable subset for one participant
 export function takeDeterministicSubset(items, count, seedValue) {
   if (!count || count <= 0) {
@@ -219,6 +265,46 @@ function groupScenarioImages(images) {
     groups[groupKey].set(variant, image);
     return groups;
   }, {});
+}
+
+function groupScenarioImageArrays(images, scenarioOrder) {
+  const byGroup = images.reduce((groups, image) => {
+    if (!groups.has(image.scenario_group)) groups.set(image.scenario_group, []);
+    groups.get(image.scenario_group).push(image);
+    return groups;
+  }, new Map());
+
+  return scenarioOrder
+    .filter((groupKey) => byGroup.has(groupKey))
+    .map((groupKey) => ({ key: groupKey, images: byGroup.get(groupKey) }));
+}
+
+function makeCapacityBalancedGroupSequence(groups, count, seedValue) {
+  if (!count || count <= 0 || !groups.length) return [];
+  const sequence = [];
+  const usage = new Map(groups.map((group) => [group.key, 0]));
+
+  while (sequence.length < count) {
+    const available = groups.filter((group) => usage.get(group.key) < group.capacity);
+    if (!available.length) break;
+    const minimumUsage = Math.min(...available.map((group) => usage.get(group.key)));
+    const leastUsed = available.filter((group) => usage.get(group.key) === minimumUsage);
+    const selected = seededShuffle(leastUsed, `${seedValue}:position-${sequence.length}`)[0];
+    sequence.push(selected.key);
+    usage.set(selected.key, usage.get(selected.key) + 1);
+  }
+
+  return sequence;
+}
+
+function makeAllPairs(images) {
+  const pairs = [];
+  for (let left = 0; left < images.length; left += 1) {
+    for (let right = left + 1; right < images.length; right += 1) {
+      pairs.push([images[left], images[right]]);
+    }
+  }
+  return pairs;
 }
 
 // this function is for requiring the same 1-2, 1-3, 2-3 pair pool in every scenario group

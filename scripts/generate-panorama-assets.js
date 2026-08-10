@@ -1,296 +1,165 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { basename } from "node:path";
-import { deflateSync, inflateSync } from "node:zlib";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { basename, join } from "node:path";
 
-// this signature is for checking that the file is a png
-const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+import sharp from "sharp";
 
-// this table is for calculating png chunk crc values
-const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
-  let value = index;
+import {
+  SCENARIO_ORDER,
+  chooseScenarioCPreview,
+  parseScenarioSourceFilename,
+  validateScenarioCatalog,
+} from "../js/scenario-protocol.js";
 
-  for (let bit = 0; bit < 8; bit += 1) {
-    value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
-  }
+const SOURCE_ROOT = "assets/source-panoramas";
+const SCENARIO_OUTPUT_ROOT = "assets/images/scenarios";
+const TUTORIAL_OUTPUT_ROOT = "assets/images/tutorial";
+const WEBP_OPTIONS = { quality: 88, effort: 6, smartSubsample: true };
 
-  return value >>> 0;
-});
-
-// this list contains the panorama assets that we need to generate
-const OUTPUTS = [
+const TUTORIALS = [
   {
-    input: "assets/images/Test_image_panoramic.png",
-    variants: [
-      { width: 4096, height: 2048, output: "assets/images/Test_image_panoramic_4k.png" },
-    ],
+    image_id: "tutorial_readable_route",
+    source: `${SOURCE_ROOT}/tutorial/readable_route.png`,
+    output: `${TUTORIAL_OUTPUT_ROOT}/readable_route.webp`,
+    description: "Tutorial example with readable route continuity.",
+  },
+  {
+    image_id: "tutorial_unreadable_route",
+    source: `${SOURCE_ROOT}/tutorial/unreadable_route.png`,
+    output: `${TUTORIAL_OUTPUT_ROOT}/unreadable_route.webp`,
+    description: "Tutorial example with hidden or unreadable route continuity.",
   },
 ];
 
-// we read the source image, resize it, and write each output file
-for (const job of OUTPUTS) {
-  const source = decodePng(readFileSync(job.input));
+const command = process.argv[2] || "--prepare";
 
-  for (const variant of job.variants) {
-    const resized = resizeBox(source, variant.width, variant.height);
-    writeFileSync(variant.output, encodePng(resized));
-    console.log(`Generated ${variant.output} from ${basename(job.input)}`);
-  }
+if (command === "--prepare") {
+  await prepareAssets();
+} else if (command === "--validate") {
+  const sourceCatalog = collectSourceCatalog();
+  assertCatalogReady(sourceCatalog.validation);
+  await validateTutorialSources();
+  console.log(formatReadinessMessage(sourceCatalog.validation));
+} else {
+  throw new Error(`Unknown panorama generation command: ${command}`);
 }
 
-// this function is for decoding a png file into rgba pixels
-function decodePng(buffer) {
-  if (!buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
-    throw new Error("Input is not a PNG file.");
+async function prepareAssets() {
+  const sourceCatalog = collectSourceCatalog();
+  assertCatalogReady(sourceCatalog.validation);
+  await validateTutorialSources();
+  rmSync(SCENARIO_OUTPUT_ROOT, { recursive: true, force: true });
+  rmSync(TUTORIAL_OUTPUT_ROOT, { recursive: true, force: true });
+  mkdirSync(SCENARIO_OUTPUT_ROOT, { recursive: true });
+  mkdirSync(TUTORIAL_OUTPUT_ROOT, { recursive: true });
+
+  for (const image of sourceCatalog.images) {
+    await generateWebp(image.local_source_path, image.path, 4096, 2048);
   }
 
-  let offset = PNG_SIGNATURE.length;
-  let width = 0;
-  let height = 0;
-  let bitDepth = 0;
-  let colorType = 0;
-  const idatChunks = [];
+  const tutorials = [];
+  for (const tutorial of TUTORIALS) {
+    const metadata = await sharp(tutorial.source).metadata();
+    await generateWebp(tutorial.source, tutorial.output, metadata.width, metadata.height);
+    tutorials.push({
+      image_id: tutorial.image_id,
+      role: "tutorial",
+      path: tutorial.output,
+      source_path: tutorial.output,
+      width: metadata.width,
+      height: metadata.height,
+      format: "webp",
+      view_type: "panorama_360",
+      initial_yaw_degrees: 90,
+      scenario_group: "tutorial",
+      scenario_variant: 0,
+      description: tutorial.description,
+    });
+  }
 
-  while (offset < buffer.length) {
-    const length = buffer.readUInt32BE(offset);
-    const type = buffer.toString("ascii", offset + 4, offset + 8);
-    const dataStart = offset + 8;
-    const data = buffer.subarray(dataStart, dataStart + length);
-    offset = dataStart + length + 4;
+  const publicImages = sourceCatalog.images.map(({ local_source_path, ...image }) => image);
+  const scenarioCVariants = publicImages.filter((image) => image.scenario_group === "C");
+  writeJson("data/images.json", tutorials);
+  writeJson("data/scenario_catalog.json", {
+    protocol: "v1",
+    validation: sourceCatalog.validation,
+    images: publicImages,
+  });
+  writeJson("data/ideal_scene_variants.json", {
+    mode: "scenario_c",
+    default: chooseScenarioCPreview(scenarioCVariants),
+    variants: scenarioCVariants,
+  });
+  console.log(formatReadinessMessage(sourceCatalog.validation));
+}
 
-    if (type === "IHDR") {
-      width = data.readUInt32BE(0);
-      height = data.readUInt32BE(4);
-      bitDepth = data[8];
-      colorType = data[9];
-    } else if (type === "IDAT") {
-      idatChunks.push(data);
-    } else if (type === "IEND") {
-      break;
+function collectSourceCatalog() {
+  const images = [];
+
+  for (const scenarioGroup of SCENARIO_ORDER) {
+    const sourceDirectory = join(SOURCE_ROOT, `scenario_${scenarioGroup}`);
+    if (!existsSync(sourceDirectory)) continue;
+
+    for (const filename of readdirSync(sourceDirectory).sort()) {
+      const parsed = parseScenarioSourceFilename(scenarioGroup, filename);
+      if (parsed.status === "excluded") continue;
+      const normalizedName = `scenario_${scenarioGroup}_${parsed.variantKey}`;
+      const outputPath = `${SCENARIO_OUTPUT_ROOT}/${normalizedName}.webp`;
+      images.push({
+        image_id: normalizedName,
+        role: "scenario",
+        path: outputPath,
+        source_path: outputPath,
+        width: 4096,
+        height: 2048,
+        format: "webp",
+        view_type: "panorama_360",
+        initial_yaw_degrees: 90,
+        scenario_group: scenarioGroup,
+        variant_key: parsed.variantKey,
+        parameter_states: parsed.parameterStates,
+        description: `Scenario ${scenarioGroup}, variant ${parsed.variantKey}.`,
+        local_source_path: join(sourceDirectory, filename),
+      });
     }
   }
 
-  if (bitDepth !== 8 || ![2, 6].includes(colorType)) {
-    throw new Error("Only 8-bit RGB or RGBA PNG panoramas are supported.");
-  }
-
-  const channels = colorType === 6 ? 4 : 3;
-  const bytesPerPixel = channels;
-  const stride = width * channels;
-  const inflated = inflateSync(Buffer.concat(idatChunks));
-  const pixels = Buffer.allocUnsafe(width * height * 4);
-  let readOffset = 0;
-  let previous = Buffer.alloc(stride);
-  let current = Buffer.allocUnsafe(stride);
-
-  for (let y = 0; y < height; y += 1) {
-    const filter = inflated[readOffset];
-    readOffset += 1;
-    const row = inflated.subarray(readOffset, readOffset + stride);
-    readOffset += stride;
-    unfilterScanline(filter, row, current, previous, bytesPerPixel);
-    copyRowToRgba(current, pixels, y * width * 4, channels);
-    const nextPrevious = current;
-    current = previous;
-    previous = nextPrevious;
-  }
-
-  return { width, height, pixels };
+  images.sort((left, right) => (
+    left.scenario_group.localeCompare(right.scenario_group)
+    || left.variant_key.localeCompare(right.variant_key)
+  ));
+  return { images, validation: validateScenarioCatalog(images) };
 }
 
-// this function is for undoing the png row filter
-function unfilterScanline(filter, row, current, previous, bytesPerPixel) {
-  for (let index = 0; index < row.length; index += 1) {
-    const left = index >= bytesPerPixel ? current[index - bytesPerPixel] : 0;
-    const up = previous[index] || 0;
-    const upperLeft = index >= bytesPerPixel ? previous[index - bytesPerPixel] || 0 : 0;
-    let predictor = 0;
-
-    if (filter === 1) {
-      predictor = left;
-    } else if (filter === 2) {
-      predictor = up;
-    } else if (filter === 3) {
-      predictor = Math.floor((left + up) / 2);
-    } else if (filter === 4) {
-      predictor = paeth(left, up, upperLeft);
-    } else if (filter !== 0) {
-      throw new Error(`Unsupported PNG filter: ${filter}`);
+async function validateTutorialSources() {
+  for (const tutorial of TUTORIALS) {
+    if (!existsSync(tutorial.source)) {
+      throw new Error(`Missing tutorial panorama: ${tutorial.source}`);
     }
-
-    current[index] = (row[index] + predictor) & 255;
-  }
-}
-
-// this function is for copying rgb or rgba rows into rgba pixels
-function copyRowToRgba(row, pixels, targetOffset, channels) {
-  if (channels === 4) {
-    row.copy(pixels, targetOffset);
-    return;
-  }
-
-  for (let source = 0, target = targetOffset; source < row.length; source += 3, target += 4) {
-    pixels[target] = row[source];
-    pixels[target + 1] = row[source + 1];
-    pixels[target + 2] = row[source + 2];
-    pixels[target + 3] = 255;
-  }
-}
-
-// this function is for resizing the image with a simple box average
-function resizeBox(source, targetWidth, targetHeight) {
-  const scaleX = source.width / targetWidth;
-  const scaleY = source.height / targetHeight;
-
-  if (!Number.isInteger(scaleX) || !Number.isInteger(scaleY) || scaleX < 1 || scaleY < 1) {
-    throw new Error("The built-in optimizer expects integer downscales such as 8K to 4K or 2K.");
-  }
-
-  const pixels = Buffer.allocUnsafe(targetWidth * targetHeight * 4);
-  const sampleCount = scaleX * scaleY;
-
-  for (let y = 0; y < targetHeight; y += 1) {
-    for (let x = 0; x < targetWidth; x += 1) {
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      let alpha = 0;
-
-      for (let sampleY = 0; sampleY < scaleY; sampleY += 1) {
-        const sourceY = y * scaleY + sampleY;
-
-        for (let sampleX = 0; sampleX < scaleX; sampleX += 1) {
-          const sourceX = x * scaleX + sampleX;
-          const sourceOffset = (sourceY * source.width + sourceX) * 4;
-          red += source.pixels[sourceOffset];
-          green += source.pixels[sourceOffset + 1];
-          blue += source.pixels[sourceOffset + 2];
-          alpha += source.pixels[sourceOffset + 3];
-        }
-      }
-
-      const targetOffset = (y * targetWidth + x) * 4;
-      pixels[targetOffset] = Math.round(red / sampleCount);
-      pixels[targetOffset + 1] = Math.round(green / sampleCount);
-      pixels[targetOffset + 2] = Math.round(blue / sampleCount);
-      pixels[targetOffset + 3] = Math.round(alpha / sampleCount);
+    const metadata = await sharp(tutorial.source).metadata();
+    if (!metadata.width || !metadata.height || metadata.width !== metadata.height * 2) {
+      throw new Error(`Tutorial panorama must use a 2:1 aspect ratio: ${tutorial.source}`);
     }
   }
-
-  return { width: targetWidth, height: targetHeight, pixels };
 }
 
-// this function is for encoding rgba pixels back into a png
-function encodePng(image) {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(image.width, 0);
-  ihdr.writeUInt32BE(image.height, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 6;
-  ihdr[10] = 0;
-  ihdr[11] = 0;
-  ihdr[12] = 0;
-
-  return Buffer.concat([
-    PNG_SIGNATURE,
-    makeChunk("IHDR", ihdr),
-    makeChunk("IDAT", deflateSync(filterScanlines(image), { level: 9 })),
-    makeChunk("IEND", Buffer.alloc(0)),
-  ]);
+async function generateWebp(input, output, width, height) {
+  await sharp(input)
+    .resize(width, height, { fit: "fill" })
+    .webp(WEBP_OPTIONS)
+    .toFile(output);
+  console.log(`Generated ${output} from ${basename(input)}`);
 }
 
-// this function is for choosing the best png filter for each row
-function filterScanlines(image) {
-  const stride = image.width * 4;
-  const filtered = Buffer.allocUnsafe((stride + 1) * image.height);
-  const candidates = Array.from({ length: 5 }, () => Buffer.allocUnsafe(stride));
+function writeJson(path, value) {
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
 
-  for (let y = 0; y < image.height; y += 1) {
-    const row = image.pixels.subarray(y * stride, (y + 1) * stride);
-    const previous = y > 0 ? image.pixels.subarray((y - 1) * stride, y * stride) : null;
-    let bestFilter = 0;
-    let bestScore = Number.POSITIVE_INFINITY;
-
-    for (let filter = 0; filter < candidates.length; filter += 1) {
-      const score = applyFilter(filter, row, previous, candidates[filter]);
-
-      if (score < bestScore) {
-        bestScore = score;
-        bestFilter = filter;
-      }
-    }
-
-    const outputOffset = y * (stride + 1);
-    filtered[outputOffset] = bestFilter;
-    candidates[bestFilter].copy(filtered, outputOffset + 1);
+function assertCatalogReady(validation) {
+  if (!validation.ready) {
+    throw new Error(`Scenario catalog is incomplete. ${formatReadinessMessage(validation)}`);
   }
-
-  return filtered;
 }
 
-// this function is for applying one png filter and scoring it
-function applyFilter(filter, row, previous, output) {
-  let score = 0;
-
-  for (let index = 0; index < row.length; index += 1) {
-    const left = index >= 4 ? row[index - 4] : 0;
-    const up = previous ? previous[index] : 0;
-    const upperLeft = previous && index >= 4 ? previous[index - 4] : 0;
-    let predictor = 0;
-
-    if (filter === 1) {
-      predictor = left;
-    } else if (filter === 2) {
-      predictor = up;
-    } else if (filter === 3) {
-      predictor = Math.floor((left + up) / 2);
-    } else if (filter === 4) {
-      predictor = paeth(left, up, upperLeft);
-    }
-
-    const value = (row[index] - predictor) & 255;
-    output[index] = value;
-    score += value < 128 ? value : 256 - value;
-  }
-
-  return score;
-}
-
-// this function is for creating one png chunk
-function makeChunk(type, data) {
-  const typeBuffer = Buffer.from(type);
-  const chunk = Buffer.alloc(12 + data.length);
-  chunk.writeUInt32BE(data.length, 0);
-  typeBuffer.copy(chunk, 4);
-  data.copy(chunk, 8);
-  chunk.writeUInt32BE(crc32(Buffer.concat([typeBuffer, data])), 8 + data.length);
-  return chunk;
-}
-
-// this function is for calculating the crc32 checksum
-function crc32(buffer) {
-  let crc = 0xffffffff;
-
-  for (const byte of buffer) {
-    crc = CRC_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
-  }
-
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-// this function is for the paeth png predictor
-function paeth(left, up, upperLeft) {
-  const prediction = left + up - upperLeft;
-  const leftDistance = Math.abs(prediction - left);
-  const upDistance = Math.abs(prediction - up);
-  const upperLeftDistance = Math.abs(prediction - upperLeft);
-
-  if (leftDistance <= upDistance && leftDistance <= upperLeftDistance) {
-    return left;
-  }
-
-  if (upDistance <= upperLeftDistance) {
-    return up;
-  }
-
-  return upperLeft;
+function formatReadinessMessage(validation) {
+  return `Scenario counts: ${JSON.stringify(validation.counts)}; missing: ${validation.missing_scenarios.join(", ") || "none"}; unexpected: ${validation.unexpected_counts.join(", ") || "none"}.`;
 }

@@ -2,6 +2,7 @@ import { createElement } from "./utils.js";
 
 const DRAG_SENSITIVITY = 0.0045;
 const KEY_STEP = Math.PI / 36;
+const GLOBAL_RIGHT_ROTATION_DEGREES = 90;
 export const MAX_PITCH = 50 * Math.PI / 180;
 const MIN_FOV = 42;
 const MAX_FOV = 94;
@@ -39,12 +40,18 @@ export function warmUpPanoramaTextures(images = []) {
 export function renderSceneMedia(image, options = {}) {
   if (image?.view_type === "panorama_360") {
     return renderPanoramaViewer(image, {
-      initialYaw: degreesToRadians(image.initial_yaw_degrees || 0),
+      initialYaw: degreesToRadians(getInitialPanoramaYawDegrees(image)),
       ...options,
     });
   }
 
   return renderFlatImage(image, options);
+}
+
+// Shift every panorama's configured heading 90 degrees to the viewer's right.
+// Keeping this global makes tutorial, comparison, rating, and builder scenes agree.
+export function getInitialPanoramaYawDegrees(image = {}) {
+  return Number(image.initial_yaw_degrees || 0) - GLOBAL_RIGHT_ROTATION_DEGREES;
 }
 
 // this function is for getting the image file metadata used in saved responses
