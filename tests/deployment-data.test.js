@@ -113,6 +113,20 @@ test("pairwise and detailed prompts render without methodological helpers", () =
   assert.doesNotMatch(detailedSource, /localize\(question\.helper/);
 });
 
+test("pairwise and detailed sections show their intro before the first question and preserve bonus view state", () => {
+  const pairwiseSource = readFileSync(new URL("../js/pairwise-comparison.js", import.meta.url), "utf8");
+  const detailedSource = readFileSync(new URL("../js/simple-methods.js", import.meta.url), "utf8");
+
+  assert.match(pairwiseSource, /export function renderPairwiseComparison[\s\S]*?renderProtocolIntro\(root, context, onComplete, onRerenderReady\)/);
+  assert.match(pairwiseSource, /function renderPairwiseQuestions/);
+  assert.match(pairwiseSource, /renderProtocolIntro\(root, context, onComplete, onRerenderReady\);/);
+  assert.match(detailedSource, /export function renderDetailedRating[\s\S]*?renderDetailedRatingIntro\(root, context, onComplete, onRerenderReady\)/);
+  assert.match(detailedSource, /function renderDetailedRatingQuestions/);
+  assert.match(detailedSource, /function renderDetailedRatingIntro/);
+  assert.match(detailedSource, /const sharedViewState = \{\};/);
+  assert.match(detailedSource, /fullViewport: true,[\s\S]*?viewState: sharedViewState/);
+});
+
 async function assertImageAsset(record, label) {
   assert.equal(record.view_type, "panorama_360", `${label} must be a 360 panorama`);
   assert.equal(Number(record.initial_yaw_degrees), 90, `${label} must use the shared initial yaw`);

@@ -73,6 +73,10 @@ test("t exposes qualitative and pairwise navigation prompts in both supported la
   assert.match(t("en", "yawRequirement", { current: 90, required: 180 }), /90°/);
   assert.match(t("fr", "neutralCommentRequirement", { minimum: 10 }), /10/);
   assert.equal(t("en", "buildScene"), "Build a scene");
+  assert.equal(t("en", "detailedStart"), "Start detailed ratings");
+  assert.equal(t("fr", "detailedStart"), "Commencer les évaluations détaillées");
+  assert.match(t("en", "detailedIntro"), /one 360 degree scene at a time/);
+  assert.match(t("fr", "detailedIntro"), /scène à 360 degrés à la fois/);
   assert.equal(t("en", "sceneA"), "Scene A");
   assert.equal(t("fr", "sceneB"), "Scène B");
   assert.equal(t("en", "disagree"), "Disagree");

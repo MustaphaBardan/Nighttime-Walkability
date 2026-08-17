@@ -13,6 +13,11 @@ import { isScenarioPool } from "./scenario-protocol.js";
 
 // this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
+  renderProtocolIntro(root, context, onComplete, onRerenderReady);
+}
+
+// this function is for showing the pairwise comparison questions after their intro
+function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
   const methodStartedAt = Date.now();
@@ -126,7 +131,7 @@ export function renderPairwiseComparison(root, context, onComplete, onRerenderRe
   onRerenderReady(() => {
     // we remove the listener before re-rendering to avoid duplicate fullscreen handlers
     document.removeEventListener("fullscreenchange", updateActiveScene);
-    renderPairwiseComparison(root, context, onComplete, onRerenderReady);
+    renderPairwiseQuestions(root, context, onComplete, onRerenderReady);
   });
   updateTrial();
 
@@ -333,7 +338,7 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
     attrs: { type: "button" },
   });
 
-  start.addEventListener("click", () => renderPairwiseComparison(root, context, onComplete, onRerenderReady));
+  start.addEventListener("click", () => renderPairwiseQuestions(root, context, onComplete, onRerenderReady));
   panel.append(
     createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 4, total: TOTAL_SURVEY_STEPS }) }),
     createElement("h2", { text: t(language, "pairwiseTitle") }),

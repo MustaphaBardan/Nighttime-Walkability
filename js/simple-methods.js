@@ -194,6 +194,11 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
 
 // this function is for showing detailed rating questions with one scene per question
 export function renderDetailedRating(root, context, onComplete, onRerenderReady = () => {}) {
+  renderDetailedRatingIntro(root, context, onComplete, onRerenderReady);
+}
+
+// this function is for showing detailed rating questions after their intro
+function renderDetailedRatingQuestions(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
   const methodStartedAt = Date.now();
@@ -308,7 +313,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
       null,
       () => {
         if (displayOrder === 1) {
-          onComplete(context);
+          renderDetailedRatingIntro(root, context, onComplete, onRerenderReady);
           return;
         }
 
@@ -318,7 +323,7 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
 
         renderCurrent();
       },
-      displayOrder === 1,
+      false,
       renderSurveyProgress(displayOrder, assignments.length, language),
       language,
     );
@@ -421,6 +426,30 @@ export function renderDetailedRating(root, context, onComplete, onRerenderReady 
   renderCurrent();
 }
 
+// this function is for showing the intro screen before detailed scene ratings
+function renderDetailedRatingIntro(root, context, onComplete, onRerenderReady = () => {}) {
+  const language = getContextLanguage(context);
+  onRerenderReady(() => renderDetailedRatingIntro(root, context, onComplete, onRerenderReady));
+  root.innerHTML = "";
+
+  const panel = createElement("section", { className: "panel completion-panel" });
+  const start = createElement("button", {
+    className: "primary-button",
+    text: t(language, "detailedStart"),
+    attrs: { type: "button" },
+  });
+
+  start.addEventListener("click", () => renderDetailedRatingQuestions(root, context, onComplete, onRerenderReady));
+  panel.append(
+    createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 5, total: TOTAL_SURVEY_STEPS }) }),
+    createElement("h2", { text: t(language, "detailedTitle") }),
+    createElement("p", { text: t(language, "detailedIntro") }),
+    createElement("div", { className: "completion-actions" }),
+  );
+  panel.querySelector(".completion-actions").append(start);
+  root.append(panel);
+}
+
 // this function is for the ideal scene builder section
 export function renderIdealSceneBuilder(
   root,
@@ -447,6 +476,7 @@ export function renderIdealSceneBuilder(
     "ideal_scene_default",
   );
   let parametersCollapsed = false;
+  const sharedViewState = {};
 
   root.innerHTML = "";
 
@@ -545,6 +575,7 @@ export function renderIdealSceneBuilder(
     mediaSlot.replaceChildren(
       renderSingleImage(currentPreview, language, {
         fullViewport: true,
+        viewState: sharedViewState,
         onFullscreenRequest: () => preview.requestFullscreen?.(),
       }),
     );

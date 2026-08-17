@@ -72,6 +72,9 @@ const UI_TEXT = {
     neutralCommentRequirement: "A neutral answer requires an explanation of at least {minimum} characters.",
     responseReady: "The response is ready to continue.",
     detailedTitle: "Detailed scene rating",
+    detailedIntro:
+      "You will inspect one 360 degree scene at a time and rate statements from your first impression after looking around.",
+    detailedStart: "Start detailed ratings",
     builderTitle: "Ideal scene builder",
     builderIntro:
       "Choose the characteristics of the night-time scene where you would prefer to walk. There is no correct answer: choose the variables that would make you more willing to walk at night.",
@@ -241,6 +244,9 @@ const UI_TEXT = {
     neutralCommentRequirement: "Une réponse neutre nécessite une explication d'au moins {minimum} caractères.",
     responseReady: "La réponse est prête à être validée.",
     detailedTitle: "Évaluation détaillée de la scène",
+    detailedIntro:
+      "Vous examinerez une scène à 360 degrés à la fois et évaluerez des affirmations selon votre première impression après avoir regardé autour de vous.",
+    detailedStart: "Commencer les évaluations détaillées",
     builderTitle: "Construction de la scène idéale",
     builderIntro:
       "Choisissez les caractéristiques de la scène nocturne dans laquelle vous préféreriez marcher. Il n'y a pas de bonne réponse : choisissez les variables qui vous rendraient le plus disposé(e) à marcher la nuit.",
