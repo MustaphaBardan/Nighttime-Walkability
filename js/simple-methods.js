@@ -5,6 +5,7 @@ import {
   createElement,
   getScenarioImages,
   makeBalancedScenarioImages,
+  makeBalancedScenarioPairs,
   makeFixedQuestionAssignments,
 } from "./utils.js";
 import { renderSceneMedia } from "./panorama-viewer.js";
@@ -204,8 +205,22 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
   const methodStartedAt = Date.now();
 
   // scenario selection is seeded, while questions always follow the protocol order
+  const pairwisePairs = isScenarioPool(context.images)
+    ? makeBalancedScenarioPairs(
+      context.images,
+      context.session.participant_id,
+      context.questions.pairwise_comparison?.length || 0,
+    )
+    : [];
+  const previousGroup = pairwisePairs.at(-1)?.[0]?.scenario_group || "";
   const detailedImages = isScenarioPool(context.images)
-    ? makeBalancedScenarioImages(context.images, context.session.participant_id, questions.length)
+    ? makeBalancedScenarioImages(
+      context.images,
+      context.session.participant_id,
+      questions.length,
+      ["A", "B", "C", "D"],
+      { previousGroup },
+    )
     : getScenarioImages(context.images);
   const assignments = makeFixedQuestionAssignments(
     detailedImages,
@@ -213,6 +228,7 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
     context.session.participant_id,
     "detailed-rating-question-assignment",
     questions.length,
+    isScenarioPool(context.images),
   );
   const responses = [];
   let questionIndex = 0;

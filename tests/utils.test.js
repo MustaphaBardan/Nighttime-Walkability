@@ -29,6 +29,15 @@ test("fixed question assignments preserve protocol order across participants", (
   assert.equal(new Set(first.map((assignment) => assignment.item.image_id)).size, 6);
 });
 
+test("fixed question assignments can preserve a pre-balanced item order", () => {
+  const items = ["A", "B", "C", "D"].map((group, index) => image(`scenario-${index + 1}`, { scenario_group: group }));
+  const questions = items.map((_, index) => ({ question_id: `question-${index + 1}` }));
+  const assignments = makeFixedQuestionAssignments(items, questions, "participant-one", "ordered", 4, true);
+
+  assert.deepEqual(assignments.map((assignment) => assignment.item.image_id), items.map(id));
+  assert.deepEqual(assignments.map((assignment) => assignment.question.question_id), questions.map((question) => question.question_id));
+});
+
 test("survey viewport gate checks both minimum dimensions", () => {
   assert.equal(isSurveyViewportAllowed(900, 600), true);
   assert.equal(isSurveyViewportAllowed(899, 600), false);
@@ -168,7 +177,7 @@ test("makeScenarioQuestionPairs caps oversized counts at the available balanced 
   ]);
 });
 
-test("balanced pair sampling is deterministic, same-scenario, and distributed 2-2-1-1", () => {
+test("balanced pair sampling is deterministic, alternating, same-scenario, and distributed 2-2-1-1", () => {
   const records = [
     ...scenarioGroup("A", [1, 2, 3]),
     ...scenarioGroup("B", [1, 2, 3, 4]),
@@ -182,13 +191,14 @@ test("balanced pair sampling is deterministic, same-scenario, and distributed 2-
   assert.equal(first.length, 6);
   assert.equal(new Set(first.map(normalizedPairKey)).size, 6);
   assert.ok(first.every(([left, right]) => left.scenario_group === right.scenario_group));
+  assertNoAdjacentMatchingGroups(first.map(([left]) => left.scenario_group));
   assert.deepEqual(
     [...multiset(first.map(([left]) => left.scenario_group)).map(([, count]) => count)].sort(),
     [1, 1, 2, 2],
   );
 });
 
-test("balanced detailed sampling returns six unique images with 2-2-1-1 exposure", () => {
+test("balanced detailed sampling returns six unique, alternating images with 2-2-1-1 exposure", () => {
   const records = [
     ...scenarioGroup("A", [1, 2, 3]),
     ...scenarioGroup("B", [1, 2, 3]),
@@ -201,10 +211,32 @@ test("balanced detailed sampling returns six unique images with 2-2-1-1 exposure
   assert.deepEqual(first.map(id), repeated.map(id));
   assert.equal(first.length, 6);
   assert.equal(new Set(first.map(id)).size, 6);
+  assertNoAdjacentMatchingGroups(first.map((record) => record.scenario_group));
   assert.deepEqual(
     [...multiset(first.map((record) => record.scenario_group)).map(([, count]) => count)].sort(),
     [1, 1, 2, 2],
   );
+});
+
+test("detailed sampling alternates across the pairwise-to-detailed boundary", () => {
+  const records = [
+    ...scenarioGroup("A", [1, 2, 3]),
+    ...scenarioGroup("B", [1, 2, 3]),
+    ...scenarioGroup("C", [1, 2, 3]),
+    ...scenarioGroup("D", [1, 2, 3]),
+  ];
+  const participantId = "participant-boundary";
+  const pairs = makeBalancedScenarioPairs(records, participantId, 6);
+  const pairwiseGroups = pairs.map(([left]) => left.scenario_group);
+  const detailed = makeBalancedScenarioImages(records, participantId, 6, ["A", "B", "C", "D"], {
+    previousGroup: pairwiseGroups.at(-1),
+  });
+  const detailedGroups = detailed.map((record) => record.scenario_group);
+
+  assertNoAdjacentMatchingGroups(pairwiseGroups);
+  assertNoAdjacentMatchingGroups(detailedGroups);
+  assert.notEqual(pairwiseGroups.at(-1), detailedGroups[0]);
+  assert.deepEqual([...multiset(detailedGroups).map(([, count]) => count)].sort(), [1, 1, 2, 2]);
 });
 
 test("takeDeterministicSubset returns exactly the requested repeatable subset without mutating input", () => {
@@ -382,6 +414,12 @@ function multiset(values) {
   }
 
   return [...counts.entries()].sort(([left], [right]) => String(left).localeCompare(String(right)));
+}
+
+function assertNoAdjacentMatchingGroups(groups) {
+  groups.slice(1).forEach((group, index) => {
+    assert.notEqual(group, groups[index], `groups at positions ${index + 1} and ${index + 2} must alternate`);
+  });
 }
 
 function assignmentKeys(assignments) {

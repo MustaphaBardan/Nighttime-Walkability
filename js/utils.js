@@ -106,13 +106,20 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
 }
 
 // this function balances pairwise exposure before drawing a seeded pair inside each scenario
-export function makeBalancedScenarioPairs(images, participantId, count, scenarioOrder = ["A", "B", "C", "D"]) {
+export function makeBalancedScenarioPairs(
+  images,
+  participantId,
+  count,
+  scenarioOrder = ["A", "B", "C", "D"],
+  options = {},
+) {
   const groups = groupScenarioImageArrays(getScenarioImages(images), scenarioOrder)
     .filter((group) => group.images.length >= 2);
   const sequence = makeCapacityBalancedGroupSequence(
     groups.map((group) => ({ key: group.key, capacity: group.images.length * (group.images.length - 1) / 2 })),
     count,
     `${participantId}:balanced-pairs`,
+    options,
   );
   const pairPools = new Map(groups.map((group) => [
     group.key,
@@ -129,13 +136,20 @@ export function makeBalancedScenarioPairs(images, participantId, count, scenario
 }
 
 // this function balances detailed-scene exposure and never repeats an image
-export function makeBalancedScenarioImages(images, participantId, count, scenarioOrder = ["A", "B", "C", "D"]) {
+export function makeBalancedScenarioImages(
+  images,
+  participantId,
+  count,
+  scenarioOrder = ["A", "B", "C", "D"],
+  options = {},
+) {
   const groups = groupScenarioImageArrays(getScenarioImages(images), scenarioOrder)
     .filter((group) => group.images.length > 0);
   const sequence = makeCapacityBalancedGroupSequence(
     groups.map((group) => ({ key: group.key, capacity: group.images.length })),
     count,
     `${participantId}:balanced-images`,
+    options,
   );
   const imagePools = new Map(groups.map((group) => [
     group.key,
@@ -190,7 +204,14 @@ export function makeSeededQuestionAssignments(items, questions, participantId, a
 }
 
 // this function is for selecting repeatable items while preserving question order
-export function makeFixedQuestionAssignments(items, questions, participantId, assignmentKey, count = questions.length) {
+export function makeFixedQuestionAssignments(
+  items,
+  questions,
+  participantId,
+  assignmentKey,
+  count = questions.length,
+  preserveItemOrder = false,
+) {
   if (!Array.isArray(items)) {
     throw new TypeError("makeFixedQuestionAssignments expects items to be an array");
   }
@@ -204,7 +225,9 @@ export function makeFixedQuestionAssignments(items, questions, participantId, as
   }
 
   const safeCount = Math.min(count, items.length);
-  const selectedItems = takeDeterministicSubset(items, safeCount, `${participantId}:${assignmentKey}:items`);
+  const selectedItems = preserveItemOrder
+    ? items.slice(0, safeCount)
+    : takeDeterministicSubset(items, safeCount, `${participantId}:${assignmentKey}:items`);
 
   return selectedItems.map((item, index) => ({
     item,
@@ -279,19 +302,23 @@ function groupScenarioImageArrays(images, scenarioOrder) {
     .map((groupKey) => ({ key: groupKey, images: byGroup.get(groupKey) }));
 }
 
-function makeCapacityBalancedGroupSequence(groups, count, seedValue) {
+function makeCapacityBalancedGroupSequence(groups, count, seedValue, { previousGroup = "" } = {}) {
   if (!count || count <= 0 || !groups.length) return [];
   const sequence = [];
   const usage = new Map(groups.map((group) => [group.key, 0]));
+  let lastGroup = previousGroup;
 
   while (sequence.length < count) {
     const available = groups.filter((group) => usage.get(group.key) < group.capacity);
     if (!available.length) break;
-    const minimumUsage = Math.min(...available.map((group) => usage.get(group.key)));
-    const leastUsed = available.filter((group) => usage.get(group.key) === minimumUsage);
+    const alternateGroups = available.filter((group) => group.key !== lastGroup);
+    const eligibleGroups = alternateGroups.length ? alternateGroups : available;
+    const minimumUsage = Math.min(...eligibleGroups.map((group) => usage.get(group.key)));
+    const leastUsed = eligibleGroups.filter((group) => usage.get(group.key) === minimumUsage);
     const selected = seededShuffle(leastUsed, `${seedValue}:position-${sequence.length}`)[0];
     sequence.push(selected.key);
     usage.set(selected.key, usage.get(selected.key) + 1);
+    lastGroup = selected.key;
   }
 
   return sequence;

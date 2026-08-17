@@ -32,6 +32,7 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     context.session.participant_id,
     "pairwise-question-assignment",
     questions.length,
+    true,
   ).map((assignment) => {
     const pair = assignment.item;
     // we also randomize which image is shown as scene A or scene B
