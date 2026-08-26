@@ -6,8 +6,8 @@ import {
   markMethodCompleted,
   removeLocalResponsesForMethod,
   saveLocalBackup,
-  submitResponses,
 } from "./storage.js";
+import { scheduleAutomaticSubmissionRetries, submitResponses } from "./submission.js";
 import { getContextLanguage, t } from "./i18n.js";
 import { createElement } from "./utils.js";
 
@@ -89,17 +89,18 @@ export async function completeMethod(root, context, methodId, responses, onConti
   const isFinalSection = allMethodsCompleted();
   let finalStatusKey = isFinalSection ? "savingComplete" : "sectionSaved";
   let continueDisabled = isFinalSection;
-  let continueButton = null;
-  let status = null;
+  let canRetrySubmission = false;
 
   // this function is for drawing the completion message for the current section
   function renderCompletion() {
     const language = getContextLanguage(context);
+    const isSavingFinalResponse = isFinalSection && continueDisabled;
     root.innerHTML = "";
 
     const panel = createElement("section", { className: "panel completion-panel" });
-    status = createElement("p", {
+    const status = createElement("p", {
       text: t(language, finalStatusKey),
+      attrs: { role: "status", "aria-live": "polite" },
     });
     panel.append(
       createElement("p", { className: "step-label", text: getMethodTitle(methodId, language) }),
@@ -107,12 +108,33 @@ export async function completeMethod(root, context, methodId, responses, onConti
       status,
     );
 
+    if (isSavingFinalResponse) {
+      const savingProgress = createElement("div", {
+        className: "saving-progress",
+        attrs: {
+          role: "progressbar",
+          "aria-label": t(language, "savingProgress"),
+          "aria-valuetext": t(language, "savingProgress"),
+        },
+      });
+      savingProgress.append(createElement("div", { className: "saving-progress-bar" }));
+      panel.append(savingProgress);
+    }
+
     const actions = createElement("div", { className: "completion-actions" });
-    continueButton = createElement("button", {
-      className: "primary-button",
-      text: isFinalSection ? t(language, "viewSummary") : t(language, "continue"),
+    const continueButton = createElement("button", {
+      className: `primary-button${isSavingFinalResponse ? " saving-summary-button" : ""}`,
       attrs: continueDisabled ? { type: "button", disabled: "disabled" } : { type: "button" },
     });
+
+    if (isSavingFinalResponse) {
+      continueButton.append(
+        createElement("span", { className: "button-spinner", attrs: { "aria-hidden": "true" } }),
+        createElement("span", { text: t(language, "savingSummary") }),
+      );
+    } else {
+      continueButton.textContent = isFinalSection ? t(language, "viewSummary") : t(language, "continue");
+    }
 
     if (onBack && !isFinalSection) {
       const backButton = createElement("button", {
@@ -125,6 +147,27 @@ export async function completeMethod(root, context, methodId, responses, onConti
         onBack();
       });
       actions.append(backButton);
+    }
+
+    if (isFinalSection && canRetrySubmission) {
+      const retryButton = createElement("button", {
+        className: "secondary-button",
+        text: t(language, "retrySubmission"),
+        attrs: { type: "button" },
+      });
+      retryButton.addEventListener("click", async () => {
+        canRetrySubmission = false;
+        finalStatusKey = "submissionRetrying";
+        renderCompletion();
+        const retryResult = await submitResponses(finalizedResponses, {
+          method: "complete_protocol",
+          replaceExistingAll: true,
+        });
+        finalStatusKey = retryResult.submittedRemote ? "completeRecorded" : "completeSavedLocal";
+        canRetrySubmission = !retryResult.submittedRemote;
+        renderCompletion();
+      });
+      actions.append(retryButton);
     }
 
     continueButton.addEventListener("click", () => onContinue(context));
@@ -149,8 +192,15 @@ export async function completeMethod(root, context, methodId, responses, onConti
 
   continueDisabled = false;
   finalStatusKey = result.submittedRemote ? "completeRecorded" : "completeSavedLocal";
-  continueButton.disabled = false;
-  status.textContent = t(getContextLanguage(context), finalStatusKey);
+  canRetrySubmission = !result.submittedRemote;
+  renderCompletion();
+
+  if (!result.submittedRemote) {
+    scheduleAutomaticSubmissionRetries(finalizedResponses, {
+      method: "complete_protocol",
+      replaceExistingAll: true,
+    });
+  }
 }
 
 // this function is for checking if the whole survey is completed

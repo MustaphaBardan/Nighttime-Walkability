@@ -6,12 +6,15 @@ import {
   finalizeSurveyTiming,
   getLocalResponses,
   getProgress,
+  getSubmissionState,
   getViewportResolution,
   hydrateSessionFromProgress,
   isInstructionViewed,
   markInstructionViewed,
   clearInstructionViewed,
   saveLocalBackup,
+  saveSubmissionState,
+  clearSubmissionState,
   updateSessionProfile,
 } from "../js/storage.js";
 
@@ -232,6 +235,35 @@ test("instruction progress is persisted separately from response rows", () => {
 
   clearInstructionViewed("route_continuation_examples");
   assert.equal(isInstructionViewed("route_continuation_examples"), false);
+});
+
+test("submission receipt state is persisted and can be cleared for a redo", () => {
+  saveSubmissionState({
+    submission_id: "123e4567-e89b-42d3-a456-426614174000",
+    status: "confirmed",
+    attempts: 2,
+    confirmed_at: "2026-08-26T10:00:00.000Z",
+    saved: 24,
+  });
+
+  assert.deepEqual(getSubmissionState(), {
+    submission_id: "123e4567-e89b-42d3-a456-426614174000",
+    status: "confirmed",
+    attempts: 2,
+    last_attempt_at: "",
+    confirmed_at: "2026-08-26T10:00:00.000Z",
+    saved: 24,
+  });
+
+  clearSubmissionState();
+  assert.deepEqual(getSubmissionState(), {
+    submission_id: "",
+    status: "idle",
+    attempts: 0,
+    last_attempt_at: "",
+    confirmed_at: "",
+    saved: 0,
+  });
 });
 
 function createStorageMock() {

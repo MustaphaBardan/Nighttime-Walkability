@@ -137,6 +137,38 @@ export function saveProgress(progress) {
   localStorage.setItem(CONFIG.progressStorageKey, JSON.stringify(progress));
 }
 
+// this function is for reading the remote submission receipt state
+export function getSubmissionState() {
+  const submission = getProgress().submission;
+
+  return {
+    submission_id: submission?.submission_id || "",
+    status: submission?.status || "idle",
+    attempts: Number(submission?.attempts) || 0,
+    last_attempt_at: submission?.last_attempt_at || "",
+    confirmed_at: submission?.confirmed_at || "",
+    saved: Number(submission?.saved) || 0,
+  };
+}
+
+// this function is for persisting remote submission progress without storing any new participant data
+export function saveSubmissionState(submission) {
+  const progress = getProgress();
+  progress.submission = {
+    ...getSubmissionState(),
+    ...submission,
+  };
+  saveProgress(progress);
+  return progress.submission;
+}
+
+// this function is for starting a fresh receipt lifecycle when the survey is redone
+export function clearSubmissionState() {
+  const progress = getProgress();
+  delete progress.submission;
+  saveProgress(progress);
+}
+
 // this function is for putting saved progress back into the active session
 export function hydrateSessionFromProgress(session) {
   const progress = getProgress();
@@ -193,47 +225,6 @@ export function clearInstructionViewed(instructionId) {
   }
 
   saveProgress(progress);
-}
-
-// this function is for sending the final responses to google apps script
-export async function submitResponses(responses, options = {}) {
-  if (!CONFIG.googleAppsScriptUrl) {
-    return {
-      savedLocal: true,
-      submittedRemote: false,
-      message: "Saved locally. Add a Google Apps Script URL in js/config.js to submit remotely.",
-    };
-  }
-
-  try {
-    // we use no-cors because google apps script does not return normal cors headers
-    await fetch(CONFIG.googleAppsScriptUrl, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8",
-      },
-      body: JSON.stringify({
-        participant_id: responses[0]?.participant_id || "",
-        method: options.method || responses[0]?.method || "",
-        replace_existing: Boolean(options.replaceExisting),
-        replace_existing_all: Boolean(options.replaceExistingAll),
-        responses,
-      }),
-    });
-
-    return {
-      savedLocal: true,
-      submittedRemote: true,
-      message: "Saved locally and sent to the configured endpoint.",
-    };
-  } catch (error) {
-    return {
-      savedLocal: true,
-      submittedRemote: false,
-      message: `Saved locally. Remote submission failed: ${error.message}`,
-    };
-  }
 }
 
 // this function is for adding final timing info to every response

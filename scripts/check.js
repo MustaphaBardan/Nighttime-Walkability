@@ -22,6 +22,7 @@ const jsFiles = [
   "js/scenario-protocol.js",
   "js/simple-methods.js",
   "js/storage.js",
+  "js/submission.js",
   "js/summary.js",
   "js/survey-methods.js",
   "js/utils.js",
@@ -36,6 +37,7 @@ const jsFiles = [
   "tests/response-schema.test.js",
   "tests/scenario-protocol.test.js",
   "tests/storage.test.js",
+  "tests/submission.test.js",
   "tests/summary.test.js",
   "tests/utils.test.js",
 ];

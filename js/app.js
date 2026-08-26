@@ -3,9 +3,11 @@ import {
   getOrCreateSession,
   getLocalResponses,
   getProgress,
+  getSubmissionState,
   hydrateSessionFromProgress,
   isMethodCompleted,
   markSurveyStarted,
+  clearSubmissionState,
   updateSessionLanguage,
   updateSessionProfile,
 } from "./storage.js";
@@ -27,6 +29,13 @@ import { byId, createElement, isSurveyViewportAllowed } from "./utils.js";
 import { renderPairwiseComparison } from "./pairwise-comparison.js";
 import { preloadSurveyImages, warmUpPanoramaTextures } from "./panorama-viewer.js";
 import { buildResponseSummaryModel } from "./summary.js";
+import {
+  SUBMISSION_STATUS_EVENT,
+  checkSubmissionService,
+  scheduleAutomaticSubmissionRetries,
+  stopAutomaticSubmissionRetries,
+  submitResponses,
+} from "./submission.js";
 
 const app = byId("app");
 const session = getOrCreateSession();
@@ -36,6 +45,8 @@ hydrateSessionFromProgress(session);
 let rerenderCurrentView = () => {};
 let mediaWarmupStarted = false;
 let lastAllowedDeviceState = null;
+let welcomeVisible = false;
+let submissionServiceAvailable = null;
 
 initThemeToggle();
 applyLanguage(session.language);
@@ -72,6 +83,8 @@ async function init() {
     preloadSurveyImages(tutorialImages);
 
     renderWelcome(window.surveyContext);
+    checkWelcomeSubmissionConnection(window.surveyContext);
+    resumeUnconfirmedSubmission();
   } catch (error) {
     app.innerHTML = "";
     app.append(
@@ -96,6 +109,7 @@ async function fetchJson(path) {
 
 // this function is for showing the first welcome screen
 function renderWelcome(context) {
+  welcomeVisible = true;
   const language = getContextLanguage(context);
   const progress = getProgress();
   const hasPartialProgress = hasSavedPartialProgress(progress);
@@ -115,6 +129,10 @@ function renderWelcome(context) {
 
   if (!allowedDevice) {
     panel.append(renderDesktopOnlyNotice(context));
+  }
+
+  if (submissionServiceAvailable === false) {
+    panel.append(renderSubmissionConnectionWarning(context));
   }
 
   const actions = createElement("div", { className: "completion-actions" });
@@ -139,6 +157,7 @@ function renderWelcome(context) {
 
 // this function is for deciding where the user goes after the welcome screen
 function routeAfterWelcome(context) {
+  welcomeVisible = false;
   if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
     return;
@@ -196,6 +215,8 @@ function renderCompletedPrompt(context) {
     }
 
     // we remove old method answers before starting the survey again
+    stopAutomaticSubmissionRetries();
+    clearSubmissionState();
     getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
     markSurveyStarted(context.session, { reset: true });
     routeToNextProtocolStep(context);
@@ -205,6 +226,7 @@ function renderCompletedPrompt(context) {
   panel.append(
     createElement("h2", { text: t(language, "alreadyCompleted") }),
     createElement("p", { text: t(language, "alreadyCompletedBody") }),
+    renderSubmissionDeliveryStatus(context),
     actions,
   );
   app.append(panel);
@@ -299,8 +321,7 @@ function renderProfile(context, draft = null) {
       ["comfortable", t(language, "comfortable")],
       ["very_comfortable", t(language, "veryComfortable")],
     ], true, values.night_walking_comfort),
-    renderSelect("activity_expertise", t(language, "activityExpertise"), [
-      ["", t(language, "selectOption")],
+    renderMultiChoice("activity_expertise", t(language, "activityExpertise"), t(language, "selectAllThatApply"), [
       ["urban_design", t(language, "expertiseUrbanDesign")],
       ["lighting", t(language, "expertiseLighting")],
       ["research", t(language, "expertiseResearch")],
@@ -309,7 +330,7 @@ function renderProfile(context, draft = null) {
       ["light_manufacturer", t(language, "expertiseManufacturer")],
       ["no_specific_expertise", t(language, "noSpecificExpertise")],
       ["prefer_not_to_say", t(language, "preferNotToSay")],
-    ], true, values.activity_expertise),
+    ], values.activity_expertise),
     renderSelect("lighting_knowledge", t(language, "lightingKnowledge"), [
       ["", t(language, "selectOption")],
       ["none", t(language, "lightingKnowledgeNone")],
@@ -336,12 +357,19 @@ function renderProfile(context, draft = null) {
     event.preventDefault();
     const formData = new FormData(form);
 
+    if (formData.getAll("activity_expertise").length === 0) {
+      const firstExpertiseChoice = form.querySelector('input[name="activity_expertise"]');
+      firstExpertiseChoice.setCustomValidity(t(language, "selectAtLeastOneOption"));
+      firstExpertiseChoice.reportValidity();
+      return;
+    }
+
     updateSessionProfile(context.session, {
       age_range: formData.get("age_range"),
       gender: formData.get("gender"),
       night_walk_frequency: formData.get("night_walk_frequency"),
       night_walking_comfort: formData.get("night_walking_comfort"),
-      activity_expertise: formData.get("activity_expertise"),
+      activity_expertise: getMultiChoiceValue(formData, "activity_expertise"),
       lighting_knowledge: formData.get("lighting_knowledge"),
     });
 
@@ -388,6 +416,60 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
 
   field.append(createElement("span", { text: label }), select);
   return field;
+}
+
+// this function is for making a checkbox group that stores multiple answers as pipe-separated codes
+function renderMultiChoice(name, label, helperText, options, selectedValue = "") {
+  const field = createElement("fieldset", { className: "form-field multi-choice-field" });
+  const selectedValues = normalizeMultiChoiceValue(selectedValue);
+  const exclusiveValues = new Set(["no_specific_expertise", "prefer_not_to_say"]);
+  const inputs = [];
+
+  field.append(
+    createElement("legend", { text: label }),
+    createElement("p", { className: "field-helper", text: helperText }),
+  );
+
+  const choices = createElement("div", { className: "multi-choice-options" });
+  options.forEach(([value, text]) => {
+    const option = createElement("label", { className: "multi-choice-option" });
+    const input = createElement("input", {
+      attrs: { type: "checkbox", name, value },
+    });
+    input.checked = selectedValues.has(value);
+    inputs.push(input);
+    option.append(input, createElement("span", { text }));
+    choices.append(option);
+  });
+
+  inputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked && exclusiveValues.has(input.value)) {
+        inputs.forEach((other) => {
+          if (other !== input) other.checked = false;
+        });
+      } else if (input.checked) {
+        inputs.forEach((other) => {
+          if (exclusiveValues.has(other.value)) other.checked = false;
+        });
+      }
+      inputs[0].setCustomValidity("");
+    });
+  });
+
+  field.append(choices);
+  return field;
+}
+
+// this function is for serializing checkbox values into one spreadsheet-safe profile value
+function getMultiChoiceValue(formData, name) {
+  return formData.getAll(name).join("|");
+}
+
+// this function is for restoring a saved multi-choice profile value
+function normalizeMultiChoiceValue(value) {
+  if (Array.isArray(value)) return new Set(value);
+  return new Set(String(value || "").split("|").filter(Boolean));
 }
 
 // this function is for calling the renderer of each survey method
@@ -502,6 +584,7 @@ function renderSurveySummary(context) {
       html: `<strong>${t(language, "summaryNote")}</strong><p>${summary.disclaimer}</p>`,
     }),
   );
+  const deliveryStatus = renderSubmissionDeliveryStatus(context);
   const actions = createElement("div", { className: "completion-actions" });
   const finish = createElement("button", {
     className: "primary-button",
@@ -510,8 +593,91 @@ function renderSurveySummary(context) {
   });
   finish.addEventListener("click", renderFinalThanks);
   actions.append(finish);
-  panel.append(hero, insightGrid, disclaimer, actions);
+  panel.append(hero, deliveryStatus, insightGrid, disclaimer, actions);
   app.append(panel);
+}
+
+// this function is for warning participants before they start when google apps script is unreachable
+function renderSubmissionConnectionWarning(context) {
+  const language = getContextLanguage(context);
+  const notice = createElement("aside", { className: "submission-status submission-status-warning" });
+  const copy = createElement("div");
+  copy.append(
+    createElement("strong", { text: t(language, "submissionConnectionWarningTitle") }),
+    createElement("p", { text: t(language, "submissionConnectionWarningBody") }),
+  );
+  const retry = createElement("button", {
+    className: "secondary-button",
+    text: t(language, "retryConnection"),
+    attrs: { type: "button" },
+  });
+  retry.addEventListener("click", async () => {
+    retry.disabled = true;
+    retry.textContent = t(language, "checkingConnection");
+    submissionServiceAvailable = await checkSubmissionService();
+    if (welcomeVisible) renderWelcome(context);
+  });
+  notice.append(copy, retry);
+  return notice;
+}
+
+// this function is for showing confirmed or retryable delivery state alongside the bilan
+function renderSubmissionDeliveryStatus(context) {
+  const language = getContextLanguage(context);
+  const state = getSubmissionState();
+  const confirmed = state.status === "confirmed";
+  const submitting = state.status === "submitting";
+  const wrapper = createElement("aside", {
+    className: `submission-status submission-status-${confirmed ? "confirmed" : submitting ? "pending" : "warning"}`,
+    attrs: { role: "status", "aria-live": "polite" },
+  });
+  const copy = createElement("div");
+  copy.append(
+    createElement("strong", { text: t(language, "deliveryStatusTitle") }),
+    createElement("p", {
+      text: t(language, confirmed ? "submissionConfirmed" : submitting ? "submissionRetrying" : "submissionUnconfirmed"),
+    }),
+  );
+  wrapper.append(copy);
+
+  if (!confirmed && !submitting) {
+    const retry = createElement("button", {
+      className: "secondary-button",
+      text: t(language, "retrySubmission"),
+      attrs: { type: "button" },
+    });
+    retry.addEventListener("click", () => retryCompletedSubmission());
+    wrapper.append(retry);
+  }
+
+  return wrapper;
+}
+
+async function checkWelcomeSubmissionConnection(context) {
+  submissionServiceAvailable = await checkSubmissionService();
+  if (welcomeVisible) renderWelcome(context);
+}
+
+async function retryCompletedSubmission() {
+  const responses = getLocalResponses();
+  if (!responses.length) return;
+  const result = await submitResponses(responses, {
+    method: "complete_protocol",
+    replaceExistingAll: true,
+  });
+
+  if (!result.submittedRemote) {
+    scheduleAutomaticSubmissionRetries(responses, {
+      method: "complete_protocol",
+      replaceExistingAll: true,
+    });
+  }
+}
+
+function resumeUnconfirmedSubmission() {
+  const responses = getLocalResponses();
+  if (!allMethodsCompleted() || !responses.length || getSubmissionState().status === "confirmed") return;
+  retryCompletedSubmission();
 }
 
 // this function is for rendering the logos and project links on the introduction screen
@@ -569,6 +735,9 @@ function makeExternalLink(label, url) {
 init();
 initDeviceGateResizeWatcher();
 initCreditsDialog();
+window.addEventListener(SUBMISSION_STATUS_EVENT, () => {
+  if (allMethodsCompleted()) rerenderCurrentView();
+});
 
 function initCreditsDialog() {
   byId("credits-button").addEventListener("click", () => {
@@ -694,7 +863,7 @@ function readProfileDraft() {
     gender: formData.get("gender") || "",
     night_walk_frequency: formData.get("night_walk_frequency") || "",
     night_walking_comfort: formData.get("night_walking_comfort") || "",
-    activity_expertise: formData.get("activity_expertise") || "",
+    activity_expertise: getMultiChoiceValue(formData, "activity_expertise"),
     lighting_knowledge: formData.get("lighting_knowledge") || "",
   };
 }

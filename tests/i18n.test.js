@@ -90,6 +90,7 @@ test("t exposes qualitative and pairwise navigation prompts in both supported la
   assert.match(t("fr", "unclearRouteDescription"), /illisible/);
   assert.equal(t("en", "screenBrightness"), "Before starting, is your screen brightness set to a comfortable level for judging night-time images?");
   assert.equal(t("en", "slightlyComfortable"), "Slightly comfortable");
+  assert.equal(t("en", "selectAllThatApply"), "Select all that apply.");
   assert.equal(t("en", "moderatelyComfortable"), "Moderately comfortable");
 });
 
@@ -100,6 +101,15 @@ test("welcome and training copy explain walkability and synchronized panoramic e
   assert.match(t("fr", "welcomePath"), /explorez la scène de façon panoramique/);
   assert.match(t("en", "trainingIntro"), /coupled and synchronized/);
   assert.match(t("fr", "trainingIntro"), /couplées et synchronisées/);
+});
+
+test("submission delivery states are available in english and french", () => {
+  assert.match(t("en", "submissionConnectionWarningBody"), /VPN/);
+  assert.match(t("fr", "submissionConnectionWarningBody"), /VPN/);
+  assert.match(t("en", "submissionConfirmed"), /confirmed/i);
+  assert.match(t("fr", "submissionConfirmed"), /confirmé/i);
+  assert.equal(t("en", "retrySubmission"), "Retry sending response");
+  assert.equal(t("fr", "retrySubmission"), "Réessayer l'envoi");
 });
 
 test("optionLabel applies question-specific labels before generic labels and raw fallback", () => {
