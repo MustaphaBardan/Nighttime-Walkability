@@ -13,7 +13,7 @@ const UI_TEXT = {
     welcomeIntro:
       "This survey is part of the LUNNE project, which studies night-time urban ambiances and night walkability. Walkability refers to how easily a space can be travelled on foot. At night, it depends in particular on visibility, spatial legibility, comfort, perceived safety, and lighting conditions.",
     welcomePath:
-      "For each 360 degree night-time urban scene, explore the scene using the panoramic view and look carefully around you before answering. Imagine that you are standing at that exact location at night. You can look around, but you cannot move through the scene. Fullscreen mode is recommended.",
+      "For each 360 degree night-time urban scene, explore the scene using the panoramic view and look carefully around you before answering. Imagine that you are standing at that exact location at night. You can look around, but you cannot move through the scene. Fullscreen mode is recommended. For the best experience with the panoramic images, please use the latest version of your browser.",
     welcomePrivacy:
       "There are no right or wrong answers. We are interested in your first impression. The collected data are anonymous and used only for research analysis.",
     desktopOnlyTitle: "Larger display required",
@@ -199,7 +199,7 @@ const UI_TEXT = {
     welcomeIntro:
       "Cette enquête s'inscrit dans le cadre du projet LUNNE, consacré à l'étude des ambiances nocturnes et de la marchabilité la nuit. La marchabilité désigne la facilité avec laquelle un espace peut être parcouru à pied. La nuit, elle dépend notamment de la visibilité, de la lisibilité de l'espace, du confort, du sentiment de sécurité et des conditions lumineuses.",
     welcomePath:
-      "Pour chaque scène urbaine nocturne à 360 degrés, explorez la scène de façon panoramique et regardez attentivement autour de vous avant de répondre. Imaginez que vous vous trouvez exactement à cet endroit la nuit. Vous pouvez regarder autour de vous, mais vous ne pouvez pas vous déplacer. Le plein écran est recommandé.",
+      "Pour chaque scène urbaine nocturne à 360 degrés, explorez la scène de façon panoramique et regardez attentivement autour de vous avant de répondre. Imaginez que vous vous trouvez exactement à cet endroit la nuit. Vous pouvez regarder autour de vous, mais vous ne pouvez pas vous déplacer. Le plein écran est recommandé. Pour une expérience optimale avec les images panoramiques, veuillez utiliser la dernière version de votre navigateur.",
     welcomePrivacy:
       "Il n'y a pas de bonne ou de mauvaise réponse. Nous nous intéressons à votre première impression. Les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
     desktopOnlyTitle: "Écran plus grand requis",

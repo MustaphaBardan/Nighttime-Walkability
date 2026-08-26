@@ -89,6 +89,8 @@ test("t exposes qualitative and pairwise navigation prompts in both supported la
   assert.match(t("en", "clearRouteDescription"), /remains readable/);
   assert.match(t("fr", "unclearRouteDescription"), /illisible/);
   assert.equal(t("en", "screenBrightness"), "Before starting, is your screen brightness set to a comfortable level for judging night-time images?");
+  assert.match(t("en", "welcomePath"), /latest version of your browser/);
+  assert.match(t("fr", "welcomePath"), /dernière version de votre navigateur/);
   assert.equal(t("en", "slightlyComfortable"), "Slightly comfortable");
   assert.equal(t("en", "selectAllThatApply"), "Select all that apply.");
   assert.equal(t("en", "moderatelyComfortable"), "Moderately comfortable");
