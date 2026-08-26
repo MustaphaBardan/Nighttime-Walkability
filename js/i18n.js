@@ -164,7 +164,6 @@ const UI_TEXT = {
     declaredDeviceOnlyTitle: "Computer / laptop required",
     declaredDeviceOnlyBody:
       "Please complete this questionnaire on a computer or laptop. Other devices cannot continue because the 360 degree scenes need a desktop viewing setup.",
-    under18: "Under 18",
     sixtyFiveOrOlder: "65 or older",
     preferNotToSay: "Prefer not to say",
     woman: "Woman",
@@ -356,7 +355,6 @@ const UI_TEXT = {
     declaredDeviceOnlyTitle: "Ordinateur requis",
     declaredDeviceOnlyBody:
       "Veuillez réaliser ce questionnaire sur un ordinateur. Les autres appareils ne peuvent pas continuer, car les scènes à 360 degrés nécessitent une configuration de visualisation de bureau.",
-    under18: "Moins de 18 ans",
     sixtyFiveOrOlder: "65 ans ou plus",
     preferNotToSay: "Préfère ne pas répondre",
     woman: "Femme",

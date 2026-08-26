@@ -298,8 +298,7 @@ function renderProfile(context, draft = null) {
     createElement("p", { text: t(language, "profileIntro") }),
     renderSelect("age_range", t(language, "ageRange"), [
       ["", t(language, "selectOption")],
-      ["under_18", t(language, "under18")],
-      ["18_24", "18-24"],
+      ["18_24", "18–24"],
       ["25_34", "25-34"],
       ["35_44", "35-44"],
       ["45_54", "45-54"],
