@@ -16,6 +16,10 @@ const UI_TEXT = {
       "For each 360 degree night-time urban scene, explore the scene using the panoramic view and look carefully around you before answering. Imagine that you are standing at that exact location at night. You can look around, but you cannot move through the scene. Fullscreen mode is recommended. For the best experience with the panoramic images, please use the latest version of your browser.",
     welcomePrivacy:
       "There are no right or wrong answers. We are interested in your first impression. The collected data are anonymous and used only for research analysis.",
+    welcomeRightsBefore:
+      "To exercise your rights of access, rectification, objection, or erasure concerning the collected data, please email ",
+    welcomeRightsAfter:
+      " and include the random participant ID assigned to your current session, which will be shown at the end of the survey.",
     desktopOnlyTitle: "Larger display required",
     desktopOnlyBody:
       "This survey requires a browser area of at least 900 by 600 pixels to observe the night scenes correctly. Please enlarge the window or try again from a computer, tablet, or sufficiently large display.",
@@ -38,6 +42,8 @@ const UI_TEXT = {
     thankYou: "Thank you for your time",
     finalThanks:
       "Your participation in this proposed-methodology version is complete. Your answers have been recorded for the research team.",
+    participantReference:
+      "Your anonymous participant ID is {id}. Keep this ID if you may need to contact the research team about your data.",
     pairwiseTitle: "Pairwise comparison",
     pairwiseIntro:
       "Compare the two scenes and answer based on your first impression after looking around.",
@@ -202,6 +208,10 @@ const UI_TEXT = {
       "Pour chaque scène urbaine nocturne à 360 degrés, explorez la scène de façon panoramique et regardez attentivement autour de vous avant de répondre. Imaginez que vous vous trouvez exactement à cet endroit la nuit. Vous pouvez regarder autour de vous, mais vous ne pouvez pas vous déplacer. Le plein écran est recommandé. Pour une expérience optimale avec les images panoramiques, veuillez utiliser la dernière version de votre navigateur.",
     welcomePrivacy:
       "Il n'y a pas de bonne ou de mauvaise réponse. Nous nous intéressons à votre première impression. Les données collectées sont anonymes et utilisées uniquement pour l'analyse de recherche.",
+    welcomeRightsBefore:
+      "Pour exercer vos droits d'accès, de rectification, d'opposition ou d'effacement des données collectées, merci d'écrire à ",
+    welcomeRightsAfter:
+      " en précisant le numéro d'identifiant aléatoire de participant propre à la session en cours, qui vous sera communiqué à la fin du questionnaire.",
     desktopOnlyTitle: "Écran plus grand requis",
     desktopOnlyBody:
       "Cette enquête nécessite une zone de navigateur d'au moins 900 par 600 pixels. Agrandissez la fenêtre ou réessayez depuis un ordinateur, une tablette ou un écran suffisamment grand.",
@@ -224,6 +234,8 @@ const UI_TEXT = {
     thankYou: "Merci pour votre participation",
     finalThanks:
       "Votre participation à cette version du protocole est terminée. Vos réponses ont été enregistrées pour l'équipe de recherche.",
+    participantReference:
+      "Votre identifiant anonyme de participant est {id}. Conservez cet identifiant si vous devez contacter l'équipe de recherche au sujet de vos données.",
     pairwiseTitle: "Comparaison par paires",
     pairwiseIntro:
       "Comparez les deux scènes et répondez selon votre première impression après avoir regardé autour de vous.",

@@ -1956,6 +1956,16 @@ p {
   margin-top: 18px;
 }
 
+.participant-reference {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
 .saving-progress {
   width: min(360px, 100%);
   height: 8px;

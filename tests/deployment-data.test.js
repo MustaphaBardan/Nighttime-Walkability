@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
@@ -135,7 +136,7 @@ async function assertImageAsset(record, label) {
     const assetUrl = new URL(asset.path, projectRoot);
     assert.ok(existsSync(assetUrl), `${label} ${assetLabel} is missing: ${asset.path}`);
 
-    const metadata = await sharp(assetUrl.pathname).metadata();
+    const metadata = await sharp(fileURLToPath(assetUrl)).metadata();
     assert.equal(metadata.format, "webp", `${label} ${assetLabel} must be WebP`);
     assert.equal(metadata.width, asset.width, `${label} ${assetLabel} width metadata is stale`);
     assert.equal(metadata.height, asset.height, `${label} ${assetLabel} height metadata is stale`);

@@ -118,12 +118,22 @@ function renderWelcome(context) {
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel welcome-panel" });
+  const rightsNotice = createElement("p");
+  rightsNotice.append(
+    t(language, "welcomeRightsBefore"),
+    createElement("a", {
+      text: "contact@lobservatoiredelanuit.fr",
+      attrs: { href: "mailto:contact@lobservatoiredelanuit.fr" },
+    }),
+    t(language, "welcomeRightsAfter"),
+  );
   panel.append(
     createElement("p", { className: "step-label", text: t(language, "stepOf", { current: 1, total: TOTAL_SURVEY_STEPS }) }),
     createElement("h2", { text: t(language, "welcome") }),
     createElement("p", { text: t(language, "welcomeIntro") }),
     createElement("p", { text: t(language, "welcomePath") }),
     createElement("p", { text: t(language, "welcomePrivacy") }),
+    rightsNotice,
     renderProjectIdentity(context),
   );
 
@@ -523,16 +533,21 @@ function renderDesktopOnlyNotice(context) {
   });
 }
 
-// this function is for showing the final thank you page
-function renderFinalThanks() {
-  const language = getContextLanguage({ session });
-  setCurrentViewRenderer(renderFinalThanks);
+// this function is for showing the final thank you page and participant reference
+function renderFinalThanks(context) {
+  const language = getContextLanguage(context);
+  setCurrentViewRenderer(() => renderFinalThanks(context));
   app.innerHTML = "";
 
   const panel = createElement("section", { className: "panel completion-panel" });
+  const participantReference = createElement("p", {
+    className: "participant-reference",
+    text: t(language, "participantReference", { id: context.session.participant_id }),
+  });
   panel.append(
     createElement("h2", { text: t(language, "thankYou") }),
     createElement("p", { text: t(language, "finalThanks") }),
+    participantReference,
   );
   app.append(panel);
 }
@@ -591,7 +606,7 @@ function renderSurveySummary(context) {
     text: t(language, "finishSurvey"),
     attrs: { type: "button" },
   });
-  finish.addEventListener("click", renderFinalThanks);
+  finish.addEventListener("click", () => renderFinalThanks(context));
   actions.append(finish);
   panel.append(hero, deliveryStatus, insightGrid, disclaimer, actions);
   app.append(panel);

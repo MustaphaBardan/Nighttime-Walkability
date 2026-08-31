@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import sharp from "sharp";
 
@@ -108,7 +109,7 @@ test("public catalog contains 56 unique 4K WebP panoramas", async () => {
   for (const image of catalog.images) {
     const assetUrl = new URL(`../${image.path}`, import.meta.url);
     assert.ok(existsSync(assetUrl), `missing public asset ${image.path}`);
-    const metadata = await sharp(assetUrl.pathname).metadata();
+    const metadata = await sharp(fileURLToPath(assetUrl)).metadata();
     assert.equal(metadata.format, "webp");
     assert.equal(metadata.width, 4096);
     assert.equal(metadata.height, 2048);
