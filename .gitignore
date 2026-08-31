@@ -21,6 +21,8 @@ pnpm-debug.log*
 *.tmp
 *.bak
 *~
+__pycache__/
+*.py[cod]
 .cache/
 .vscode/
 .idea/
@@ -32,3 +34,6 @@ CODEX*
 codex*
 local-notes/
 /assets/source-panoramas/
+
+# Local workspace tools
+/localtools/
