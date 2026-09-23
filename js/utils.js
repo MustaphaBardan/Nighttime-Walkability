@@ -105,7 +105,15 @@ export function makeScenarioQuestionPairs(images, participantId, count) {
   return seededShuffle(pairs, `${participantId}:scenario-pairs`).slice(0, count);
 }
 
-// this function balances pairwise exposure before drawing a seeded pair inside each scenario
+const DEFAULT_PAIR_CATEGORY_WEIGHTS = {
+  singleFactor: 0.65,
+  twoFactor: 0.25,
+  exploratory: 0.10,
+};
+
+const PAIR_CATEGORIES = ["singleFactor", "twoFactor", "exploratory"];
+
+// this function balances scenario-family exposure and prioritizes interpretable parameter contrasts
 export function makeBalancedScenarioPairs(
   images,
   participantId,
@@ -123,14 +131,32 @@ export function makeBalancedScenarioPairs(
   );
   const pairPools = new Map(groups.map((group) => [
     group.key,
-    seededShuffle(makeAllPairs(group.images), `${participantId}:balanced-pairs:${group.key}`),
+    makeConstrainedPairPools(group.images, `${participantId}:balanced-pairs:${group.key}`),
   ]));
-  const offsets = new Map();
+  const offsets = new Map(groups.map((group) => [
+    group.key,
+    new Map(PAIR_CATEGORIES.map((category) => [category, 0])),
+  ]));
+  const groupOccurrences = new Map();
 
-  return sequence.map((groupKey) => {
-    const offset = offsets.get(groupKey) || 0;
-    const pair = pairPools.get(groupKey)?.[offset];
-    offsets.set(groupKey, offset + 1);
+  return sequence.map((groupKey, position) => {
+    const occurrence = groupOccurrences.get(groupKey) || 0;
+    groupOccurrences.set(groupKey, occurrence + 1);
+    const desiredCategory = choosePairCategory(
+      `${participantId}:balanced-pairs:${groupKey}:occurrence-${occurrence}:position-${position}`,
+      options.pairCategoryWeights,
+    );
+    const pools = pairPools.get(groupKey);
+    const groupOffsets = offsets.get(groupKey);
+    const availableCategories = PAIR_CATEGORIES.filter((category) => (
+      (groupOffsets.get(category) || 0) < (pools.get(category)?.length || 0)
+    ));
+    const category = availableCategories.includes(desiredCategory)
+      ? desiredCategory
+      : seededShuffle(availableCategories, `${participantId}:balanced-pairs:${groupKey}:fallback-${occurrence}`)[0];
+    const offset = groupOffsets.get(category) || 0;
+    const pair = pools.get(category)?.[offset];
+    groupOffsets.set(category, offset + 1);
     return pair;
   }).filter(Boolean);
 }
@@ -332,6 +358,52 @@ function makeAllPairs(images) {
     }
   }
   return pairs;
+}
+
+// this function counts how many encoded experimental parameters differ between two scenes
+export function parameterStateHammingDistance(first, second) {
+  const firstStates = first?.parameter_states || {};
+  const secondStates = second?.parameter_states || {};
+  const keys = new Set([...Object.keys(firstStates), ...Object.keys(secondStates)]);
+  return [...keys].filter((key) => firstStates[key] !== secondStates[key]).length;
+}
+
+function makeConstrainedPairPools(images, seedValue) {
+  const pools = new Map(PAIR_CATEGORIES.map((category) => [category, []]));
+
+  for (const pair of makeAllPairs(images)) {
+    const distance = parameterStateHammingDistance(pair[0], pair[1]);
+    const category = distance === 1 ? "singleFactor" : distance === 2 ? "twoFactor" : "exploratory";
+    pools.get(category).push(pair);
+  }
+
+  for (const category of PAIR_CATEGORIES) {
+    pools.set(category, seededShuffle(pools.get(category), `${seedValue}:${category}`));
+  }
+
+  return pools;
+}
+
+function choosePairCategory(seedValue, configuredWeights = {}) {
+  const weights = {
+    ...DEFAULT_PAIR_CATEGORY_WEIGHTS,
+    ...(configuredWeights || {}),
+  };
+  const normalized = PAIR_CATEGORIES.map((category) => Math.max(0, Number(weights[category]) || 0));
+  const total = normalized.reduce((sum, weight) => sum + weight, 0);
+  const safeWeights = total > 0
+    ? normalized
+    : PAIR_CATEGORIES.map((category) => DEFAULT_PAIR_CATEGORY_WEIGHTS[category]);
+  const safeTotal = safeWeights.reduce((sum, weight) => sum + weight, 0);
+  const draw = (hashString(seedValue) / 4294967296) * safeTotal;
+  let cumulative = 0;
+
+  for (let index = 0; index < PAIR_CATEGORIES.length; index += 1) {
+    cumulative += safeWeights[index];
+    if (draw < cumulative) return PAIR_CATEGORIES[index];
+  }
+
+  return PAIR_CATEGORIES.at(-1);
 }
 
 // this function is for requiring the same 1-2, 1-3, 2-3 pair pool in every scenario group

@@ -47,7 +47,7 @@ Source panoramas belong under `assets/source-panoramas/scenario_A/` through `sce
 7. Realism, lighting plausibility, and viewing-quality questions
 8. Local save, verified remote submission, and indicative personal summary
 
-Assignments are deterministic for each participant ID. Panorama interaction records a compact yaw/pitch trace, rotation count, fullscreen state, viewing coverage, and timing for analysis.
+Assignments are deterministic for each participant ID. Pairwise selection targets approximately 65% one-factor (Hamming-1), 25% two-factor (Hamming-2), and 10% broader exploratory comparisons across participants while retaining balanced scenario-family exposure. Panorama interaction records a compact yaw/pitch trace, rotation count, fullscreen state, viewing coverage, and timing for analysis.
 
 ## Response storage
 

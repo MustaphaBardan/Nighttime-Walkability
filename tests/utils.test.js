@@ -11,6 +11,7 @@ import {
   makeFixedQuestionAssignments,
   makeScenarioQuestionPairs,
   makeSeededQuestionAssignments,
+  parameterStateHammingDistance,
   seededShuffle,
   takeDeterministicSubset,
 } from "../js/utils.js";
@@ -196,6 +197,38 @@ test("balanced pair sampling is deterministic, alternating, same-scenario, and d
     [...multiset(first.map(([left]) => left.scenario_group)).map(([, count]) => count)].sort(),
     [1, 1, 2, 2],
   );
+});
+
+test("constrained pair sampling prioritizes one-factor contrasts across participants", () => {
+  const records = Array.from({ length: 16 }, (_, variant) => image(`A${variant}`, {
+    scenario_group: "A",
+    scenario_variant: variant + 1,
+    parameter_states: {
+      first: String((variant >> 0) & 1),
+      second: String((variant >> 1) & 1),
+      third: String((variant >> 2) & 1),
+      fourth: String((variant >> 3) & 1),
+    },
+  }));
+  const counts = { 1: 0, 2: 0, exploratory: 0 };
+
+  for (let participant = 0; participant < 4000; participant += 1) {
+    const [pair] = makeBalancedScenarioPairs(records, `participant-${participant}`, 1, ["A"]);
+    const distance = parameterStateHammingDistance(pair[0], pair[1]);
+    if (distance === 1 || distance === 2) counts[distance] += 1;
+    else counts.exploratory += 1;
+  }
+
+  assert.ok(counts[1] / 4000 > 0.61 && counts[1] / 4000 < 0.69, JSON.stringify(counts));
+  assert.ok(counts[2] / 4000 > 0.21 && counts[2] / 4000 < 0.29, JSON.stringify(counts));
+  assert.ok(counts.exploratory / 4000 > 0.07 && counts.exploratory / 4000 < 0.13, JSON.stringify(counts));
+});
+
+test("parameter-state distance uses the union of encoded parameter keys", () => {
+  const first = image("first", { parameter_states: { lighting: "dark", obstacles: "clear" } });
+  const second = image("second", { parameter_states: { lighting: "lit", vegetation: "half" } });
+
+  assert.equal(parameterStateHammingDistance(first, second), 3);
 });
 
 test("balanced detailed sampling returns six unique, alternating images with 2-2-1-1 exposure", () => {
