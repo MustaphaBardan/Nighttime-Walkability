@@ -24,7 +24,6 @@ const IDEAL_SCENE_BUILDER_PARTICIPATION_QUESTION = {
   },
 };
 
-// this function is for teaching both 360 navigation and route continuation
 export function renderTrainingScene(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "training_scene";
   const question = context.questions.training_scene?.[0] || {
@@ -42,7 +41,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
   const yawCoverageState = {};
   const sharedViewState = {};
 
-  // this function is for redrawing the training screen
   function renderCurrent() {
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
@@ -87,7 +85,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
       attrs: { type: "button", disabled: "disabled" },
     });
     const answerRow = renderChoiceRow(question.options || ["yes", "partly", "no"], language, (answer) => {
-      // we save which training answer is selected before enabling continue
       selectedAnswer = answer;
       answerRow.querySelectorAll(".choice-button").forEach((button) => {
         const isSelected = button.dataset.value === answer;
@@ -97,7 +94,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
       continueButton.disabled = false;
     }, question.question_id);
 
-    // this function is for updating how many degrees the user has seen
     function updateYawCoverage(metrics) {
       const nextCoverage = metrics.yawCoverageDegrees;
       yawCoverageDegrees = Math.max(0, Math.min(360, Math.round(nextCoverage || 0)));
@@ -126,7 +122,6 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
         return;
       }
 
-      // we save the training answer and the 360 rotation coverage
       const answerValue = (question.options || []).indexOf(selectedAnswer) + 1;
       saveLocalBackup(makeResponse(context, methodId, question, 1, startedAt, {
         image_left: clearImage?.image_id || "",
@@ -193,18 +188,16 @@ export function renderTrainingScene(root, context, onComplete, onRerenderReady =
   renderCurrent();
 }
 
-// this function is for showing detailed rating questions with one scene per question
 export function renderDetailedRating(root, context, onComplete, onRerenderReady = () => {}) {
   renderDetailedRatingIntro(root, context, onComplete, onRerenderReady);
 }
 
-// this function is for showing detailed rating questions after their intro
 function renderDetailedRatingQuestions(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "detailed_rating";
   const questions = context.questions.detailed_rating;
   const methodStartedAt = Date.now();
 
-  // scenario selection is seeded, while questions always follow the protocol order
+  // Scene selection varies by participant; the question order stays fixed.
   const pairwisePairs = isScenarioPool(context.images)
     ? makeBalancedScenarioPairs(
       context.images,
@@ -290,7 +283,6 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
   };
   document.addEventListener("fullscreenchange", markFullscreenUsed);
 
-  // this function is for rendering the current detailed rating question
   function renderCurrent() {
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
@@ -358,13 +350,11 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
     updateDetailedAnswerState();
   }
 
-  // this function is for selecting a detailed rating without immediately advancing
   function selectAnswer(value) {
     selectedRating = value;
     updateDetailedAnswerState();
   }
 
-  // this function is for saving one detailed rating answer
   function submitAnswer() {
     if (!canContinueDetailed()) {
       return;
@@ -391,7 +381,6 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
     renderCurrent();
   }
 
-  // this function is for rendering the answer, comment, and continue controls
   function renderDetailedAnswerControls(question, language) {
     const wrapper = createElement("div", { className: "response-controls" });
     const continueButton = createElement("button", {
@@ -409,7 +398,6 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
     return wrapper;
   }
 
-  // this function is for keeping normal and fullscreen detailed controls in sync
   function updateDetailedAnswerState() {
     root.querySelectorAll(".likert-button").forEach((button) => {
       const isSelected = Number(button.dataset.value) === selectedRating;
@@ -442,7 +430,6 @@ function renderDetailedRatingQuestions(root, context, onComplete, onRerenderRead
   renderCurrent();
 }
 
-// this function is for showing the intro screen before detailed scene ratings
 function renderDetailedRatingIntro(root, context, onComplete, onRerenderReady = () => {}) {
   const language = getContextLanguage(context);
   onRerenderReady(() => renderDetailedRatingIntro(root, context, onComplete, onRerenderReady));
@@ -466,7 +453,6 @@ function renderDetailedRatingIntro(root, context, onComplete, onRerenderReady = 
   root.append(panel);
 }
 
-// this function is for the ideal scene builder section
 export function renderIdealSceneBuilder(
   root,
   context,
@@ -536,12 +522,10 @@ export function renderIdealSceneBuilder(
   root.append(toolbarSlot, panel);
 
   function submitBuilder() {
-    // we only continue after all builder parameters are answered
     if (!allBuilderQuestionsAnswered()) {
       return;
     }
 
-    // we save one response row per builder question
     const responses = buildIdealSceneBuilderResponses({
       context,
       questions,
@@ -569,7 +553,6 @@ export function renderIdealSceneBuilder(
     updateParametersCollapsedState();
   });
 
-  // this function is for rendering the builder image and controls
   function renderCurrent() {
     const language = getContextLanguage(context);
     onRerenderReady(renderCurrent);
@@ -599,7 +582,6 @@ export function renderIdealSceneBuilder(
     overlayControls.replaceChildren();
     questions.forEach((question) => {
       const onSelect = (answer) => {
-        // we save the selected option and update the preview image
         selections[question.question_id] = answer;
         currentPreview = buildIdealPreviewImage(
           usesScenarioC
@@ -620,17 +602,14 @@ export function renderIdealSceneBuilder(
     updateParametersCollapsedState();
   }
 
-  // this function is for counting how many builder questions are answered
   function countSelectedQuestions() {
     return questions.filter((question) => Boolean(selections[question.question_id])).length;
   }
 
-  // this function is for checking if all builder questions are answered
   function allBuilderQuestionsAnswered() {
     return countSelectedQuestions() === questions.length;
   }
 
-  // this function is for hiding or showing parameters in fullscreen
   function updateParametersCollapsedState() {
     preview.classList.toggle("parameters-collapsed", parametersCollapsed);
     parametersToggle.setAttribute("aria-expanded", String(!parametersCollapsed));
@@ -692,7 +671,6 @@ export function renderIdealSceneBuilder(
   }
 }
 
-// this function is for building completed or skipped ideal-builder response rows
 export function buildIdealSceneBuilderResponses({
   context,
   questions = [],
@@ -734,7 +712,6 @@ export function buildIdealSceneBuilderResponses({
   ];
 }
 
-// this function is for the final realism and viewing quality questions
 export function renderRealismCheck(root, context, onComplete, onRerenderReady = () => {}, draft = null) {
   const language = getContextLanguage(context);
   const methodId = "realism_check";
@@ -802,7 +779,6 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    // we read the final form and create one response per question
     const formData = new FormData(form);
     const responses = questions.map((question, index) => {
       const rawValue = String(formData.get(question.question_id) || "").trim();
@@ -823,7 +799,6 @@ export function renderRealismCheck(root, context, onComplete, onRerenderReady = 
   root.append(toolbar, panel);
 }
 
-// this function is for rendering one control in the ideal scene builder
 function renderBuilderParameterControl(question, language, selectedAnswer, onSelect, optionAvailability = {}) {
   const label = createElement("label", { className: "builder-parameter" });
   const labelText = createElement("span", {
@@ -859,7 +834,6 @@ function renderBuilderParameterControl(question, language, selectedAnswer, onSel
   return label;
 }
 
-// this function is for finding the preview image that matches the builder selections
 function resolveIdealSceneVariant(config = {}, selections = {}) {
   const variants = config.variants || [];
   const matchingVariant = variants
@@ -869,7 +843,6 @@ function resolveIdealSceneVariant(config = {}, selections = {}) {
   return buildIdealPreviewImage(matchingVariant || config.default, "ideal_scene_default");
 }
 
-// this function is for checking if a preview variant matches the selected answers
 function variantMatchesSelections(variant, selections) {
   const conditions = variant.conditions || {};
   const entries = Object.entries(conditions);
@@ -881,7 +854,6 @@ function variantMatchesSelections(variant, selections) {
   return entries.every(([questionId, answer]) => selections[questionId] === answer);
 }
 
-// this function is for building a panorama image object for the preview
 function buildIdealPreviewImage(variant = {}, fallbackId = "ideal_scene_preview") {
   const imageId = variant.image_id || variant.variant_id || fallbackId;
   return {
@@ -902,7 +874,6 @@ function buildIdealPreviewImage(variant = {}, fallbackId = "ideal_scene_preview"
   };
 }
 
-// this function is for rendering the toolbar used by question screens
 function renderQuestionToolbar(title, intro, onBack, backDisabled, progress, language = "en") {
   const toolbar = createElement("section", { className: "toolbar" });
   const heading = createElement("div", {
@@ -922,7 +893,6 @@ function renderQuestionToolbar(title, intro, onBack, backDisabled, progress, lan
   return toolbar;
 }
 
-// this function is for rendering old preview choice cards
 function renderPreviewChoiceGrid(question, language, onSelect) {
   const grid = createElement("div", { className: "preview-option-grid" });
 
@@ -957,7 +927,6 @@ function renderPreviewChoiceGrid(question, language, onSelect) {
   return grid;
 }
 
-// this function is for rendering one image or panorama in a question
 function renderSingleImage(image, language = "en", options = {}) {
   const wrapper = createElement("article", { className: "scene-option single-scene" });
   const frame = renderSceneMedia(image, {
@@ -974,7 +943,6 @@ function renderSingleImage(image, language = "en", options = {}) {
   return wrapper;
 }
 
-// this function is for rendering a row of choice buttons
 function renderChoiceRow(options, language, onSelect, questionId = null) {
   const row = createElement("div", { className: "answer-row" });
   options.forEach((option, index) => {
@@ -989,7 +957,6 @@ function renderChoiceRow(options, language, onSelect, questionId = null) {
   return row;
 }
 
-// this function is for rendering the 1 to 5 rating buttons
 function renderLikertRow(question, language, onSelect, selectedValue = null) {
   const scale = question.scale || 5;
   const wrapper = createElement("div", { className: "scale-block" });
@@ -1014,14 +981,12 @@ function renderLikertRow(question, language, onSelect, selectedValue = null) {
   return wrapper;
 }
 
-// this function is for rendering a short question without helper text
 function renderQuestionPrompt(question, language) {
   return [
     createElement("p", { className: "question-text", text: questionText(question, language) }),
   ];
 }
 
-// this function is for rendering a radio scale field in the final form
 function renderScaleField(question, order, language, selectedValue = "") {
   const fieldset = createElement("fieldset", { className: "scale-field" });
   const legend = createElement("legend", { text: questionText(question, language) });
@@ -1060,7 +1025,6 @@ function renderScaleField(question, order, language, selectedValue = "") {
   return fieldset;
 }
 
-// this function is for rendering a radio choice field in the final form
 function renderChoiceField(question, order, language, selectedValue = "") {
   const fieldset = createElement("fieldset", { className: "scale-field" });
   const legend = createElement("legend", { text: questionText(question, language) });
@@ -1094,7 +1058,6 @@ function renderChoiceField(question, order, language, selectedValue = "") {
   return fieldset;
 }
 
-// this function is for rendering a text area with character limit
 function renderTextArea(question, language, value = "") {
   const label = createElement("label", { className: "form-field" });
   const textarea = createElement("textarea", {
@@ -1125,7 +1088,6 @@ function renderTextArea(question, language, value = "") {
     }),
   });
   textarea.addEventListener("input", () => {
-    // we cut the text if it goes above the character limit
     const limitedValue = limitCharacters(textarea.value, FINAL_COMMENT_CHARACTER_LIMIT);
 
     if (textarea.value !== limitedValue) {
@@ -1142,7 +1104,6 @@ function renderTextArea(question, language, value = "") {
   return label;
 }
 
-// this function is for rendering the min and max labels under a scale
 function renderScaleAnchors(question, language) {
   const min = localize(question.scale_labels?.min, language) || t(language, "stronglyDisagree");
   const max = localize(question.scale_labels?.max, language) || t(language, "stronglyAgree");
@@ -1150,7 +1111,6 @@ function renderScaleAnchors(question, language) {
   return `<span class="scale-anchor-min">${min}</span><span class="scale-anchor-max">${max}</span>`;
 }
 
-// this function is for converting a choice answer into a number
 function getChoiceAnswerValue(question, answer) {
   if (question.type !== "choice") {
     return null;
@@ -1160,17 +1120,14 @@ function getChoiceAnswerValue(question, answer) {
   return index >= 0 ? index + 1 : null;
 }
 
-// this function is for counting characters correctly
 function countCharacters(value) {
   return Array.from(String(value)).length;
 }
 
-// this function is for cutting text at the character limit
 function limitCharacters(value, limit) {
   return Array.from(String(value)).slice(0, limit).join("");
 }
 
-// this function is for keeping realism answers when language changes
 function readRealismDraft(root) {
   const form = root.querySelector(".profile-form");
 
@@ -1181,7 +1138,6 @@ function readRealismDraft(root) {
   return Object.fromEntries(new FormData(form).entries());
 }
 
-// this function is for choosing the css preview class for builder options
 function getPreviewClass(questionId, option) {
   const classes = {
     preferred_lighting_intensity: {

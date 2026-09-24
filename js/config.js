@@ -1,4 +1,3 @@
-// this object contains the main settings used by the survey website
 export const CONFIG = {
   protocolLabel: "Public protocol V1",
   googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbztOko8hIfqh-oAJp9Q9aRLPWiTDOKx6TLMJoMJPsObjnM293KlErOyUvdXYJkAzvG2/exec",

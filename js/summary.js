@@ -9,7 +9,6 @@ const DIMENSION_LABELS = {
   detailed_willingness_to_walk: { en: "willingness to walk", fr: "l'envie de marcher" },
 };
 
-// this function is for creating a structured, cautious participant-facing summary
 export function buildResponseSummaryModel(responses = [], language = "en") {
   const lang = language === "fr" ? "fr" : "en";
   const detailed = responses
@@ -63,7 +62,7 @@ export function buildResponseSummaryModel(responses = [], language = "en") {
   };
 }
 
-// this compatibility helper returns the summary as plain paragraphs
+// Keep the paragraph output for callers that have not switched to the structured model.
 export function buildResponseSummary(responses = [], language = "en") {
   const model = buildResponseSummaryModel(responses, language);
   return [...model.insights.map((insight) => insight.text), model.disclaimer];

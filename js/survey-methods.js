@@ -11,7 +11,6 @@ import { scheduleAutomaticSubmissionRetries, submitResponses } from "./submissio
 import { getContextLanguage, t } from "./i18n.js";
 import { createElement } from "./utils.js";
 
-// this list defines the order of the survey sections
 export const METHOD_DEFINITIONS = [
   {
     id: "training_scene",
@@ -42,24 +41,20 @@ export const METHOD_DEFINITIONS = [
 
 export const TOTAL_SURVEY_STEPS = METHOD_DEFINITIONS.length + 2;
 
-// this function is for getting all method ids
 export function getAllMethodIds() {
   return METHOD_DEFINITIONS.map((method) => method.id);
 }
 
-// this function is for getting the translated title of a method
 export function getMethodTitle(methodId, language = "en") {
   const method = METHOD_DEFINITIONS.find((item) => item.id === methodId);
   return method ? t(language, method.titleKey) : methodId;
 }
 
-// this function is for removing answers and progress for one method
 export function removeMethodAnswers(methodId) {
   removeLocalResponsesForMethod(methodId);
   clearMethodCompletion(methodId);
 }
 
-// this function is for rendering the progress bar
 export function renderSurveyProgress(current, total, language = "en") {
   const safeTotal = Math.max(0, Number(total) || 0);
   const safeCurrent = safeTotal > 0 ? Math.min(Math.max(0, Number(current) || 0), safeTotal) : 0;
@@ -79,10 +74,8 @@ export function renderSurveyProgress(current, total, language = "en") {
   return wrapper;
 }
 
-// this function is for saving a section and showing the section complete screen
 export async function completeMethod(root, context, methodId, responses, onContinue, onRerenderReady = () => {}, onBack = null) {
   const completedAt = new Date().toISOString();
-  // we save every answer locally before moving to the next section
   responses.forEach((response) => saveLocalBackup(response));
   markMethodCompleted(methodId, completedAt);
 
@@ -91,7 +84,6 @@ export async function completeMethod(root, context, methodId, responses, onConti
   let continueDisabled = isFinalSection;
   let canRetrySubmission = false;
 
-  // this function is for drawing the completion message for the current section
   function renderCompletion() {
     const language = getContextLanguage(context);
     const isSavingFinalResponse = isFinalSection && continueDisabled;
@@ -183,7 +175,6 @@ export async function completeMethod(root, context, methodId, responses, onConti
     return;
   }
 
-  // we submit only when all survey methods are completed
   const finalizedResponses = finalizeSurveyTiming(completedAt);
   const result = await submitResponses(finalizedResponses, {
     method: "complete_protocol",
@@ -203,13 +194,11 @@ export async function completeMethod(root, context, methodId, responses, onConti
   }
 }
 
-// this function is for checking if the whole survey is completed
 export function allMethodsCompleted() {
   const completed = getProgress().completed_methods || {};
   return getAllMethodIds().every((methodId) => Boolean(completed[methodId]));
 }
 
-// this function is for adding method specific values to the common response row
 export function makeResponse(context, methodId, question, displayOrder, startedAt, values = {}) {
   return {
     ...buildBaseResponse(context.session, methodId, question, displayOrder, startedAt),

@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-// this list contains the json files that must stay valid
 const jsonFiles = [
   "data/images.json",
   "data/ideal_scene_variants.json",
@@ -12,7 +11,6 @@ const jsonFiles = [
   "package.json",
 ];
 
-// this list contains the javascript files checked for syntax errors
 const jsFiles = [
   "js/app.js",
   "js/config.js",
@@ -42,12 +40,10 @@ const jsFiles = [
   "tests/utils.test.js",
 ];
 
-// we check that every json file can be parsed
 for (const file of jsonFiles) {
   JSON.parse(readFileSync(file, "utf8"));
 }
 
-// we check that every javascript file has valid syntax
 for (const file of jsFiles) {
   const result = spawnSync(process.execPath, ["--check", file], {
     encoding: "utf8",

@@ -8,7 +8,6 @@ let retryTimers = [];
 let onlineRetryHandler = null;
 let activeAttempt = null;
 
-// this function is for checking whether google apps script can be reached from this browser
 export async function checkSubmissionService(options = {}) {
   if (!CONFIG.googleAppsScriptUrl) return false;
 
@@ -20,7 +19,6 @@ export async function checkSubmissionService(options = {}) {
   }
 }
 
-// this function is for sending answers and accepting only a matching sheet receipt as success
 export async function submitResponses(responses, options = {}) {
   if (activeAttempt) return activeAttempt;
 
@@ -103,7 +101,6 @@ async function runSubmissionAttempt(responses, options = {}) {
   return submissionResult(false, state, "Remote submission is not yet confirmed.");
 }
 
-// this function is for retrying an unconfirmed completed response while the page stays open
 export function scheduleAutomaticSubmissionRetries(responses, options = {}) {
   const state = getSubmissionState();
   if (state.status === "confirmed" || !state.submission_id || scheduledSubmissionId === state.submission_id) return;

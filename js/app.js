@@ -41,7 +41,7 @@ const app = byId("app");
 const session = getOrCreateSession();
 hydrateSessionFromProgress(session);
 
-// this keeps the last screen renderer so we can redraw it when language/device changes
+// Redraw the active screen when the language or viewport eligibility changes.
 let rerenderCurrentView = () => {};
 let mediaWarmupStarted = false;
 let lastAllowedDeviceState = null;
@@ -52,10 +52,8 @@ initThemeToggle();
 applyLanguage(session.language);
 renderHeaderLanguageSelector();
 
-// this function is for starting the survey app and loading the json files
 async function init() {
   try {
-    // Load the tutorial panoramas, complete scenario catalog, and survey content.
     const [tutorialImages, scenarioCatalog, baseQuestions, builderQuestions, idealSceneVariants, credits] = await Promise.all([
       fetchJson("data/images.json"),
       fetchJson("data/scenario_catalog.json"),
@@ -70,7 +68,6 @@ async function init() {
       ideal_scene_builder: builderQuestions,
     };
 
-    // we keep the survey data in one context object used by all sections
     window.surveyContext = {
       session,
       images,
@@ -96,7 +93,6 @@ async function init() {
   }
 }
 
-// this function is for reading a json file and checking if it loaded correctly
 async function fetchJson(path) {
   const response = await fetch(path);
 
@@ -107,7 +103,6 @@ async function fetchJson(path) {
   return response.json();
 }
 
-// this function is for showing the first welcome screen
 function renderWelcome(context) {
   welcomeVisible = true;
   const language = getContextLanguage(context);
@@ -153,7 +148,6 @@ function renderWelcome(context) {
   });
 
   start.addEventListener("click", () => {
-    // we save the starting time only when the survey is not finished yet
     if (!allMethodsCompleted()) {
       markSurveyStarted(context.session);
     }
@@ -165,7 +159,6 @@ function renderWelcome(context) {
   app.append(panel);
 }
 
-// this function is for deciding where the user goes after the welcome screen
 function routeAfterWelcome(context) {
   welcomeVisible = false;
   if (!isAllowedSurveyViewport(context)) {
@@ -190,7 +183,6 @@ function routeAfterWelcome(context) {
   routeToNextProtocolStep(context);
 }
 
-// this function is for knowing if the browser already has unfinished answers
 function hasSavedPartialProgress(progress) {
   return !allMethodsCompleted() && (
     Boolean(progress.profile_completed) ||
@@ -198,7 +190,6 @@ function hasSavedPartialProgress(progress) {
   );
 }
 
-// this function is for showing the message when the survey was already completed
 function renderCompletedPrompt(context) {
   const language = getContextLanguage(context);
   setCurrentViewRenderer(() => renderCompletedPrompt(context));
@@ -224,7 +215,6 @@ function renderCompletedPrompt(context) {
       return;
     }
 
-    // we remove old method answers before starting the survey again
     stopAutomaticSubmissionRetries();
     clearSubmissionState();
     getAllMethodIds().forEach((methodId) => removeMethodAnswers(methodId));
@@ -242,7 +232,6 @@ function renderCompletedPrompt(context) {
   app.append(panel);
 }
 
-// this function is for routing to the next unfinished survey section
 function routeToNextProtocolStep(context) {
   if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
@@ -267,7 +256,6 @@ function routeToNextProtocolStep(context) {
   startMethod(context, nextMethod.id);
 }
 
-// this function is for preparing panorama textures once after the profile
 function warmUpSurveyMedia(context) {
   if (mediaWarmupStarted) {
     return;
@@ -277,7 +265,6 @@ function warmUpSurveyMedia(context) {
   warmUpPanoramaTextures(context.images);
 }
 
-// this function is for showing the anonymous profile questions
 function renderProfile(context, draft = null) {
   const language = getContextLanguage(context);
   if (!isAllowedSurveyViewport(context)) {
@@ -391,7 +378,6 @@ function renderProfile(context, draft = null) {
   app.append(panel);
 }
 
-// this function is for making a select input with translated options
 function renderSelect(name, label, options, required = true, selectedValue = "") {
   const field = createElement("label", { className: "form-field" });
   const attrs = { name };
@@ -427,7 +413,6 @@ function renderSelect(name, label, options, required = true, selectedValue = "")
   return field;
 }
 
-// this function is for making a checkbox group that stores multiple answers as pipe-separated codes
 function renderMultiChoice(name, label, helperText, options, selectedValue = "") {
   const field = createElement("fieldset", { className: "form-field multi-choice-field" });
   const selectedValues = normalizeMultiChoiceValue(selectedValue);
@@ -470,18 +455,15 @@ function renderMultiChoice(name, label, helperText, options, selectedValue = "")
   return field;
 }
 
-// this function is for serializing checkbox values into one spreadsheet-safe profile value
 function getMultiChoiceValue(formData, name) {
   return formData.getAll(name).join("|");
 }
 
-// this function is for restoring a saved multi-choice profile value
 function normalizeMultiChoiceValue(value) {
   if (Array.isArray(value)) return new Set(value);
   return new Set(String(value || "").split("|").filter(Boolean));
 }
 
-// this function is for calling the renderer of each survey method
 function startMethod(context, methodId) {
   if (!isAllowedSurveyViewport(context)) {
     renderWelcome(context);
@@ -513,7 +495,6 @@ function startMethod(context, methodId) {
   }
 }
 
-// this function is for checking if the usable browser area is large enough
 function isAllowedSurveyViewport(context) {
   const allowed = isSurveyViewportAllowed();
   if (context?.session) {
@@ -522,7 +503,6 @@ function isAllowedSurveyViewport(context) {
   return allowed;
 }
 
-// this function is for showing the desktop only message from the welcome screen
 function renderDesktopOnlyNotice(context) {
   const language = getContextLanguage(context);
 
@@ -532,7 +512,6 @@ function renderDesktopOnlyNotice(context) {
   });
 }
 
-// this function is for showing the final thank you page and participant reference
 function renderFinalThanks(context) {
   const language = getContextLanguage(context);
   setCurrentViewRenderer(() => renderFinalThanks(context));
@@ -551,7 +530,6 @@ function renderFinalThanks(context) {
   app.append(panel);
 }
 
-// this function is for showing the indicative response summary before the final thank-you page
 function renderSurveySummary(context) {
   const language = getContextLanguage(context);
   setCurrentViewRenderer(() => renderSurveySummary(context));
@@ -611,7 +589,6 @@ function renderSurveySummary(context) {
   app.append(panel);
 }
 
-// this function is for warning participants before they start when google apps script is unreachable
 function renderSubmissionConnectionWarning(context) {
   const language = getContextLanguage(context);
   const notice = createElement("aside", { className: "submission-status submission-status-warning" });
@@ -635,7 +612,6 @@ function renderSubmissionConnectionWarning(context) {
   return notice;
 }
 
-// this function is for showing confirmed or retryable delivery state alongside the bilan
 function renderSubmissionDeliveryStatus(context) {
   const language = getContextLanguage(context);
   const state = getSubmissionState();
@@ -694,7 +670,6 @@ function resumeUnconfirmedSubmission() {
   retryCompletedSubmission();
 }
 
-// this function is for rendering the logos and project links on the introduction screen
 function renderProjectIdentity(context) {
   const language = getContextLanguage(context);
   const wrapper = createElement("section", { className: "project-identity" });
@@ -710,7 +685,6 @@ function renderProjectIdentity(context) {
   return wrapper;
 }
 
-// this function is for filling the footer credits dialog from the tracked credit data
 function renderCreditsDialog(context) {
   const language = getContextLanguage(context);
   const content = byId("credits-content");
@@ -762,7 +736,6 @@ function initCreditsDialog() {
   byId("credits-close").addEventListener("click", () => byId("credits-dialog").close());
 }
 
-// this function is for preparing the dark/light mode button
 function initThemeToggle() {
   const button = byId("theme-toggle");
   const savedTheme = localStorage.getItem(CONFIG.themeStorageKey);
@@ -776,7 +749,6 @@ function initThemeToggle() {
   });
 }
 
-// this function is for applying and saving the theme
 function setTheme(theme, button) {
   const language = session.language;
   document.documentElement.dataset.theme = theme;
@@ -785,7 +757,6 @@ function setTheme(theme, button) {
   button.setAttribute("aria-pressed", String(theme === "dark"));
 }
 
-// this function is for applying the current language to the fixed header
 function applyLanguage(language) {
   document.documentElement.lang = language;
   byId("app-eyebrow").textContent = t(language, "appEyebrow");
@@ -793,7 +764,6 @@ function applyLanguage(language) {
   setTheme(document.documentElement.dataset.theme || "dark", byId("theme-toggle"));
 }
 
-// this function is for changing language and redrawing the current page
 function changeLanguage(context, language) {
   const previousLanguage = getContextLanguage(context);
   updateSessionLanguage(context.session, language);
@@ -805,12 +775,10 @@ function changeLanguage(context, language) {
   }
 }
 
-// this function is for remembering how to redraw the active screen
 function setCurrentViewRenderer(callback) {
   rerenderCurrentView = callback;
 }
 
-// this function is for blocking the survey again if the window becomes too small
 function initDeviceGateResizeWatcher() {
   window.addEventListener("resize", () => {
     if (document.fullscreenElement) {
@@ -838,7 +806,6 @@ function initDeviceGateResizeWatcher() {
   });
 }
 
-// this function is for rendering the EN/FR buttons in the header
 function renderHeaderLanguageSelector() {
   const language = getContextLanguage({ session });
   const container = byId("header-language");
@@ -863,7 +830,6 @@ function renderHeaderLanguageSelector() {
   });
 }
 
-// this function is for keeping the profile draft when the language changes
 function readProfileDraft() {
   const form = app.querySelector(".profile-form");
 

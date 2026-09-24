@@ -11,18 +11,16 @@ import {
 import { renderSceneMedia } from "./panorama-viewer.js";
 import { isScenarioPool } from "./scenario-protocol.js";
 
-// this function is for showing the pairwise comparison section
 export function renderPairwiseComparison(root, context, onComplete, onRerenderReady = () => {}) {
   renderProtocolIntro(root, context, onComplete, onRerenderReady);
 }
 
-// this function is for showing the pairwise comparison questions after their intro
 function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = () => {}) {
   const methodId = "pairwise_comparison";
   const questions = context.questions.pairwise_comparison;
   const methodStartedAt = Date.now();
 
-  // pair selection is seeded, while questions always follow the protocol order
+  // Keep the protocol question order fixed while varying scene pairs by participant.
   const pairs = isScenarioPool(context.images)
     ? makeBalancedScenarioPairs(context.images, context.session.participant_id, questions.length)
     : makeScenarioQuestionPairs(context.images, context.session.participant_id, Number.MAX_SAFE_INTEGER);
@@ -35,7 +33,7 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     true,
   ).map((assignment) => {
     const pair = assignment.item;
-    // we also randomize which image is shown as scene A or scene B
+    // Balance left and right placement without changing it on a reload.
     const shouldFlipSides = hashString(`${context.session.participant_id}:${pair[0].image_id}:${pair[1].image_id}:pair-side`) % 2 === 0;
     const [first, second] = shouldFlipSides ? [pair[1], pair[0]] : pair;
 
@@ -130,13 +128,12 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
 
   document.addEventListener("fullscreenchange", updateActiveScene);
   onRerenderReady(() => {
-    // we remove the listener before re-rendering to avoid duplicate fullscreen handlers
+    // Remove the old handler before redrawing so fullscreen clicks fire once.
     document.removeEventListener("fullscreenchange", updateActiveScene);
     renderPairwiseQuestions(root, context, onComplete, onRerenderReady);
   });
   updateTrial();
 
-  // this function is for drawing the current pairwise trial
   function updateTrial() {
     const language = getContextLanguage(context);
 
@@ -167,7 +164,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     panoramaInteractiveAvailable = true;
     yawCoverageState = {};
 
-    // we update the text, progress, images, and answer buttons
     toolbarTitle.innerHTML = `<h2>${t(language, "pairwiseTitle")}</h2><p>${t(language, "pairwiseIntro")}</p>`;
     back.textContent = t(language, "back");
     exitFullscreenButton.textContent = t(language, "exitFullScreen");
@@ -194,7 +190,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     updateResponseState();
   }
 
-  // this function is for creating the answer, comment, and continue controls
   function renderResponseControls(language) {
     const wrapper = createElement("div", { className: "response-controls" });
     const answerRow = createElement("div", { className: "answer-row" });
@@ -221,7 +216,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     return wrapper;
   }
 
-  // this function is for creating one answer button
   function renderAnswerButton(label, value, language) {
     const isSelected = selectedAnswer === value;
     const button = createElement("button", {
@@ -238,14 +232,12 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     return button;
   }
 
-  // this function is for saving the selected pairwise answer
   function submitAnswer() {
     if (!canContinue()) {
       return;
     }
 
     const trial = trials[currentIndex];
-    // we build the answer row that will be saved in local storage and google sheets
     const response = buildBaseResponse(
       context.session,
       methodId,
@@ -269,7 +261,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     updateTrial();
   }
 
-  // this function is for entering fullscreen on the comparison viewer
   async function enterComparisonFullscreen(sceneLabel, fallbackFrame) {
     activeScene = sceneLabel;
     updateActiveScene();
@@ -286,7 +277,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     }
   }
 
-  // this function is for marking which scene is active in fullscreen
   function updateActiveScene() {
     fullscreenUsed = fullscreenUsed || document.fullscreenElement === shell || shell.contains(document.fullscreenElement);
     shell.dataset.activeScene = activeScene;
@@ -295,7 +285,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
     });
   }
 
-  // this function is for keeping normal and fullscreen answer controls in sync
   function updateResponseState() {
     root.querySelectorAll(".choice-button").forEach((button) => {
       const isSelected = button.dataset.value === selectedAnswer;
@@ -326,7 +315,6 @@ function renderPairwiseQuestions(root, context, onComplete, onRerenderReady = ()
   }
 }
 
-// this function is for showing the intro screen before pairwise comparison
 function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => {}) {
   const language = getContextLanguage(context);
   onRerenderReady(() => renderProtocolIntro(root, context, onComplete, onRerenderReady));
@@ -350,7 +338,6 @@ function renderProtocolIntro(root, context, onComplete, onRerenderReady = () => 
   root.append(panel);
 }
 
-// this function is for rendering one scene in the pairwise comparison
 function renderScene(label, image, language, onFullscreenRequest, viewState, trackingOptions = {}) {
   const displayLabel = label === "A" ? t(language, "sceneA") : t(language, "sceneB");
   const wrapper = createElement("article", {
@@ -375,7 +362,6 @@ function renderScene(label, image, language, onFullscreenRequest, viewState, tra
   return wrapper;
 }
 
-// this function is for rendering a short question without helper text
 function renderQuestionPrompt(question, language) {
   return [
     createElement("p", { className: "question-text", text: questionText(question, language) }),

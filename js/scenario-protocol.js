@@ -87,7 +87,7 @@ const SCENARIO_DEFINITIONS = {
   },
 };
 
-// Parse one source filename into the normalized scenario parameter-state interface.
+// In Scenario C, T1 and T2 encode vegetation density; missing tokens use the defaults.
 export function parseScenarioSourceFilename(scenarioGroup, filename) {
   const group = String(scenarioGroup || "").toUpperCase();
   const definition = SCENARIO_DEFINITIONS[group];
@@ -139,7 +139,7 @@ export function parseScenarioSourceFilename(scenarioGroup, filename) {
   };
 }
 
-// Return only Scenario C variants that agree with every known builder answer.
+// "Don't know" leaves a parameter open so the preview can still match later choices.
 export function getCompatibleScenarioCVariants(variants = [], selections = {}) {
   return variants.filter((variant) => {
     if (variant.scenario_group !== "C") {
@@ -155,7 +155,7 @@ export function getCompatibleScenarioCVariants(variants = [], selections = {}) {
   });
 }
 
-// Check which options still lead to at least one exact known-state preview.
+// Disable choices that would leave the builder without a matching panorama.
 export function getScenarioCOptionAvailability(variants, selections, questionId) {
   const field = SCENARIO_C_BUILDER_FIELDS[questionId];
   if (!field) {
@@ -172,7 +172,7 @@ export function getScenarioCOptionAvailability(variants, selections, questionId)
   }));
 }
 
-// Pick a stable compatible preview, preferring half density and fewer active unknown flags.
+// Keep the preview stable while favoring half density and fewer active unknown flags.
 export function chooseScenarioCPreview(variants = [], selections = {}) {
   const compatible = getCompatibleScenarioCVariants(variants, selections);
   const knownParameters = new Set(Object.entries(SCENARIO_C_BUILDER_FIELDS)
